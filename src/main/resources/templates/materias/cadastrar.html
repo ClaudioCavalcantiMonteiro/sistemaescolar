@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastrar Matéria</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container mt-5" style="max-width: 600px;">
+    <h1>Cadastrar/Editar Matéria</h1>
+    <form th:action="@{/materias/salvar}" th:object="${materia}" method="post">
+        <input type="hidden" th:field="*{id}">
+        <div class="mb-3">
+            <label class="form-label">Nome da Matéria</label>
+            <input type="text" class="form-control" th:field="*{nome}" placeholder="Ex: Matemática" required>
+        </div>
+        <button type="submit" class="btn btn-success">Salvar</button>
+        <a href="/materias" class="btn btn-secondary">Cancelar</a>
+    </form>
+</body>
+</html>

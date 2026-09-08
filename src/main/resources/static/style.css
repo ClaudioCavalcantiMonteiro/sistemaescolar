@@ -1,0 +1,31 @@
+/* Reset básico */
+body {
+    background-color: #f8f9fa; /* Fundo cinza claro */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fonte padrão */
+}
+
+/* Ajuste do container principal */
+.container {
+    max-width: 900px; /* Largura máxima da página */
+}
+
+/* Cor do título */
+h1, h2, h3 {
+    color: #333; /* Cor escura para os títulos */
+    font-weight: bold;
+}
+
+/* Links */
+a {
+    text-decoration: none; /* Tira o sublinhado padrão */
+}
+
+/* Personalização dos botões (opcional) */
+.btn-primary {
+    background-color: #667eea; /* Mudar a cor do botão principal */
+    border-color: #667eea;
+}
+
+.btn-primary:hover {
+    background-color: #5a6fd8; /* Cor ao passar o mouse */
+}

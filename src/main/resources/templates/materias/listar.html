@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Lista de Matérias</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container mt-5">
+    <h1>Matérias</h1>
+    <a href="/materias/novo" class="btn btn-primary mb-3">Nova Matéria</a>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="materia : ${materias}">
+                <td th:text="${materia.id}"></td>
+                <td th:text="${materia.nome}"></td>
+                <td>
+                    <a th:href="@{/materias/editar/{id}(id=${materia.id})}" class="btn btn-sm btn-warning">Editar</a>
+                    <a th:href="@{/materias/excluir/{id}(id=${materia.id})}" class="btn btn-sm btn-danger" onclick="return confirm('Confirma exclusão?')">Excluir</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <a href="/home" class="btn btn-secondary">Voltar</a>
+</body>
+</html>
