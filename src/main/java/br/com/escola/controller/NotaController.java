@@ -90,10 +90,62 @@ public class NotaController {
                     .put(n.getUnidade(), n);
         }
 
+        // ===== Gerar JSON com locale US (ponto decimal) =====
+        StringBuilder datasetsJson = new StringBuilder("[");
+        String[] cores = {"#4a6fa5", "#e74c3c", "#27ae60", "#f39c12", "#9b59b6",
+                         "#16a085", "#d35400", "#2c3e50", "#e91e63", "#00bcd4"};
+
+        int corIndex = 0;
+        boolean primeiro = true;
+
+        for (Materia materia : materias) {
+            Map<Integer, Nota> mapaUnidades = notasPorMateria.get(materia.getId());
+            if (mapaUnidades == null || mapaUnidades.isEmpty()) continue;
+
+            StringBuilder medias = new StringBuilder("[");
+            boolean temAlgumaNota = false;
+            for (int u = 1; u <= 4; u++) {
+                Nota n = mapaUnidades.get(u);
+                if (n != null && n.getMediaFinal() != null) {
+                    // 👇 CORREÇÃO: força locale US para usar ponto decimal
+                    medias.append(String.format(java.util.Locale.US, "%.1f", n.getMediaFinal()));
+                    temAlgumaNota = true;
+                } else {
+                    medias.append("null");
+                }
+                if (u < 4) medias.append(",");
+            }
+            medias.append("]");
+
+            if (!temAlgumaNota) continue;
+
+            if (!primeiro) datasetsJson.append(",");
+            primeiro = false;
+
+            String cor = cores[corIndex % cores.length];
+            datasetsJson.append("{")
+                .append("\"label\":\"").append(materia.getNome()).append("\",")
+                .append("\"data\":").append(medias).append(",")
+                .append("\"borderColor\":\"").append(cor).append("\",")
+                .append("\"backgroundColor\":\"").append(cor).append("20\",")
+                .append("\"borderWidth\":2,")
+                .append("\"tension\":0.3,")
+                .append("\"pointRadius\":5,")
+                .append("\"pointHoverRadius\":7,")
+                .append("\"spanGaps\":true")
+                .append("}");
+            corIndex++;
+        }
+        datasetsJson.append("]");
+
         model.addAttribute("aluno", aluno);
         model.addAttribute("materias", materias);
         model.addAttribute("notasPorMateria", notasPorMateria);
+        model.addAttribute("graficoLabels", "[\"1ª Unidade\",\"2ª Unidade\",\"3ª Unidade\",\"4ª Unidade\"]");
+        model.addAttribute("graficoDatasets", datasetsJson.toString());
+
         return "notas/boletim";
+    
     }
 
     // ========== LISTAR NOTAS POR TURMA ==========

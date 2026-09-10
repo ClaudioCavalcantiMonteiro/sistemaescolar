@@ -5,9 +5,20 @@
     <title>Boletim do Aluno</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        @media print { .no-print { display: none; } }
+        @media print {
+            .no-print { display: none !important; }
+            body { margin: 0; padding: 0; }
+            .container { max-width: 100%; }
+            .grafico-container { page-break-inside: avoid; }
+        }
         .table-bordered th, .table-bordered td { border: 1px solid #dee2e6; }
+        .grafico-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -53,25 +64,24 @@
         <tbody>
             <tr th:each="materia : ${materias}">
                 <td th:text="${materia.nome}"></td>
-                <!-- Para cada unidade, pega a nota do mapa -->
                 <td th:each="unidade : ${#numbers.sequence(1, 4)}">
-                    <span th:with="nota=${notasPorMateria.get(materia.id) != null ? notasPorMateria.get(materia.id).get(unidade) : null}">
-                        <span th:if="${nota != null}" th:text="${nota.mediaFinal != null ? #numbers.formatDecimal(nota.mediaFinal, 1, 1) : '-'}"></span>
-                        <span th:if="${nota == null}">-</span>
+                    <span th:with="notaMap=${notasPorMateria.get(materia.id)}">
+                        <span th:with="nota=${notaMap != null ? notaMap.get(unidade) : null}">
+                            <span th:if="${nota != null and nota.mediaFinal != null}" th:text="${#numbers.formatDecimal(nota.mediaFinal, 1, 1)}"></span>
+                            <span th:if="${nota == null or nota.mediaFinal == null}">-</span>
+                        </span>
                     </span>
                 </td>
-                <!-- Média final -->
                 <td>
                     <span th:with="medias=${notasPorMateria.get(materia.id) != null ? notasPorMateria.get(materia.id).values().![mediaFinal].?[#this != null] : null}">
                         <span th:if="${medias != null and !medias.isEmpty()}" th:text="${#numbers.formatDecimal(#aggregates.avg(medias), 1, 1)}"></span>
                         <span th:if="${medias == null or medias.isEmpty()}">-</span>
                     </span>
                 </td>
-                <!-- Resultado -->
                 <td>
                     <span th:with="medias=${notasPorMateria.get(materia.id) != null ? notasPorMateria.get(materia.id).values().![mediaFinal].?[#this != null] : null}">
-                        <span th:if="${medias != null and !medias.isEmpty() and #aggregates.avg(medias) >= 6}" style="color: green;">Aprovado</span>
-                        <span th:if="${medias != null and !medias.isEmpty() and #aggregates.avg(medias) < 6}" style="color: red;">Reprovado</span>
+                        <span th:if="${medias != null and !medias.isEmpty() and #aggregates.avg(medias) >= 6}" style="color: green; font-weight: bold;">Aprovado</span>
+                        <span th:if="${medias != null and !medias.isEmpty() and #aggregates.avg(medias) < 6}" style="color: red; font-weight: bold;">Reprovado</span>
                         <span th:if="${medias == null or medias.isEmpty()}">-</span>
                     </span>
                 </td>
@@ -79,11 +89,68 @@
         </tbody>
     </table>
 
-    <div class="no-print text-center mt-3">
+    <!-- GRÁFICO -->
+    <div class="card mt-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> Evolução do Aluno por Unidade</h5>
+        </div>
+        <div class="card-body">
+            <div class="grafico-container">
+                <canvas id="graficoEvolucao"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="no-print text-center mt-4">
         <button class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> Imprimir Boletim</button>
         <a href="/home" class="btn btn-secondary">Voltar</a>
     </div>
 </div>
+
+<script th:inline="javascript">
+    // Converte as strings JSON em objetos JavaScript
+    const labels = JSON.parse(/*[[${graficoLabels}]]*/ '[]');
+    const datasets = JSON.parse(/*[[${graficoDatasets}]]*/ '[]');
+
+    console.log('Labels:', labels);
+    console.log('Datasets:', datasets);
+
+    window.addEventListener('load', function() {
+        const ctx = document.getElementById('graficoEvolucao').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 500 },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 10,
+                        ticks: { stepSize: 2 },
+                        title: { display: true, text: 'Média' }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: { boxWidth: 20, padding: 10, font: { size: 11 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => ctx.dataset.label + ': ' + (ctx.raw !== null ? ctx.raw.toFixed(1) : '-')
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
