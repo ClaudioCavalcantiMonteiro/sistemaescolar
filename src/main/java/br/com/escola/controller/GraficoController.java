@@ -5,6 +5,7 @@ import br.com.escola.model.Nota;
 import br.com.escola.service.AlunoService;
 import br.com.escola.service.MateriaService;
 import br.com.escola.service.NotaService;
+import br.com.escola.service.SerieService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,7 +17,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 @Controller
@@ -32,12 +32,30 @@ public class GraficoController {
     @Autowired
     private NotaService notaService;
 
+    @Autowired
+    private SerieService serieService;
+
     // Página de relatórios
     @GetMapping
     public String paginaRelatorios(Model model) {
         model.addAttribute("alunos", alunoService.listarTodos());
         model.addAttribute("materias", materiaService.listarTodas());
+        model.addAttribute("series", serieService.listarTodas()); // NOVO
         return "relatorios/graficos";
+    }
+
+    // ========== API: Alunos por série ==========
+    @GetMapping("/api/alunos-por-serie/{serieId}")
+    @ResponseBody
+    public List<Map<String, Object>> alunosPorSerie(@PathVariable Long serieId) {
+        List<Map<String, Object>> resultado = new ArrayList<>();
+        for (var aluno : alunoService.buscarPorSerie(serieId)) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", aluno.getId());
+            item.put("nome", aluno.getNome());
+            resultado.add(item);
+        }
+        return resultado;
     }
 
     // ========== API: Evolução individual (uma matéria) ==========
@@ -105,7 +123,7 @@ public class GraficoController {
                     }
                 }
                 if (media != null) temAlgumaNota = true;
-                medias.add(media); // pode ser null
+                medias.add(media);
             }
 
             if (!temAlgumaNota) continue;

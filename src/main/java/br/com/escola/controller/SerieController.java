@@ -7,20 +7,31 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-@SuppressWarnings("unused")
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Controller
 @RequestMapping("/series")
 public class SerieController {
 
-    private final SerieService serieService;
-
-    SerieController(SerieService serieService) {
-        this.serieService = serieService;
-    }
+    @Autowired
+    private SerieService serieService;
 
     @GetMapping
-    public String listar(Model model) {
-        model.addAttribute("series", serieService.listarTodas());
+    public String listar(@RequestParam(required = false) String nome, Model model) {
+        List<Serie> series = serieService.listarTodas();
+
+        if (nome != null && !nome.trim().isEmpty()) {
+            String termo = nome.trim().toLowerCase();
+            series = series.stream()
+                    .filter(s -> s.getNome().toLowerCase().contains(termo))
+                    .collect(Collectors.toList());
+        }
+
+        model.addAttribute("series", series);
+        model.addAttribute("filtroNome", nome);
+        model.addAttribute("totalSeries", serieService.listarTodas().size());
+        model.addAttribute("totalFiltrado", series.size());
         return "series/listar";
     }
 
@@ -38,8 +49,7 @@ public class SerieController {
 
     @GetMapping("/editar/{id}")
     public String editar(@PathVariable Long id, Model model) {
-        Serie serie = serieService.buscarPorId(id);
-        model.addAttribute("serie", serie);
+        model.addAttribute("serie", serieService.buscarPorId(id));
         return "series/cadastrar";
     }
 

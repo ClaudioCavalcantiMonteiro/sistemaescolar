@@ -45,23 +45,31 @@
 <div class="container mt-4">
     <div class="page-header">
         <h1 class="mb-1"><i class="bi bi-bar-chart-line"></i> Gráficos de Evolução do Aluno</h1>
-        <p class="mb-0 opacity-75">Selecione um aluno e veja a evolução por matéria individual ou todas juntas.</p>
+        <p class="mb-0 opacity-75">Selecione uma série, um aluno e veja a evolução por matéria individual ou todas juntas.</p>
     </div>
 
     <!-- Filtros -->
     <div class="card shadow-sm mb-4 no-print">
         <div class="card-body">
             <div class="row g-3">
-                <div class="col-md-5">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">
+                        <i class="bi bi-book-fill text-info"></i> Série
+                    </label>
+                    <select id="serieSelect" class="form-select" onchange="carregarAlunosPorSerie()">
+                        <option value="">Todas as séries</option>
+                        <option th:each="serie : ${series}" th:value="${serie.id}" th:text="${serie.nome}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3">
                     <label class="form-label fw-semibold">
                         <i class="bi bi-person-fill text-primary"></i> Aluno
                     </label>
                     <select id="alunoSelect" class="form-select">
-                        <option value="">Selecione um aluno</option>
-                        <option th:each="aluno : ${alunos}" th:value="${aluno.id}" th:text="${aluno.nome}"></option>
+                        <option value="">Selecione uma série primeiro</option>
                     </select>
                 </div>
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <label class="form-label fw-semibold">
                         <i class="bi bi-journal-bookmark-fill text-success"></i> Matéria
                     </label>
@@ -84,7 +92,7 @@
     <div class="card shadow-sm">
         <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
             <h5 class="mb-0" id="tituloGrafico">
-                <i class="bi bi-bar-chart"></i> Selecione um aluno e uma matéria
+                <i class="bi bi-bar-chart"></i> Selecione uma série, um aluno e uma matéria
             </h5>
             <button class="btn btn-sm btn-outline-primary no-print" onclick="imprimirGrafico()">
                 <i class="bi bi-printer"></i> Imprimir
@@ -109,6 +117,39 @@
 <script>
     let chartInstance = null;
 
+    // Carrega alunos conforme a série selecionada
+    function carregarAlunosPorSerie() {
+        const serieId = document.getElementById('serieSelect').value;
+        const alunoSelect = document.getElementById('alunoSelect');
+
+        alunoSelect.innerHTML = '<option value="">Carregando...</option>';
+
+        if (!serieId) {
+            alunoSelect.innerHTML = '<option value="">Selecione uma série primeiro</option>';
+            return;
+        }
+
+        fetch(`/relatorios/api/alunos-por-serie/${serieId}`)
+            .then(r => r.json())
+            .then(alunos => {
+                if (alunos.length === 0) {
+                    alunoSelect.innerHTML = '<option value="">Nenhum aluno nesta série</option>';
+                    return;
+                }
+                alunoSelect.innerHTML = '<option value="">Selecione um aluno</option>';
+                alunos.forEach(a => {
+                    const opt = document.createElement('option');
+                    opt.value = a.id;
+                    opt.textContent = a.nome;
+                    alunoSelect.appendChild(opt);
+                });
+            })
+            .catch(err => {
+                alunoSelect.innerHTML = '<option value="">Erro ao carregar</option>';
+                alert('Erro: ' + err);
+            });
+    }
+
     function carregarGrafico() {
         const alunoId = document.getElementById('alunoSelect').value;
         const materiaId = document.getElementById('materiaSelect').value;
@@ -125,7 +166,6 @@
         }
     }
 
-    // Gráfico individual (uma matéria)
     function carregarGraficoIndividual(alunoId, materiaId) {
         const materiaNome = document.getElementById('materiaSelect').selectedOptions[0].text;
         const alunoNome = document.getElementById('alunoSelect').selectedOptions[0].text;
@@ -136,7 +176,6 @@
                 document.getElementById('tituloGrafico').innerHTML =
                     `<i class="bi bi-person-circle"></i> ${alunoNome} — <span class="text-primary">${materiaNome}</span>`;
 
-                // Verifica se há notas
                 const temNotas = data.medias.some(m => m > 0);
                 if (!temNotas) {
                     document.getElementById('mensagemVazia').classList.remove('d-none');
@@ -170,7 +209,6 @@
             .catch(err => alert('Erro: ' + err));
     }
 
-    // Gráfico geral (todas as matérias)
     function carregarGraficoGeral(alunoId) {
         const alunoNome = document.getElementById('alunoSelect').selectedOptions[0].text;
 
@@ -203,7 +241,6 @@
             .catch(err => alert('Erro: ' + err));
     }
 
-    // Opções comuns do gráfico
     function opcoesGrafico() {
         return {
             responsive: true,
@@ -236,7 +273,6 @@
         };
     }
 
-    // Imprimir o gráfico
     function imprimirGrafico() {
         window.print();
     }

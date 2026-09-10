@@ -3,163 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Matérias</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <title>Lista de Matérias</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', sans-serif;
-            min-height: 100vh;
-            background: linear-gradient(145deg, #e6f0fa 0%, #d4e2f2 100%);
-            padding: 40px 20px;
-            display: flex;
-            justify-content: center;
-        }
-        .container {
-            max-width: 800px;
-            width: 100%;
-            background: rgba(255,255,255,0.78);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border-radius: 32px;
-            padding: 32px 28px;
-            box-shadow: 0 20px 60px rgba(58,86,130,0.12);
-            border: 1px solid rgba(255,255,255,0.5);
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-        }
-        .header h1 {
-            font-size: 24px;
-            font-weight: 700;
-            color: #1a2a3a;
-        }
-        .btn {
-            padding: 10px 20px;
-            border: none;
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%); min-height: 100vh; }
+        .filter-card {
+            background: white;
             border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .table-card {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        .badge-info {
+            background: #e8eef5;
+            color: #4a6fa5;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
             font-weight: 600;
-            font-size: 14px;
-            font-family: inherit;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
         }
-        .btn-primary {
-            background: #4a6fa5;
-            color: white;
-            box-shadow: 0 4px 12px rgba(74,111,165,0.2);
-        }
-        .btn-primary:hover {
-            background: #3a5a8a;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(74,111,165,0.3);
-        }
-        .btn-warning {
-            background: #f5b342;
-            color: #1a2a3a;
-        }
-        .btn-warning:hover {
-            background: #e6a030;
-        }
-        .btn-danger {
-            background: #d32f2f;
-            color: white;
-        }
-        .btn-danger:hover {
-            background: #b71c1c;
-        }
-        .btn-secondary {
-            background: #e0e7ef;
-            color: #1a2a3a;
-        }
-        .btn-secondary:hover {
-            background: #ccd5e0;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 8px;
-        }
-        th {
-            text-align: left;
-            padding: 12px 8px 8px 0;
-            font-size: 13px;
-            font-weight: 600;
-            color: #5a6a7a;
+        .table thead th {
+            background: #f8fafc;
+            color: #6c757d;
+            font-size: 0.8rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            border-bottom: 1px solid #dce5ef;
+            font-weight: 600;
+            border-bottom: 2px solid #e5e9f0;
         }
-        td {
-            padding: 12px 8px 12px 0;
-            border-bottom: 1px solid #f0f4fa;
-            color: #1a2a3a;
+        .table tbody tr:hover { background: #f8fafc; }
+        .btn-action {
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            border-radius: 6px;
+            margin: 1px;
         }
-        .actions {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-        .actions .btn {
-            padding: 6px 12px;
-            font-size: 12px;
-            border-radius: 10px;
-        }
-        .empty {
+        .empty-state {
             text-align: center;
-            color: #8a9aae;
-            padding: 30px 0;
+            padding: 50px 20px;
+            color: #6c757d;
         }
-        .back-link {
-            margin-top: 20px;
-            display: inline-block;
-        }
-        @media (max-width: 600px) {
-            .container { padding: 20px 16px; }
-            .header { flex-direction: column; align-items: stretch; gap: 12px; }
-        }
+        .empty-state i { font-size: 3rem; color: #ced4da; margin-bottom: 12px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Matérias</h1>
-            <a href="/materias/novo" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nova Matéria</a>
-        </div>
 
-        <table>
-            <thead>
-                <tr><th>ID</th><th>Nome</th><th>Ações</th></tr>
-            </thead>
-            <tbody>
-                <tr th:each="materia : ${materias}">
-                    <td th:text="${materia.id}"></td>
-                    <td th:text="${materia.nome}"></td>
-                    <td>
-                        <div class="actions">
-                            <a th:href="@{/materias/editar/{id}(id=${materia.id})}" class="btn btn-warning"><i class="bi bi-pencil"></i></a>
-                            <a th:href="@{/materias/excluir/{id}(id=${materia.id})}" class="btn btn-danger" onclick="return confirm('Confirma exclusão?')"><i class="bi bi-trash"></i></a>
-                        </div>
-                    </td>
-                </tr>
-                <tr th:if="${#lists.isEmpty(materias)}">
-                    <td colspan="3" class="empty">Nenhuma matéria cadastrada.</td>
-                </tr>
-            </tbody>
-        </table>
-
-        <div class="back-link">
-            <a href="/home" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Voltar</a>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/home"><i class="bi bi-mortarboard"></i> Sistema Escolar</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link" href="/series">Séries</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/materias">Matérias</a></li>
+                <li class="nav-item"><a class="nav-link" href="/turmas">Turmas</a></li>
+                <li class="nav-item"><a class="nav-link" href="/alunos">Alunos</a></li>
+            </ul>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/logout"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
+            </ul>
         </div>
     </div>
+</nav>
+
+<div class="container mt-4 pb-5">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+            <h1 class="h3 mb-1"><i class="bi bi-journal text-success"></i> Matérias</h1>
+            <span class="badge-info">
+                <i class="bi bi-list-ul"></i>
+                <span th:text="${totalFiltrado}"></span> de <span th:text="${totalMaterias}"></span> matéria(s)
+            </span>
+        </div>
+        <a href="/materias/novo" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Nova Matéria
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filter-card">
+        <form th:action="@{/materias}" method="get">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-10">
+                    <label class="form-label small fw-semibold text-muted">
+                        <i class="bi bi-search"></i> Buscar por nome
+                    </label>
+                    <input type="text" name="nome" class="form-control"
+                           placeholder="Digite o nome da matéria..."
+                           th:value="${filtroNome}">
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">
+                        <i class="bi bi-funnel"></i> Filtrar
+                    </button>
+                    <a href="/materias" class="btn btn-outline-secondary" title="Limpar">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabela -->
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="materia : ${materias}">
+                        <td th:text="${materia.id}"></td>
+                        <td><strong th:text="${materia.nome}"></strong></td>
+                        <td class="text-center text-nowrap">
+                            <a th:href="@{/materias/editar/{id}(id=${materia.id})}" class="btn btn-warning btn-action">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a th:href="@{/materias/excluir/{id}(id=${materia.id})}" class="btn btn-danger btn-action"
+                               onclick="return confirm('Confirma exclusão?')">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(materias)}">
+                        <td colspan="3" class="empty-state">
+                            <i class="bi bi-search"></i>
+                            <h5>Nenhuma matéria encontrada</h5>
+                            <p>Ajuste os filtros ou <a href="/materias/novo">cadastre uma nova matéria</a>.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="/home" class="btn btn-secondary"><i class="bi bi-house"></i> Voltar ao Início</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -7,6 +7,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Controller
 @RequestMapping("/materias")
 public class MateriaController {
@@ -15,8 +18,20 @@ public class MateriaController {
     private MateriaService materiaService;
 
     @GetMapping
-    public String listar(Model model) {
-        model.addAttribute("materias", materiaService.listarTodas());
+    public String listar(@RequestParam(required = false) String nome, Model model) {
+        List<Materia> materias = materiaService.listarTodas();
+
+        if (nome != null && !nome.trim().isEmpty()) {
+            String termo = nome.trim().toLowerCase();
+            materias = materias.stream()
+                    .filter(m -> m.getNome().toLowerCase().contains(termo))
+                    .collect(Collectors.toList());
+        }
+
+        model.addAttribute("materias", materias);
+        model.addAttribute("filtroNome", nome);
+        model.addAttribute("totalMaterias", materiaService.listarTodas().size());
+        model.addAttribute("totalFiltrado", materias.size());
         return "materias/listar";
     }
 
@@ -34,8 +49,7 @@ public class MateriaController {
 
     @GetMapping("/editar/{id}")
     public String editar(@PathVariable Long id, Model model) {
-        Materia materia = materiaService.buscarPorId(id);
-        model.addAttribute("materia", materia);
+        model.addAttribute("materia", materiaService.buscarPorId(id));
         return "materias/cadastrar";
     }
 

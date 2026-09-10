@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alunos da Turma</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%); min-height: 100vh; }
+        .page-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #4a6fa5 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+        .table-card {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        .table thead th {
+            background: #f8fafc;
+            color: #6c757d;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            border-bottom: 2px solid #e5e9f0;
+        }
+        .table tbody tr:hover { background: #f8fafc; }
+        .btn-action {
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            border-radius: 6px;
+            margin: 1px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        .empty-state i { font-size: 3rem; color: #ced4da; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/home"><i class="bi bi-mortarboard"></i> Sistema Escolar</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link" href="/series">Séries</a></li>
+                <li class="nav-item"><a class="nav-link" href="/materias">Matérias</a></li>
+                <li class="nav-item"><a class="nav-link" href="/turmas">Turmas</a></li>
+                <li class="nav-item"><a class="nav-link" href="/alunos">Alunos</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/turmas/alunos">Alunos por Turma</a></li>
+            </ul>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/logout"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4 pb-5">
+    <!-- Cabeçalho -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h1 class="mb-1"><i class="bi bi-people-fill"></i> Alunos da Turma: <span th:text="${turma.nome}"></span></h1>
+                <p class="mb-0 opacity-75">
+                    <i class="bi bi-book"></i>
+                    Série: <span th:text="${turma.serie != null ? turma.serie.nome : 'N/A'}"></span>
+                    <span class="mx-2">•</span>
+                    <i class="bi bi-person-fill"></i>
+                    <span th:text="${#lists.size(alunos)}"></span> aluno(s)
+                </p>
+            </div>
+            <a href="/turmas/alunos" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <!-- Tabela de alunos -->
+    <div class="table-card" th:if="${!#lists.isEmpty(alunos)}">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Matrícula</th>
+                        <th>Data Nasc.</th>
+                        <th>Responsável</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="aluno : ${alunos}">
+                        <td th:text="${aluno.id}"></td>
+                        <td>
+                            <i class="bi bi-person-circle text-primary me-1"></i>
+                            <strong th:text="${aluno.nome}"></strong>
+                        </td>
+                        <td><span class="badge bg-secondary" th:text="${aluno.matricula}"></span></td>
+                        <td th:text="${aluno.dataNascimento != null ? #temporals.format(aluno.dataNascimento, 'dd/MM/yyyy') : '-'}"></td>
+                        <td>
+                            <span th:if="${aluno.responsavelFinanceiro != null}"
+                                  th:text="${aluno.responsavelFinanceiro.nome}"></span>
+                            <span th:if="${aluno.responsavelFinanceiro == null}" class="text-muted small">N/A</span>
+                        </td>
+                        <td class="text-center text-nowrap">
+                            <a th:href="@{/alunos/editar/{id}(id=${aluno.id})}"
+                               class="btn btn-warning btn-action" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a th:href="@{/notas/boletim/{id}(id=${aluno.id})}"
+                               class="btn btn-info btn-action" title="Boletim">
+                                <i class="bi bi-file-text"></i>
+                            </a>
+                            <a th:href="@{/notas/editar/{id}(id=${aluno.id})}"
+                               class="btn btn-secondary btn-action" title="Editar Notas">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Estado vazio -->
+    <div th:if="${#lists.isEmpty(alunos)}" class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <h4>Nenhum aluno nesta turma</h4>
+        <p>Vincule alunos a esta turma no cadastro de alunos.</p>
+        <a href="/alunos/novo" class="btn btn-primary mt-2">
+            <i class="bi bi-person-plus"></i> Cadastrar Aluno
+        </a>
+    </div>
+
+    <div class="mt-4">
+        <a href="/turmas/alunos" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Voltar para Turmas
+        </a>
+        <a href="/home" class="btn btn-outline-secondary">
+            <i class="bi bi-house"></i> Início
+        </a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

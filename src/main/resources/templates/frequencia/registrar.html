@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Frequência</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%); min-height: 100vh; }
+        .filter-card {
+            background: white; border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            padding: 20px; margin-bottom: 20px;
+        }
+        .table-card {
+            background: white; border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        .table thead th {
+            background: #f8fafc; color: #6c757d;
+            font-size: 0.8rem; text-transform: uppercase;
+            font-weight: 600; border-bottom: 2px solid #e5e9f0;
+        }
+        .btn-presenca {
+            border-radius: 8px; padding: 6px 14px;
+            font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; border: 2px solid;
+            transition: all 0.2s ease;
+        }
+        .btn-presente { border-color: #198754; color: #198754; background: white; }
+        .btn-presente.active { background: #198754; color: white; }
+        .btn-ausente { border-color: #dc3545; color: #dc3545; background: white; }
+        .btn-ausente.active { background: #dc3545; color: white; }
+        .aluno-row:hover { background: #f8fafc; }
+        .aluno-risco {
+            background: #fff5f5 !important;
+        }
+        .aluno-risco:hover { background: #fee !important; }
+        .badge-risco {
+            background: #dc3545; color: white;
+            font-size: 0.65rem; padding: 2px 8px;
+            border-radius: 10px; font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/home"><i class="bi bi-mortarboard"></i> Sistema Escolar</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/frequencia"><i class="bi bi-arrow-left"></i> Voltar</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4 pb-5">
+    <h1 class="h3 mb-3"><i class="bi bi-clipboard-check text-success"></i> Registrar Frequência</h1>
+
+    <div th:if="${param.sucesso}" class="alert alert-success">
+        <i class="bi bi-check-circle"></i> Frequência registrada com sucesso!
+    </div>
+
+    <!-- Filtros -->
+    <div class="filter-card">
+        <form th:action="@{/frequencia/registrar}" method="get">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold text-muted">
+                        <i class="bi bi-people"></i> Turma
+                    </label>
+                    <select name="turmaId" class="form-select" required onchange="this.form.submit()">
+                        <option value="">Selecione uma turma</option>
+                        <option th:each="t : ${turmas}"
+                                th:value="${t.id}"
+                                th:text="${t.nome}"
+                                th:selected="${turma != null and turma.id == t.id}">
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold text-muted">
+                        <i class="bi bi-journal"></i> Matéria
+                    </label>
+                    <select name="materiaId" class="form-select" onchange="this.form.submit()">
+                        <option value="">Todas / Geral</option>
+                        <option th:each="m : ${materias}"
+                                th:value="${m.id}"
+                                th:text="${m.nome}"
+                                th:selected="${materiaId != null and materiaId == m.id}">
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold text-muted">
+                        <i class="bi bi-calendar"></i> Data
+                    </label>
+                    <input type="date" name="data" class="form-control"
+                           th:value="${data}" required>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Carregar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Se turma foi selecionada -->
+    <div th:if="${turma != null}">
+        <form th:action="@{/frequencia/salvar}" method="post">
+            <input type="hidden" name="turmaId" th:value="${turma.id}">
+            <input type="hidden" name="materiaId" th:value="${materiaId}">
+            <input type="hidden" name="data" th:value="${data}">
+
+            <div class="table-card">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">#</th>
+                                <th>Aluno</th>
+                                <th style="width: 200px;" class="text-center">Presença</th>
+                                <th style="width: 200px;">Justificativa</th>
+                                <th>Observação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="aluno, iter : ${alunos}" class="aluno-row">
+                                <td th:text="${iter.index + 1}"></td>
+                                <td>
+                                    <i class="bi bi-person-circle text-primary me-1"></i>
+                                    <strong th:text="${aluno.nome}"></strong>
+                                </td>
+                                <td class="text-center">
+                                    <span th:with="registro=${mapaExistentes.get(aluno.id)}">
+                                        <input type="hidden"
+                                               th:name="'aluno_' + ${aluno.id} + '_presente'"
+                                               th:id="'presente_' + ${aluno.id}"
+                                               th:value="${registro != null and registro.presente} ? 'true' : 'false'">
+
+                                        <button type="button"
+                                                class="btn-presenca btn-presente me-1"
+                                                th:classappend="${registro != null and registro.presente} ? 'active' : ''"
+                                                th:attr="data-aluno=${aluno.id}, data-value='true'"
+                                                onclick="marcar(this)">
+                                            <i class="bi bi-check-lg"></i> Presente
+                                        </button>
+                                        <button type="button"
+                                                class="btn-presenca btn-ausente"
+                                                th:classappend="${registro != null and !registro.presente} ? 'active' : ''"
+                                                th:attr="data-aluno=${aluno.id}, data-value='false'"
+                                                onclick="marcar(this)">
+                                            <i class="bi bi-x-lg"></i> Ausente
+                                        </button>
+                                    </span>
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control form-control-sm"
+                                           th:name="'aluno_' + ${aluno.id} + '_justificativa'"
+                                           th:value="${mapaExistentes.get(aluno.id) != null ? mapaExistentes.get(aluno.id).justificativa : ''}"
+                                           placeholder="Se ausente">
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control form-control-sm"
+                                           th:name="'aluno_' + ${aluno.id} + '_observacao'"
+                                           th:value="${mapaExistentes.get(aluno.id) != null ? mapaExistentes.get(aluno.id).observacao : ''}">
+                                </td>
+                            </tr>
+
+                            <tr th:if="${#lists.isEmpty(alunos)}">
+                                <td colspan="5" class="text-center text-muted py-5">
+                                    <i class="bi bi-inbox display-4 d-block mb-2"></i>
+                                    Nenhum aluno cadastrado nesta turma.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="mt-3 d-flex gap-2" th:if="${!#lists.isEmpty(alunos)}">
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-save"></i> Salvar Frequência
+                </button>
+                <button type="button" class="btn btn-outline-success" onclick="marcarTodosPresentes()">
+                    <i class="bi bi-check-all"></i> Marcar Todos Presentes
+                </button>
+                <a href="/frequencia" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+
+    <div th:if="${turma == null}" class="text-center py-5 text-muted">
+        <i class="bi bi-arrow-up-circle display-4 mb-3"></i>
+        <h5>Selecione uma turma para começar</h5>
+    </div>
+</div>
+
+<script>
+    function marcar(btn) {
+        const alunoId = btn.getAttribute('data-aluno');
+        const valor = btn.getAttribute('data-value');
+        document.getElementById('presente_' + alunoId).value = valor;
+        const parent = btn.parentElement;
+        parent.querySelectorAll('.btn-presenca').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    function marcarTodosPresentes() {
+        document.querySelectorAll('.btn-presente').forEach(btn => marcar(btn));
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

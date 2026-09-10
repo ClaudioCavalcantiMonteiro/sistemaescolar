@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Sistema Escolar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background: #f4f6f9; font-family: 'Inter', sans-serif; }
+        .page-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #4a6fa5 100%);
+            color: white;
+            padding: 32px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 24px rgba(44, 62, 80, 0.15);
+        }
+        .stat-card {
+            background: white;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            transition: transform 0.2s, box-shadow 0.2s;
+            height: 100%;
+            border-left: 4px solid;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+        .stat-card .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: white;
+            margin-bottom: 12px;
+        }
+        .stat-card .stat-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            line-height: 1.2;
+        }
+        .chart-card {
+            background: white;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            height: 100%;
+        }
+        .chart-card h5 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chart-container {
+            position: relative;
+            height: 280px;
+        }
+
+        /* Botão flutuante de imprimir */
+        .btn-imprimir-float {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1000;
+            border-radius: 50px;
+            padding: 12px 20px;
+            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.4);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-imprimir-float:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(74, 111, 165, 0.5);
+        }
+
+        /* Cabeçalho de impressão (oculto na tela) */
+        .print-header { display: none; }
+
+        /* Impressão */
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; padding: 0; margin: 0; }
+            .page-header {
+                background: #2c3e50 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                color: white !important;
+                box-shadow: none !important;
+            }
+            .stat-card {
+                border: 1px solid #e5e9f0 !important;
+                box-shadow: none !important;
+                page-break-inside: avoid;
+            }
+            .stat-card .stat-icon {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .chart-card {
+                border: 1px solid #e5e9f0 !important;
+                box-shadow: none !important;
+                page-break-inside: avoid;
+            }
+            .container { max-width: 100% !important; }
+            .print-header { display: block !important; margin-bottom: 20px; }
+            canvas { max-width: 100% !important; height: auto !important; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary no-print">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/home"><i class="bi bi-mortarboard"></i> Sistema Escolar</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/home"><i class="bi bi-house"></i> Início</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/dashboard"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Cabeçalho apenas para impressão -->
+<div class="print-header text-center">
+    <h1 style="color: #2c3e50; font-weight: 700; margin-bottom: 4px;">Dashboard - Sistema Escolar</h1>
+    <p style="color: #6c757d; margin: 0;">Emitido em: <span id="dataImpressao"></span></p>
+    <hr>
+</div>
+
+<div class="container mt-4 pb-5">
+    <!-- Cabeçalho (tela) -->
+    <div class="page-header no-print">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h1 class="mb-1"><i class="bi bi-speedometer2"></i> Dashboard</h1>
+                <p class="mb-0 opacity-75">Visão geral da escola com indicadores e gráficos</p>
+            </div>
+            <div>
+                <button class="btn btn-light btn-sm" onclick="imprimirDashboard()">
+                    <i class="bi bi-printer"></i> Imprimir
+                </button>
+                <a href="/home" class="btn btn-outline-light btn-sm"><i class="bi bi-house"></i> Início</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cards de estatísticas -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card" style="border-color: #4a6fa5;">
+                <div class="stat-icon" style="background: #4a6fa5;"><i class="bi bi-people-fill"></i></div>
+                <div class="stat-label">Total de Alunos</div>
+                <div class="stat-value" th:text="${totalAlunos}">0</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card" style="border-color: #27ae60;">
+                <div class="stat-icon" style="background: #27ae60;"><i class="bi bi-book-fill"></i></div>
+                <div class="stat-label">Séries</div>
+                <div class="stat-value" th:text="${totalSeries}">0</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card" style="border-color: #f39c12;">
+                <div class="stat-icon" style="background: #f39c12;"><i class="bi bi-journal-bookmark-fill"></i></div>
+                <div class="stat-label">Matérias</div>
+                <div class="stat-value" th:text="${totalMaterias}">0</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card" style="border-color: #9b59b6;">
+                <div class="stat-icon" style="background: #9b59b6;"><i class="bi bi-diagram-3-fill"></i></div>
+                <div class="stat-label">Turmas</div>
+                <div class="stat-value" th:text="${totalTurmas}">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cards secundários -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card" style="border-color: #16a085;">
+                <div class="stat-icon" style="background: #16a085;"><i class="bi bi-graph-up-arrow"></i></div>
+                <div class="stat-label">Média Geral da Escola</div>
+                <div class="stat-value" th:text="${mediaGeral}">0</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card" style="border-color: #198754;">
+                <div class="stat-icon" style="background: #198754;"><i class="bi bi-check-circle-fill"></i></div>
+                <div class="stat-label">Alunos Aprovados</div>
+                <div class="stat-value text-success" th:text="${aprovados}">0</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card" style="border-color: #dc3545;">
+                <div class="stat-icon" style="background: #dc3545;"><i class="bi bi-x-circle-fill"></i></div>
+                <div class="stat-label">Alunos Reprovados</div>
+                <div class="stat-value text-danger" th:text="${reprovados}">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="chart-card">
+                <h5><i class="bi bi-pie-chart-fill text-primary"></i> Alunos por Série</h5>
+                <div class="chart-container">
+                    <canvas id="graficoAlunosPorSerie"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-card">
+                <h5><i class="bi bi-bar-chart-fill text-success"></i> Média por Matéria</h5>
+                <div class="chart-container">
+                    <canvas id="graficoMediaPorMateria"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center no-print">
+        <a href="/home" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Voltar ao Início</a>
+    </div>
+</div>
+
+<!-- Botão flutuante de imprimir -->
+<button class="btn btn-primary btn-imprimir-float no-print" onclick="imprimirDashboard()">
+    <i class="bi bi-printer-fill"></i> Imprimir
+</button>
+
+<script>
+    let chartSerie = null;
+    let chartMateria = null;
+
+    // Gráfico 1: Alunos por Série (pizza)
+    fetch('/dashboard/api/alunos-por-serie')
+        .then(r => r.json())
+        .then(data => {
+            const ctx = document.getElementById('graficoAlunosPorSerie').getContext('2d');
+            chartSerie = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.valores,
+                        backgroundColor: [
+                            '#4a6fa5', '#e74c3c', '#27ae60', '#f39c12',
+                            '#9b59b6', '#16a085', '#d35400', '#2c3e50'
+                        ],
+                        borderWidth: 2,
+                        borderColor: 'white'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 0 },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 10, font: { size: 11 } } }
+                    }
+                }
+            });
+        });
+
+    // Gráfico 2: Média por Matéria (barras)
+    fetch('/dashboard/api/media-por-materia')
+        .then(r => r.json())
+        .then(data => {
+            const ctx = document.getElementById('graficoMediaPorMateria').getContext('2d');
+            chartMateria = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Média',
+                        data: data.valores,
+                        backgroundColor: data.cores,
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 0 },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10,
+                            ticks: { stepSize: 2 }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        });
+
+    // Função para imprimir o dashboard
+    function imprimirDashboard() {
+        // Preenche a data no cabeçalho de impressão
+        const hoje = new Date();
+        const dataFormatada = hoje.toLocaleDateString('pt-BR') + ' às ' +
+                              hoje.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('dataImpressao').textContent = dataFormatada;
+
+        // Aguarda um instante para que os gráficos estejam prontos
+        setTimeout(() => {
+            window.print();
+        }, 200);
+    }
+
+    // Ao fechar a janela de impressão, redesenha os gráficos com animação
+    window.addEventListener('afterprint', function() {
+        if (chartSerie) chartSerie.update();
+        if (chartMateria) chartMateria.update();
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

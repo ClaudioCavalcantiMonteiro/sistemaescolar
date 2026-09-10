@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frequência do Aluno</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%); min-height: 100vh; }
+        .page-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #4a6fa5 100%);
+            color: white; padding: 24px; border-radius: 12px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white; border-radius: 14px;
+            padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border-left: 4px solid; text-align: center;
+        }
+        .stat-card .stat-value {
+            font-size: 2rem; font-weight: 700; line-height: 1.2;
+        }
+        .stat-card .stat-label {
+            font-size: 0.8rem; color: #6c757d;
+            text-transform: uppercase; font-weight: 600;
+            letter-spacing: 0.5px; margin-top: 4px;
+        }
+        .table-card {
+            background: white; border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        .table thead th {
+            background: #f8fafc; color: #6c757d;
+            font-size: 0.8rem; text-transform: uppercase;
+            font-weight: 600; border-bottom: 2px solid #e5e9f0;
+        }
+        .badge-presente { background: #d1e7dd; color: #0f5132; }
+        .badge-ausente { background: #f8d7da; color: #842029; }
+
+        /* Alerta */
+        .alerta-risco {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 16px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .alerta-risco i { font-size: 1.8rem; color: #856404; }
+        .alerta-risco strong { color: #856404; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/home"><i class="bi bi-mortarboard"></i> Sistema Escolar</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/alunos"><i class="bi bi-arrow-left"></i> Voltar</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4 pb-5">
+    <div class="page-header">
+        <h1 class="mb-1"><i class="bi bi-person-badge-fill"></i> Frequência do Aluno</h1>
+        <p class="mb-0 opacity-75">
+            <span th:text="${aluno.nome}"></span> •
+            Série: <span th:text="${aluno.serie != null ? aluno.serie.nome : 'N/A'}"></span> •
+            Turma: <span th:text="${aluno.turma != null ? aluno.turma.nome : 'N/A'}"></span>
+        </p>
+    </div>
+
+    <!-- Alerta se abaixo de 75% -->
+    <div th:if="${estatisticas.abaixoMinimo}" class="alerta-risco">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <div>
+            <strong>Atenção!</strong> Este aluno está com frequência abaixo do mínimo exigido (75%).
+            Frequência atual: <strong th:text="${#numbers.formatDecimal(estatisticas.percentual, 1, 1)} + '%'"></strong>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="stat-card" style="border-color: #4a6fa5;">
+                <div class="stat-value text-primary" th:text="${estatisticas.total}">0</div>
+                <div class="stat-label">Total de Registros</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card" style="border-color: #198754;">
+                <div class="stat-value text-success" th:text="${estatisticas.presencas}">0</div>
+                <div class="stat-label">Presenças</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card" style="border-color: #dc3545;">
+                <div class="stat-value text-danger" th:text="${estatisticas.faltas}">0</div>
+                <div class="stat-label">Ausências</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card" style="border-color: #f39c12;">
+                <div class="stat-value"
+                     th:classappend="${estatisticas.abaixoMinimo} ? 'text-danger' : 'text-success'"
+                     th:text="${#numbers.formatDecimal(estatisticas.percentual, 1, 1)} + '%'">0%</div>
+                <div class="stat-label">Percentual</div>
+            </div>
+        </div>
+    </div>
+
+    <h5 class="mb-3"><i class="bi bi-clock-history"></i> Histórico de Frequência</h5>
+
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Turma</th>
+                        <th>Matéria</th>
+                        <th class="text-center">Status</th>
+                        <th>Justificativa</th>
+                        <th>Observação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="r : ${registros}">
+                        <td th:text="${#temporals.format(r.data, 'dd/MM/yyyy')}"></td>
+                        <td th:text="${r.turma != null ? r.turma.nome : '-'}"></td>
+                        <td th:text="${r.materia != null ? r.materia.nome : 'Geral'}"></td>
+                        <td class="text-center">
+                            <span th:if="${r.presente}" class="badge badge-presente">
+                                <i class="bi bi-check-circle"></i> Presente
+                            </span>
+                            <span th:if="${!r.presente}" class="badge badge-ausente">
+                                <i class="bi bi-x-circle"></i> Ausente
+                            </span>
+                        </td>
+                        <td th:text="${r.justificativa != null ? r.justificativa : '-'}"></td>
+                        <td th:text="${r.observacao != null ? r.observacao : '-'}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(registros)}">
+                        <td colspan="6" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox display-4 d-block mb-2"></i>
+                            Nenhum registro de frequência para este aluno.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="/alunos" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Voltar</a>
+        <a th:href="@{/frequencia/registrar}" class="btn btn-primary">
+            <i class="bi bi-clipboard-check"></i> Registrar Frequência
+        </a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
