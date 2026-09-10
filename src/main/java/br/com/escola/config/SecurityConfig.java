@@ -23,18 +23,33 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(authz -> authz
-                // Públicas (sem /registro)
+                // Públicas
                 .requestMatchers("/login", "/css/**", "/js/**",
                                  "/images/**", "/h2-console/**", "/error").permitAll()
+
+                // Apenas ADMIN
                 .requestMatchers("/usuarios/**").hasRole("ADMIN")
+
+                // Cadastros básicos (ADMIN + SECRETARIA)
                 .requestMatchers("/series/**").hasAnyRole("ADMIN", "SECRETARIA")
                 .requestMatchers("/materias/**").hasAnyRole("ADMIN", "SECRETARIA")
                 .requestMatchers("/turmas/**").hasAnyRole("ADMIN", "SECRETARIA")
                 .requestMatchers("/alunos/**").hasAnyRole("ADMIN", "SECRETARIA")
+
+                // Notas (ADMIN + PROFESSOR)
                 .requestMatchers("/notas/**").hasAnyRole("ADMIN", "PROFESSOR")
+
+                // Frequência (ADMIN + PROFESSOR + SECRETARIA)
                 .requestMatchers("/frequencia/**").hasAnyRole("ADMIN", "PROFESSOR", "SECRETARIA")
+
+                // Financeiro (ADMIN + SECRETARIA)
+                .requestMatchers("/financeiro/**").hasAnyRole("ADMIN", "SECRETARIA")
+
+                // Relatórios e Dashboard
                 .requestMatchers("/relatorios/**", "/dashboard/**")
                     .hasAnyRole("ADMIN", "PROFESSOR", "SECRETARIA")
+
+                // Qualquer outra
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form

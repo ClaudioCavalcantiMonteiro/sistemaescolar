@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerar Mensalidades em Lote</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%); min-height: 100vh; }
+        .form-card {
+            background: white; border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            padding: 32px; max-width: 640px; margin: 0 auto;
+        }
+        .form-card h1 { font-size: 1.4rem; font-weight: 700; color: #2c3e50; margin-bottom: 8px; }
+        .form-card .sub { color: #6c757d; margin-bottom: 24px; font-size: 0.9rem; }
+        .form-label { font-weight: 600; color: #495057; font-size: 0.9rem; }
+        .info-box {
+            background: #e8f4ea; border-left: 4px solid #27ae60;
+            padding: 12px 16px; border-radius: 8px;
+            font-size: 0.88rem; color: #186a3b; margin-bottom: 24px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/home"><i class="bi bi-mortarboard"></i> Sistema Escolar</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/financeiro/mensalidades"><i class="bi bi-arrow-left"></i> Voltar</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4 pb-5">
+    <div class="form-card">
+        <h1><i class="bi bi-layers-fill text-warning"></i> Gerar Mensalidades em Lote</h1>
+        <p class="sub">Crie mensalidades para todos os alunos de uma turma de uma só vez.</p>
+
+        <div class="info-box">
+            <i class="bi bi-info-circle-fill"></i>
+            Alunos que já possuem mensalidade para este mês serão ignorados automaticamente.
+        </div>
+
+        <form th:action="@{/financeiro/gerar-lote}" method="post">
+            <div class="mb-3">
+                <label class="form-label"><i class="bi bi-people"></i> Turma</label>
+                <select name="turmaId" class="form-select" required>
+                    <option value="">Selecione uma turma</option>
+                    <option th:each="t : ${turmas}" th:value="${t.id}" th:text="${t.nome}"></option>
+                </select>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label"><i class="bi bi-calendar"></i> Mês de Referência</label>
+                    <input type="month" name="mesReferencia" class="form-control"
+                           th:value="${#temporals.format(#temporals.createToday(), 'yyyy-MM')}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label"><i class="bi bi-calendar-event"></i> Vencimento</label>
+                    <input type="date" name="dataVencimento" class="form-control"
+                           th:value="${#temporals.format(#temporals.createToday().withDayOfMonth(10), 'yyyy-MM-dd')}"
+                           required>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label"><i class="bi bi-currency-dollar"></i> Valor Padrão (R$)</label>
+                <input type="number" name="valor" class="form-control"
+                       step="0.01" min="0" placeholder="0.00" required>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-warning">
+                    <i class="bi bi-magic"></i> Gerar Mensalidades
+                </button>
+                <a href="/financeiro/mensalidades" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

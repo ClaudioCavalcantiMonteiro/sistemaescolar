@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Nova Mensalidade</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%); min-height: 100vh; }
+        .form-card {
+            background: white; border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            padding: 32px; max-width: 600px; margin: 0 auto;
+        }
+        .form-card h1 { font-size: 1.4rem; font-weight: 700; color: #2c3e50; margin-bottom: 24px; }
+        .form-label { font-weight: 600; color: #495057; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/home"><i class="bi bi-mortarboard"></i> Sistema Escolar</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/financeiro/mensalidades"><i class="bi bi-arrow-left"></i> Voltar</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4 pb-5">
+    <div class="form-card">
+        <h1><i class="bi bi-cash-coin text-success"></i> Nova Mensalidade</h1>
+
+        <form th:action="@{/financeiro/salvar}" method="post">
+            <div class="mb-3">
+                <label class="form-label"><i class="bi bi-person"></i> Aluno</label>
+                <select name="alunoId" class="form-select" required>
+                    <option value="">Selecione um aluno</option>
+                    <option th:each="a : ${alunos}" th:value="${a.id}"
+                            th:text="${a.nome} + (${a.turma != null} ? ' (' + ${a.turma.nome} + ')' : '')">
+                    </option>
+                </select>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label"><i class="bi bi-calendar"></i> Mês de Referência</label>
+                    <input type="month" name="mesReferencia" class="form-control"
+                           th:value="${#temporals.format(#temporals.createToday(), 'yyyy-MM')}" required>
+                    <small class="text-muted">Vai virar o primeiro dia do mês.</small>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label"><i class="bi bi-calendar-event"></i> Data de Vencimento</label>
+                    <input type="date" name="dataVencimento" class="form-control"
+                           th:value="${#temporals.format(#temporals.createToday().withDayOfMonth(10), 'yyyy-MM-dd')}"
+                           required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label"><i class="bi bi-currency-dollar"></i> Valor (R$)</label>
+                <input type="number" name="valorOriginal" class="form-control"
+                       step="0.01" min="0" placeholder="0.00" required>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label"><i class="bi bi-chat"></i> Observação (opcional)</label>
+                <input type="text" name="observacao" class="form-control" placeholder="Ex: Bolsa de 50%">
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success"><i class="bi bi-save"></i> Salvar</button>
+                <a href="/financeiro/mensalidades" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

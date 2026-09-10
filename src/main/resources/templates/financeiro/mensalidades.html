@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mensalidades</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%); min-height: 100vh; }
+        .filter-card {
+            background: white; border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            padding: 20px; margin-bottom: 20px;
+        }
+        .table-card {
+            background: white; border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        .table thead th {
+            background: #f8fafc; color: #6c757d;
+            font-size: 0.78rem; text-transform: uppercase;
+            font-weight: 600; border-bottom: 2px solid #e5e9f0;
+        }
+        .table tbody tr:hover { background: #f8fafc; }
+        .badge-status {
+            padding: 5px 12px; border-radius: 20px;
+            font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 0.3px; text-transform: uppercase;
+        }
+        .badge-PAGA { background: #d1e7dd; color: #0f5132; }
+        .badge-PENDENTE { background: #fff3cd; color: #856404; }
+        .badge-ATRASADA { background: #f8d7da; color: #842029; }
+        .badge-CANCELADA { background: #e2e3e5; color: #41464b; }
+        .stat-card-mini {
+            background: white; border-radius: 12px; padding: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 4px solid; text-align: center;
+        }
+        .stat-card-mini .v { font-size: 1.3rem; font-weight: 700; }
+        .stat-card-mini .l {
+            font-size: 0.7rem; color: #6c757d;
+            text-transform: uppercase; font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/home"><i class="bi bi-mortarboard"></i> Sistema Escolar</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/financeiro"><i class="bi bi-arrow-left"></i> Voltar</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4 pb-5">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h1 class="h3 mb-0"><i class="bi bi-list-check text-primary"></i> Mensalidades</h1>
+        <div class="d-flex gap-2">
+            <a href="/financeiro/nova" class="btn btn-success"><i class="bi bi-plus-circle"></i> Nova</a>
+            <a href="/financeiro/gerar-lote" class="btn btn-outline-success"><i class="bi bi-layers"></i> Gerar Lote</a>
+        </div>
+    </div>
+
+    <!-- Alertas -->
+    <div th:if="${param.sucesso}" class="alert alert-success">
+        <i class="bi bi-check-circle"></i> Operação realizada com sucesso!
+    </div>
+    <div th:if="${param.loteSucesso}" class="alert alert-success">
+        <i class="bi bi-check-circle"></i>
+        <strong th:text="${param.loteSucesso}"></strong> mensalidade(s) criada(s) com sucesso!
+    </div>
+    <div th:if="${param.revertido}" class="alert alert-warning">
+        <i class="bi bi-arrow-counterclockwise"></i> Pagamento revertido.
+    </div>
+    <div th:if="${param.cancelada}" class="alert alert-secondary">
+        <i class="bi bi-x-circle"></i> Mensalidade cancelada.
+    </div>
+    <div th:if="${param.erroDuplicado}" class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle"></i> Já existe mensalidade para este aluno neste mês.
+    </div>
+
+    <!-- Estatísticas rápidas -->
+    <div class="row g-2 mb-3">
+        <div class="col-md-3 col-6">
+            <div class="stat-card-mini" style="border-color: #4a6fa5;">
+                <div class="v text-primary"
+                     th:text="'R$ ' + ${#numbers.formatDecimal(estatisticas.totalPrevisto, 1, 2)}">R$ 0,00</div>
+                <div class="l">Previsto</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card-mini" style="border-color: #198754;">
+                <div class="v text-success"
+                     th:text="'R$ ' + ${#numbers.formatDecimal(estatisticas.totalRecebido, 1, 2)}">R$ 0,00</div>
+                <div class="l">Recebido</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card-mini" style="border-color: #dc3545;">
+                <div class="v text-danger"
+                     th:text="'R$ ' + ${#numbers.formatDecimal(estatisticas.totalAtrasado, 1, 2)}">R$ 0,00</div>
+                <div class="l">Atrasado</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card-mini" style="border-color: #f39c12;">
+                <div class="v text-warning" th:text="${estatisticas.qtdPagas} + '/' + ${estatisticas.total}">0/0</div>
+                <div class="l">Pagas / Total</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filter-card">
+        <form th:action="@{/financeiro/mensalidades}" method="get">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold text-muted">Mês</label>
+                    <select name="mes" class="form-select">
+                        <option value="1" th:selected="${mes == 1}">Janeiro</option>
+                        <option value="2" th:selected="${mes == 2}">Fevereiro</option>
+                        <option value="3" th:selected="${mes == 3}">Março</option>
+                        <option value="4" th:selected="${mes == 4}">Abril</option>
+                        <option value="5" th:selected="${mes == 5}">Maio</option>
+                        <option value="6" th:selected="${mes == 6}">Junho</option>
+                        <option value="7" th:selected="${mes == 7}">Julho</option>
+                        <option value="8" th:selected="${mes == 8}">Agosto</option>
+                        <option value="9" th:selected="${mes == 9}">Setembro</option>
+                        <option value="10" th:selected="${mes == 10}">Outubro</option>
+                        <option value="11" th:selected="${mes == 11}">Novembro</option>
+                        <option value="12" th:selected="${mes == 12}">Dezembro</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold text-muted">Ano</label>
+                    <input type="number" name="ano" class="form-control" th:value="${ano}" min="2020" max="2100">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold text-muted">Turma</label>
+                    <select name="turmaId" class="form-select">
+                        <option value="">Todas as turmas</option>
+                        <option th:each="t : ${turmas}"
+                                th:value="${t.id}"
+                                th:text="${t.nome}"
+                                th:selected="${filtroTurmaId != null and filtroTurmaId == t.id}">
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold text-muted">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="PENDENTE" th:selected="${filtroStatus == 'PENDENTE'}">Pendente</option>
+                        <option value="PAGA" th:selected="${filtroStatus == 'PAGA'}">Paga</option>
+                        <option value="ATRASADA" th:selected="${filtroStatus == 'ATRASADA'}">Atrasada</option>
+                        <option value="CANCELADA" th:selected="${filtroStatus == 'CANCELADA'}">Cancelada</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-funnel"></i></button>
+                    <a href="/financeiro/mensalidades" class="btn btn-outline-secondary"><i class="bi bi-x-lg"></i></a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabela -->
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Aluno</th>
+                        <th>Turma</th>
+                        <th>Referência</th>
+                        <th>Vencimento</th>
+                        <th class="text-end">Valor</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="m : ${mensalidades}">
+                        <td>
+                            <i class="bi bi-person-circle text-primary me-1"></i>
+                            <strong th:text="${m.aluno != null ? m.aluno.nome : 'N/A'}"></strong>
+                        </td>
+                        <td th:text="${m.aluno != null and m.aluno.turma != null ? m.aluno.turma.nome : '-'}"></td>
+                        <td th:text="${m.mesReferencia != null ? #temporals.format(m.mesReferencia, 'MM/yyyy') : '-'}"></td>
+                        <td th:text="${m.dataVencimento != null ? #temporals.format(m.dataVencimento, 'dd/MM/yyyy') : '-'}"></td>
+                        <td class="text-end fw-bold"
+                            th:text="'R$ ' + ${#numbers.formatDecimal(m.valorTotal, 1, 2)}">R$ 0,00</td>
+                        <td class="text-center">
+                            <span th:if="${m.paga}" class="badge-status badge-PAGA">
+                                <i class="bi bi-check-circle-fill"></i> Paga
+                            </span>
+                            <span th:if="${m.atrasada}" class="badge-status badge-ATRASADA">
+                                <i class="bi bi-exclamation-triangle-fill"></i> Atrasada
+                            </span>
+                            <span th:if="${!m.paga and !m.atrasada and !m.cancelada}" class="badge-status badge-PENDENTE">
+                                <i class="bi bi-clock-fill"></i> Pendente
+                            </span>
+                            <span th:if="${m.cancelada}" class="badge-status badge-CANCELADA">
+                                <i class="bi bi-x-circle-fill"></i> Cancelada
+                            </span>
+                        </td>
+                        <td class="text-center text-nowrap">
+                            <a th:if="${!m.paga and !m.cancelada}"
+                               th:href="@{/financeiro/pagar/{id}(id=${m.id})}"
+                               class="btn btn-sm btn-success" title="Marcar como Paga">
+                                <i class="bi bi-cash-coin"></i> Pagar
+                            </a>
+                            <a th:if="${m.paga}"
+                               th:href="@{/financeiro/recibo/{id}(id=${m.id})}"
+                               class="btn btn-sm btn-primary" title="Ver Recibo" target="_blank">
+                                <i class="bi bi-receipt"></i> Recibo
+                            </a>
+                            <a th:if="${m.paga}"
+                               th:href="@{/financeiro/reverter/{id}(id=${m.id})}"
+                               class="btn btn-sm btn-warning"
+                               onclick="return confirm('Reverter o pagamento desta mensalidade?')"
+                               title="Reverter">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </a>
+                            <a th:if="${!m.paga and !m.cancelada}"
+                               th:href="@{/financeiro/cancelar/{id}(id=${m.id})}"
+                               class="btn btn-sm btn-outline-danger"
+                               onclick="return confirm('Cancelar esta mensalidade?')"
+                               title="Cancelar">
+                                <i class="bi bi-x-circle"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(mensalidades)}">
+                        <td colspan="7" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox display-4 d-block mb-2"></i>
+                            Nenhuma mensalidade encontrada para os filtros selecionados.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="/financeiro" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Voltar</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

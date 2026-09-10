@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Registrar Pagamento</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%); min-height: 100vh; }
+        .form-card {
+            background: white; border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            padding: 32px; max-width: 640px; margin: 0 auto;
+        }
+        .form-card h1 { font-size: 1.4rem; font-weight: 700; color: #2c3e50; margin-bottom: 24px; }
+        .form-label { font-weight: 600; color: #495057; font-size: 0.9rem; }
+        .info-aluno {
+            background: #f8fafc; border-radius: 10px;
+            padding: 16px; margin-bottom: 24px;
+            border-left: 4px solid #4a6fa5;
+        }
+        .info-aluno .row-info { margin-bottom: 6px; font-size: 0.9rem; }
+        .info-aluno strong { color: #2c3e50; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/home"><i class="bi bi-mortarboard"></i> Sistema Escolar</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/financeiro/mensalidades"><i class="bi bi-arrow-left"></i> Voltar</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4 pb-5">
+    <div class="form-card">
+        <h1><i class="bi bi-cash-coin text-success"></i> Registrar Pagamento</h1>
+
+        <div class="info-aluno">
+            <div class="row-info"><strong>Aluno:</strong> <span th:text="${mensalidade.aluno.nome}"></span></div>
+            <div class="row-info"><strong>Turma:</strong> <span th:text="${mensalidade.aluno.turma != null ? mensalidade.aluno.turma.nome : '-'}"></span></div>
+            <div class="row-info"><strong>Mês:</strong> <span th:text="${#temporals.format(mensalidade.mesReferencia, 'MM/yyyy')}"></span></div>
+            <div class="row-info"><strong>Vencimento:</strong> <span th:text="${#temporals.format(mensalidade.dataVencimento, 'dd/MM/yyyy')}"></span></div>
+            <div class="row-info"><strong>Valor:</strong>
+                <span class="text-success fw-bold"
+                      th:text="'R$ ' + ${#numbers.formatDecimal(mensalidade.valorTotal, 1, 2)}"></span>
+            </div>
+            <div th:if="${mensalidade.atrasada}" class="row-info text-danger">
+                <strong>⚠️ Em atraso há</strong> <span th:text="${mensalidade.diasAtraso}"></span> dia(s)
+            </div>
+        </div>
+
+        <form th:action="@{/financeiro/pagar}" method="post">
+            <input type="hidden" name="id" th:value="${mensalidade.id}">
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label"><i class="bi bi-currency-dollar"></i> Valor Pago (R$)</label>
+                    <input type="number" name="valorPago" class="form-control"
+                           step="0.01" min="0"
+                           th:value="${mensalidade.valorTotal}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label"><i class="bi bi-calendar-check"></i> Data do Pagamento</label>
+                    <input type="date" name="dataPagamento" class="form-control"
+                           th:value="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}" required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label"><i class="bi bi-credit-card"></i> Forma de Pagamento</label>
+                <select name="formaPagamento" class="form-select" required>
+                    <option value="">Selecione</option>
+                    <option value="DINHEIRO">💵 Dinheiro</option>
+                    <option value="PIX">📱 PIX</option>
+                    <option value="BOLETO">📄 Boleto</option>
+                    <option value="CARTAO">💳 Cartão</option>
+                    <option value="TRANSFERENCIA">🏦 Transferência</option>
+                </select>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label"><i class="bi bi-tag"></i> Desconto (R$)</label>
+                    <input type="number" name="desconto" class="form-control"
+                           step="0.01" min="0" value="0.00"
+                           th:value="${mensalidade.desconto != null ? mensalidade.desconto : 0}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label"><i class="bi bi-plus-circle"></i> Juros (R$)</label>
+                    <input type="number" name="juros" class="form-control"
+                           step="0.01" min="0" value="0.00"
+                           th:value="${mensalidade.juros != null ? mensalidade.juros : 0}">
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label"><i class="bi bi-chat"></i> Observação</label>
+                <input type="text" name="observacao" class="form-control"
+                       placeholder="Ex: pago com atraso, juros de 2%" th:value="${mensalidade.observacao}">
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Confirmar Pagamento
+                </button>
+                <a href="/financeiro/mensalidades" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

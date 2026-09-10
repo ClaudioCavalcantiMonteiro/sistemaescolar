@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financeiro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%); min-height: 100vh; }
+        .page-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #27ae60 100%);
+            color: white; padding: 32px; border-radius: 16px;
+            margin-bottom: 24px; box-shadow: 0 8px 24px rgba(39, 174, 96, 0.15);
+        }
+        .stat-card {
+            background: white; border-radius: 14px;
+            padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border-left: 4px solid; text-align: center;
+        }
+        .stat-card .stat-value { font-size: 1.8rem; font-weight: 700; line-height: 1.2; }
+        .stat-card .stat-label {
+            font-size: 0.75rem; color: #6c757d;
+            text-transform: uppercase; font-weight: 600;
+            margin-top: 4px; letter-spacing: 0.5px;
+        }
+        .menu-card {
+            background: white; border-radius: 14px; padding: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            transition: all 0.3s ease; height: 100%;
+            text-decoration: none; color: inherit; display: block;
+        }
+        .menu-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+            color: inherit;
+        }
+        .menu-card .icon-box {
+            width: 56px; height: 56px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem; color: white; margin-bottom: 14px;
+        }
+        .menu-card h5 { font-size: 1rem; font-weight: 700; color: #2c3e50; margin-bottom: 6px; }
+        .menu-card p { font-size: 0.82rem; color: #6c757d; margin: 0; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/home"><i class="bi bi-mortarboard"></i> Sistema Escolar</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/home"><i class="bi bi-house"></i> Início</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4 pb-5">
+    <div class="page-header">
+        <h1 class="mb-1"><i class="bi bi-cash-coin"></i> Módulo Financeiro</h1>
+        <p class="mb-0 opacity-75">Gerencie mensalidades, pagamentos e recebimentos.</p>
+    </div>
+
+    <!-- Estatísticas do mês atual -->
+    <h5 class="mb-3">
+        <i class="bi bi-calendar-month text-success"></i>
+        Resumo de <span th:text="${mesAtual}" class="text-capitalize"></span>
+    </h5>
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="stat-card" style="border-color: #4a6fa5;">
+                <div class="stat-value text-primary"
+                     th:text="'R$ ' + ${#numbers.formatDecimal(estatisticas.totalPrevisto, 1, 2)}">R$ 0,00</div>
+                <div class="stat-label">Total Previsto</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card" style="border-color: #198754;">
+                <div class="stat-value text-success"
+                     th:text="'R$ ' + ${#numbers.formatDecimal(estatisticas.totalRecebido, 1, 2)}">R$ 0,00</div>
+                <div class="stat-label">Total Recebido</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card" style="border-color: #dc3545;">
+                <div class="stat-value text-danger"
+                     th:text="'R$ ' + ${#numbers.formatDecimal(estatisticas.totalAtrasado, 1, 2)}">R$ 0,00</div>
+                <div class="stat-label">Em Atraso</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card" style="border-color: #f39c12;">
+                <div class="stat-value text-warning" th:text="${estatisticas.qtdAtrasadas}">0</div>
+                <div class="stat-label">Mensalidades Atrasadas</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menu de ações -->
+    <h5 class="mb-3"><i class="bi bi-grid text-primary"></i> Ações</h5>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <a href="/financeiro/mensalidades" class="menu-card">
+                <div class="icon-box" style="background: linear-gradient(135deg, #4a6fa5, #5b82b8);">
+                    <i class="bi bi-list-check"></i>
+                </div>
+                <h5>Mensalidades</h5>
+                <p>Visualize, filtre e marque mensalidades como pagas.</p>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/financeiro/nova" class="menu-card">
+                <div class="icon-box" style="background: linear-gradient(135deg, #27ae60, #2ecc71);">
+                    <i class="bi bi-plus-circle-fill"></i>
+                </div>
+                <h5>Nova Mensalidade</h5>
+                <p>Cadastre uma mensalidade individual para um aluno.</p>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/financeiro/gerar-lote" class="menu-card">
+                <div class="icon-box" style="background: linear-gradient(135deg, #f39c12, #f5b342);">
+                    <i class="bi bi-layers-fill"></i>
+                </div>
+                <h5>Gerar em Lote</h5>
+                <p>Gere mensalidades para uma turma inteira de uma vez.</p>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/financeiro/relatorio" class="menu-card">
+                <div class="icon-box" style="background: linear-gradient(135deg, #2c3e50, #34495e);">
+                    <i class="bi bi-file-earmark-bar-graph-fill"></i>
+                </div>
+                <h5>Relatório Financeiro</h5>
+                <p>Veja o resumo mensal e imprima.</p>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

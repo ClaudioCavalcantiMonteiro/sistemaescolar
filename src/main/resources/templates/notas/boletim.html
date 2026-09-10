@@ -23,6 +23,7 @@
 </head>
 <body>
 
+<!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary no-print">
     <div class="container-fluid">
         <a class="navbar-brand" href="/home"><i class="bi bi-mortarboard"></i> Sistema Escolar</a>
@@ -31,8 +32,19 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="#" onclick="window.print()"><i class="bi bi-printer"></i> Imprimir</a></li>
-                <li class="nav-item"><a class="nav-link" href="/home"><i class="bi bi-house"></i> Início</a></li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="window.print()">
+                        <i class="bi bi-printer"></i> Imprimir
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/notas/boletim/{id}/pdf(id=${aluno.id})}" target="_blank">
+                        <i class="bi bi-file-earmark-pdf"></i> PDF
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/home"><i class="bi bi-house"></i> Início</a>
+                </li>
             </ul>
         </div>
     </div>
@@ -101,19 +113,24 @@
         </div>
     </div>
 
+    <!-- Botões -->
     <div class="no-print text-center mt-4">
-        <button class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> Imprimir Boletim</button>
-        <a href="/home" class="btn btn-secondary">Voltar</a>
+        <button class="btn btn-primary" onclick="window.print()">
+            <i class="bi bi-printer"></i> Imprimir
+        </button>
+        <a th:href="@{/notas/boletim/{id}/pdf(id=${aluno.id})}"
+           class="btn btn-danger" target="_blank">
+            <i class="bi bi-file-earmark-pdf"></i> Baixar PDF
+        </a>
+        <a href="/home" class="btn btn-secondary">
+            <i class="bi bi-house"></i> Voltar
+        </a>
     </div>
 </div>
 
 <script th:inline="javascript">
-    // Converte as strings JSON em objetos JavaScript
     const labels = JSON.parse(/*[[${graficoLabels}]]*/ '[]');
     const datasets = JSON.parse(/*[[${graficoDatasets}]]*/ '[]');
-
-    console.log('Labels:', labels);
-    console.log('Datasets:', datasets);
 
     window.addEventListener('load', function() {
         const ctx = document.getElementById('graficoEvolucao').getContext('2d');

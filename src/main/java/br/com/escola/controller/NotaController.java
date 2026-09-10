@@ -6,14 +6,21 @@ import br.com.escola.model.Nota;
 import br.com.escola.service.AlunoService;
 import br.com.escola.service.MateriaService;
 import br.com.escola.service.NotaService;
+import br.com.escola.service.PdfService;
 import br.com.escola.service.TurmaService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Controller
@@ -32,6 +39,9 @@ public class NotaController {
     @Autowired
     private TurmaService turmaService;
 
+    @Autowired
+    private PdfService pdfService;
+
     // ========== LANÇAR NOTAS ==========
     @GetMapping("/lancar")
     public String lancar(@RequestParam(required = false) Long turmaId, Model model) {
@@ -44,7 +54,7 @@ public class NotaController {
         return "notas/lancar";
     }
 
-    // ========== SALVAR UMA NOTA (lançamento individual) ==========
+    // ========== SALVAR UMA NOTA ==========
     @PostMapping("/salvar")
     public String salvar(@RequestParam("aluno.id") Long alunoId,
                          @RequestParam("materia.id") Long materiaId,
@@ -77,7 +87,7 @@ public class NotaController {
         return "redirect:/notas/lancar?sucesso";
     }
 
-    // ========== BOLETIM ==========
+    // ========== BOLETIM (com gráfico) ==========
     @GetMapping("/boletim/{alunoId}")
     public String boletim(@PathVariable Long alunoId, Model model) {
         Aluno aluno = alunoService.buscarPorId(alunoId);
@@ -90,10 +100,10 @@ public class NotaController {
                     .put(n.getUnidade(), n);
         }
 
-        // ===== Gerar JSON com locale US (ponto decimal) =====
+        // ===== Gerar JSON do gráfico =====
         StringBuilder datasetsJson = new StringBuilder("[");
         String[] cores = {"#4a6fa5", "#e74c3c", "#27ae60", "#f39c12", "#9b59b6",
-                         "#16a085", "#d35400", "#2c3e50", "#e91e63", "#00bcd4"};
+                          "#16a085", "#d35400", "#2c3e50", "#e91e63", "#00bcd4"};
 
         int corIndex = 0;
         boolean primeiro = true;
@@ -107,8 +117,7 @@ public class NotaController {
             for (int u = 1; u <= 4; u++) {
                 Nota n = mapaUnidades.get(u);
                 if (n != null && n.getMediaFinal() != null) {
-                    // 👇 CORREÇÃO: força locale US para usar ponto decimal
-                    medias.append(String.format(java.util.Locale.US, "%.1f", n.getMediaFinal()));
+                    medias.append(String.format(Locale.US, "%.1f", n.getMediaFinal()));
                     temAlgumaNota = true;
                 } else {
                     medias.append("null");
@@ -145,7 +154,25 @@ public class NotaController {
         model.addAttribute("graficoDatasets", datasetsJson.toString());
 
         return "notas/boletim";
-    
+    }
+
+    // ========== BAIXAR PDF DO BOLETIM ==========
+    @GetMapping("/boletim/{alunoId}/pdf")
+    public ResponseEntity<InputStreamResource> baixarBoletimPdf(@PathVariable Long alunoId) {
+        Aluno aluno = alunoService.buscarPorId(alunoId);
+        String nomeArquivo = "boletim_" +
+                (aluno != null ? aluno.getNome().replaceAll("\\s+", "_") : alunoId) + ".pdf";
+
+        ByteArrayInputStream pdf = pdfService.gerarBoletimPdf(alunoId);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "inline; filename=" + nomeArquivo);
+
+        return ResponseEntity
+                .ok()
+                .headers(headers)
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(new InputStreamResource(pdf));
     }
 
     // ========== LISTAR NOTAS POR TURMA ==========
@@ -208,24 +235,13 @@ public class NotaController {
         return "notas/editar";
     }
 
-    // ========== SALVAR TODAS AS NOTAS (RECRIA TUDO) ==========
+    // ========== SALVAR TODAS AS NOTAS ==========
     @PostMapping("/salvar-todas")
     public String salvarTodas(@RequestParam Long alunoId,
                               @RequestParam Map<String, String> params) {
-        System.out.println("========== INICIANDO SALVAR-TODAS ==========");
-        System.out.println("Aluno ID recebido: " + alunoId);
-
         Aluno aluno = alunoService.buscarPorId(alunoId);
-        if (aluno == null) {
-            System.out.println("ERRO: Aluno não encontrado!");
-            return "redirect:/notas/lancar";
-        }
-
-        // ===== PASSO 1: Excluir todas as notas existentes do aluno =====
         notaService.excluirPorAlunoId(alunoId);
-        System.out.println("Notas antigas excluídas.");
 
-        // ===== PASSO 2: Recriar todas as notas com base no formulário =====
         int notasCriadas = 0;
         for (Materia materia : materiaService.listarTodas()) {
             for (int unidade = 1; unidade <= 4; unidade++) {
@@ -263,8 +279,6 @@ public class NotaController {
         }
 
         System.out.println("Notas recriadas: " + notasCriadas);
-        System.out.println("========== FIM SALVAR-TODAS ==========");
-
         return "redirect:/notas/boletim/" + alunoId + "?sucesso";
     }
 

@@ -16,7 +16,6 @@
             min-height: 100vh;
         }
 
-        /* Cabeçalho de boas-vindas */
         .welcome-header {
             background: white;
             border-radius: 16px;
@@ -38,7 +37,6 @@
             font-size: 0.9rem;
         }
 
-        /* Cards */
         .home-card {
             border: none;
             border-radius: 14px;
@@ -104,7 +102,6 @@
         }
         .home-card .btn:hover { transform: translateY(-1px); }
 
-        /* Info do usuário */
         .user-info {
             background: rgba(255,255,255,0.15);
             padding: 6px 14px;
@@ -115,7 +112,6 @@
             gap: 6px;
         }
 
-        /* Responsivo */
         @media (max-width: 768px) {
             .welcome-header { padding: 18px 20px; }
             .welcome-header h1 { font-size: 1.2rem; }
@@ -158,6 +154,9 @@
                 <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','PROFESSOR','SECRETARIA')">
                     <a class="nav-link" href="/frequencia">Frequência</a>
                 </li>
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','SECRETARIA')">
+                    <a class="nav-link" href="/financeiro">Financeiro</a>
+                </li>
                 <li class="nav-item"><a class="nav-link" href="/relatorios">Relatórios</a></li>
                 <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
                 <li class="nav-item" sec:authorize="hasRole('ADMIN')">
@@ -185,7 +184,7 @@
     <!-- Cabeçalho de boas-vindas -->
     <div class="welcome-header">
         <h1><i class="bi bi-house-heart-fill me-2"></i>Bem-vindo ao Sistema Escolar</h1>
-        <p>Gerencie séries, matérias, turmas, alunos, notas, frequência e relatórios.</p>
+        <p>Gerencie séries, matérias, turmas, alunos, notas, frequência, financeiro e relatórios.</p>
     </div>
 
     <!-- Grid de funcionalidades -->
@@ -271,6 +270,18 @@
                     <h5 class="card-title">Frequência</h5>
                     <p class="card-text">Registre a presença dos alunos.</p>
                     <a href="/frequencia" class="btn btn-outline-success">Acessar</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Financeiro -->
+        <div class="col-6 col-sm-6 col-md-4 col-lg-3 col-xl-2" sec:authorize="hasAnyRole('ADMIN','SECRETARIA')">
+            <div class="card home-card" style="--card-color: #16a085;">
+                <div class="card-body">
+                    <i class="bi bi-cash-coin text-success"></i>
+                    <h5 class="card-title">Financeiro</h5>
+                    <p class="card-text">Mensalidades e recebimentos.</p>
+                    <a href="/financeiro" class="btn btn-outline-success">Acessar</a>
                 </div>
             </div>
         </div>
