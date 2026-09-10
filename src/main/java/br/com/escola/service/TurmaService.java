@@ -31,4 +31,8 @@ public class TurmaService {
     public List<Turma> buscarPorSerie(Long serieId) {
         return turmaRepository.findBySerieId(serieId);
     }
+
+    public List<Turma> listarTodasComAlunos() {
+        return turmaRepository.findAllWithAlunos();
+    }
 }

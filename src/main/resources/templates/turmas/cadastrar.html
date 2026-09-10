@@ -2,39 +2,168 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastrar Turma</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(145deg, #e6f0fa 0%, #d4e2f2 100%);
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .form-card {
+            background: rgba(255,255,255,0.78);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 32px;
+            padding: 40px 32px;
+            max-width: 560px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(58,86,130,0.12);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        .form-card h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a2a3a;
+            margin-bottom: 24px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #1a2a3a;
+            margin-bottom: 4px;
+        }
+        .input-wrapper {
+            position: relative;
+        }
+        .input-wrapper i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #8a9aae;
+            font-size: 18px;
+            opacity: 0.6;
+        }
+        .input-wrapper input,
+        .input-wrapper select {
+            width: 100%;
+            padding: 12px 16px 12px 46px;
+            border: 1.5px solid #dce5ef;
+            border-radius: 14px;
+            font-size: 15px;
+            font-family: inherit;
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(4px);
+            transition: all 0.2s ease;
+            color: #1a2a3a;
+        }
+        .input-wrapper input:focus,
+        .input-wrapper select:focus {
+            outline: none;
+            border-color: #4a6fa5;
+            background: white;
+            box-shadow: 0 4px 12px rgba(74,111,165,0.12);
+        }
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 15px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-success {
+            background: #4a6fa5;
+            color: white;
+            box-shadow: 0 4px 12px rgba(74,111,165,0.2);
+        }
+        .btn-success:hover {
+            background: #3a5a8a;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(74,111,165,0.3);
+        }
+        .btn-secondary {
+            background: #e0e7ef;
+            color: #1a2a3a;
+        }
+        .btn-secondary:hover {
+            background: #ccd5e0;
+        }
+        @media (max-width: 600px) {
+            .form-card { padding: 24px 16px; }
+            .actions { flex-direction: column; }
+        }
+    </style>
 </head>
-<body class="container mt-5" style="max-width: 600px;">
-    <h1>Cadastrar/Editar Turma</h1>
-    <form th:action="@{/turmas/salvar}" th:object="${turma}" method="post">
-        <input type="hidden" th:field="*{id}">
-        <div class="mb-3">
-            <label class="form-label">Nome da Turma (ex: A, B)</label>
-            <input type="text" class="form-control" th:field="*{nome}" required>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Ano</label>
-            <input type="text" class="form-control" th:field="*{ano}" placeholder="ex: 2025">
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Turno</label>
-            <select class="form-control" th:field="*{turno}">
-                <option value="">Selecione</option>
-                <option value="Manhã">Manhã</option>
-                <option value="Tarde">Tarde</option>
-                <option value="Noite">Noite</option>
-            </select>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Série</label>
-            <select class="form-control" th:field="*{serie.id}">
-                <option value="">Selecione</option>
-                <option th:each="serie : ${series}" th:value="${serie.id}" th:text="${serie.nome}"></option>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-success">Salvar</button>
-        <a href="/turmas" class="btn btn-secondary">Cancelar</a>
-    </form>
+<body>
+    <div class="form-card">
+        <h1>Cadastrar/Editar Turma</h1>
+        <form th:action="@{/turmas/salvar}" th:object="${turma}" method="post">
+            <input type="hidden" th:field="*{id}">
+            <div class="form-group">
+                <label for="nome">Nome da Turma</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-tag"></i>
+                    <input type="text" id="nome" th:field="*{nome}" placeholder="Ex: A, B" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="ano">Ano</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-calendar"></i>
+                    <input type="text" id="ano" th:field="*{ano}" placeholder="Ex: 2025">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="turno">Turno</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-clock"></i>
+                    <select id="turno" th:field="*{turno}">
+                        <option value="">Selecione</option>
+                        <option value="Manhã">Manhã</option>
+                        <option value="Tarde">Tarde</option>
+                        <option value="Noite">Noite</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="serie">Série</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-book"></i>
+                    <select id="serie" th:field="*{serie.id}">
+                        <option value="">Selecione</option>
+                        <option th:each="serie : ${series}" th:value="${serie.id}" th:text="${serie.nome}"></option>
+                    </select>
+                </div>
+            </div>
+            <div class="actions">
+                <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Salvar</button>
+                <a href="/turmas" class="btn btn-secondary"><i class="bi bi-x-lg"></i> Cancelar</a>
+            </div>
+        </form>
+    </div>
 </body>
 </html>

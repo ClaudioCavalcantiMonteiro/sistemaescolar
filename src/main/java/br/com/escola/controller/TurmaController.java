@@ -50,4 +50,10 @@ public class TurmaController {
         turmaService.excluir(id);
         return "redirect:/turmas";
     }
+
+    @GetMapping("/alunos")
+    public String listarAlunosPorTurma(Model model) {
+        model.addAttribute("turmas", turmaService.listarTodasComAlunos());
+        return "turmas/alunos-por-turma";
+    }
 }

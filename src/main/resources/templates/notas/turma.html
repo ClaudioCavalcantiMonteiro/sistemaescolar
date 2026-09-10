@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notas por Turma</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+            min-height: 100vh;
+        }
+
+        /* Cabeçalho da página */
+        .page-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #4a6fa5 100%);
+            color: white;
+            padding: 32px 0;
+            margin-bottom: 32px;
+            border-radius: 0 0 24px 24px;
+            box-shadow: 0 4px 20px rgba(44, 62, 80, 0.15);
+        }
+        .page-header h1 {
+            font-weight: 700;
+            font-size: 1.75rem;
+            margin-bottom: 4px;
+        }
+        .page-header p {
+            opacity: 0.85;
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        /* Card do aluno */
+        .card-aluno {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            background: white;
+            height: 100%;
+        }
+        .card-aluno:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+        }
+
+        /* Cabeçalho do card */
+        .card-aluno .card-header {
+            background: linear-gradient(135deg, #4a6fa5 0%, #5b82b8 100%);
+            color: white;
+            padding: 16px 20px;
+            border: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .card-aluno .card-header .aluno-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+        .card-aluno .card-header .aluno-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .card-aluno .card-header h5 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .media-badge {
+            background: rgba(255, 255, 255, 0.25);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(10px);
+            white-space: nowrap;
+        }
+        .media-badge.aprovado { background: rgba(25, 135, 84, 0.9); }
+        .media-badge.reprovado { background: rgba(220, 53, 69, 0.9); }
+        .media-badge.sem-nota { background: rgba(108, 117, 125, 0.6); }
+
+        /* Corpo do card */
+        .card-body {
+            padding: 16px 20px 20px;
+        }
+
+        /* Bloco de matéria */
+        .materia-bloco {
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            border-radius: 10px;
+            background: #f8fafc;
+            border-left: 4px solid #4a6fa5;
+            transition: background 0.2s;
+        }
+        .materia-bloco:last-child {
+            margin-bottom: 0;
+        }
+        .materia-bloco:hover {
+            background: #eef3f9;
+        }
+        .materia-titulo {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .materia-titulo .nome {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .materia-titulo .nome i {
+            color: #4a6fa5;
+        }
+        .materia-media {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 12px;
+            background: #e8eef5;
+            color: #4a6fa5;
+        }
+        .materia-media.aprovado { background: #d1e7dd; color: #0f5132; }
+        .materia-media.reprovado { background: #f8d7da; color: #842029; }
+
+        /* Lista de unidades */
+        .unidades-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+        .unidade-item {
+            background: white;
+            border-radius: 8px;
+            padding: 6px 4px;
+            text-align: center;
+            border: 1px solid #e5e9f0;
+            transition: all 0.2s;
+            min-width: 0;
+        }
+        .unidade-item:hover {
+            border-color: #4a6fa5;
+            transform: translateY(-1px);
+        }
+        .unidade-label {
+            display: block;
+            font-size: 0.65rem;
+            color: #6c757d;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 2px;
+        }
+        .unidade-valor {
+            display: block;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #2c3e50;
+        }
+        .unidade-valor.aprovado { color: #198754; }
+        .unidade-valor.reprovado { color: #dc3545; }
+        .unidade-valor.vazio { color: #ced4da; font-weight: 400; }
+
+        /* Botões de ação */
+        .acoes-aluno {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid #eef3f9;
+        }
+        .acoes-aluno .btn {
+            flex: 1;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border-radius: 8px;
+            padding: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        /* Badge de contagem */
+        .badge-total {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-left: auto;
+        }
+
+        /* Mensagem vazia */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        }
+        .empty-state i {
+            font-size: 3rem;
+            color: #ced4da;
+            margin-bottom: 12px;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .page-header { padding: 20px 0; }
+            .page-header h1 { font-size: 1.3rem; }
+            .unidades-grid { gap: 4px; }
+            .unidade-item { padding: 4px 2px; }
+            .unidade-valor { font-size: 0.85rem; }
+            .acoes-aluno { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/home">
+            <i class="bi bi-mortarboard-fill"></i> Sistema Escolar
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/notas/lancar"><i class="bi bi-arrow-left"></i> Voltar</a></li>
+                <li class="nav-item"><a class="nav-link" href="/home"><i class="bi bi-house"></i> Início</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Cabeçalho da página -->
+<div class="page-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h1><i class="bi bi-clipboard-data-fill me-2"></i>Notas da Turma: <span th:text="${turma.nome}"></span></h1>
+                <p>
+                    <i class="bi bi-bookmark me-1"></i>
+                    Série: <span th:text="${turma.serie != null ? turma.serie.nome : 'N/A'}"></span>
+                    <span class="mx-2">•</span>
+                    <i class="bi bi-people-fill me-1"></i>
+                    <span th:text="${#lists.size(alunos)}"></span> aluno(s)
+                </p>
+            </div>
+            <span class="badge-total">
+                <i class="bi bi-mortarboard"></i> Ano letivo
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Conteúdo principal -->
+<div class="container pb-5">
+    <div class="row g-4">
+        <div th:each="aluno : ${alunos}" class="col-12 col-md-6 col-xl-4">
+            <div class="card card-aluno">
+                <!-- Cabeçalho do aluno -->
+                <div class="card-header">
+                    <div class="aluno-info">
+                        <div class="aluno-avatar" th:text="${#strings.substring(aluno.nome, 0, 1).toUpperCase()}"></div>
+                        <h5 th:text="${aluno.nome}"></h5>
+                    </div>
+                    <span th:with="media=${mediaGeralPorAluno.get(aluno.id)}"
+                          class="media-badge"
+                          th:classappend="${media == null or media == 0} ? 'sem-nota' : (${media >= 6} ? 'aprovado' : 'reprovado')">
+                        <i class="bi bi-graph-up-arrow"></i>
+                        <span th:if="${media != null and media > 0}" th:text="${#numbers.formatDecimal(media, 1, 1)}"></span>
+                        <span th:if="${media == null or media == 0}">--</span>
+                    </span>
+                </div>
+
+                <div class="card-body">
+                    <!-- Blocos de matérias -->
+                    <div th:each="materia : ${materias}" class="materia-bloco">
+                        <div class="materia-titulo">
+                            <span class="nome">
+                                <i class="bi bi-journal-bookmark-fill"></i>
+                                <span th:text="${materia.nome}"></span>
+                            </span>
+                            <!-- Média da matéria -->
+                            <span th:with="notaMap=${notasPorAlunoMateria.get(aluno.id) != null ? notasPorAlunoMateria.get(aluno.id).get(materia.id) : null}">
+                                <span th:with="medias=${notaMap != null ? notaMap.values().![mediaFinal].?[#this != null] : null}">
+                                    <span th:if="${medias != null and !medias.isEmpty()}"
+                                          class="materia-media"
+                                          th:classappend="${#aggregates.avg(medias) >= 6} ? 'aprovado' : 'reprovado'">
+                                        <span th:text="${#numbers.formatDecimal(#aggregates.avg(medias), 1, 1)}"></span>
+                                    </span>
+                                    <span th:if="${medias == null or medias.isEmpty()}" class="materia-media">--</span>
+                                </span>
+                            </span>
+                        </div>
+
+                        <!-- Grid de unidades -->
+                        <div class="unidades-grid">
+                            <div th:each="unidade : ${#numbers.sequence(1, 4)}" class="unidade-item">
+                                <span class="unidade-label" th:text="${unidade} + 'ª'"></span>
+                                <span th:with="notaMap=${notasPorAlunoMateria.get(aluno.id) != null ? notasPorAlunoMateria.get(aluno.id).get(materia.id) : null}">
+                                    <span th:with="nota=${notaMap != null ? notaMap.get(unidade) : null}">
+                                        <span th:if="${nota != null and nota.mediaFinal != null}"
+                                              class="unidade-valor"
+                                              th:classappend="${nota.mediaFinal >= 6} ? 'aprovado' : 'reprovado'"
+                                              th:text="${#numbers.formatDecimal(nota.mediaFinal, 1, 1)}"></span>
+                                        <span th:if="${nota == null or nota.mediaFinal == null}" class="unidade-valor vazio">—</span>
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ações -->
+                    <div class="acoes-aluno">
+                        <a th:href="@{/notas/editar/{alunoId}(alunoId=${aluno.id})}" class="btn btn-warning">
+                            <i class="bi bi-pencil-square"></i> Editar
+                        </a>
+                        <a th:href="@{/notas/boletim/{alunoId}(alunoId=${aluno.id})}" class="btn btn-info">
+                            <i class="bi bi-file-earmark-text"></i> Boletim
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estado vazio -->
+        <div th:if="${#lists.isEmpty(alunos)}" class="col-12">
+            <div class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <h4>Nenhum aluno nesta turma</h4>
+                <p class="text-muted">Cadastre alunos e vincule-os a esta turma para vê-los aqui.</p>
+                <a href="/alunos" class="btn btn-primary mt-2">
+                    <i class="bi bi-person-plus"></i> Ir para Alunos
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botões de navegação -->
+    <div class="mt-4 d-flex gap-2 flex-wrap">
+        <a href="/notas/lancar" class="btn btn-primary">
+            <i class="bi bi-pencil-square"></i> Lançar Notas
+        </a>
+        <a href="/home" class="btn btn-outline-secondary">
+            <i class="bi bi-house"></i> Início
+        </a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

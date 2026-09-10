@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Turmas com Alunos - Sistema Escolar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body>
+
+<!-- Navbar (idêntica à do home) -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/home">
+            <i class="bi bi-mortarboard"></i> Sistema Escolar
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link" href="/series">Séries</a></li>
+                <li class="nav-item"><a class="nav-link" href="/materias">Matérias</a></li>
+                <li class="nav-item"><a class="nav-link" href="/turmas">Turmas</a></li>
+                <li class="nav-item"><a class="nav-link" href="/alunos">Alunos</a></li>
+                <li class="nav-item"><a class="nav-link" href="/notas/lancar">Lançar Notas</a></li>
+                <li class="nav-item"><a class="nav-link" href="/relatorios">Relatórios</a></li>
+            </ul>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/logout"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Conteúdo principal -->
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="display-5 fw-bold text-primary">Turmas e seus Alunos</h1>
+            <p class="lead text-dark">Visualize todos os alunos organizados por turma.</p>
+            <hr class="my-4">
+        </div>
+    </div>
+
+    <!-- Lista de turmas em cards -->
+    <div class="row g-4 mt-3">
+        <div th:each="turma : ${turmas}" class="col-md-4 col-sm-6">
+            <div class="card text-center shadow-sm h-100">
+                <div class="card-body">
+                    <i class="bi bi-people display-4 text-info"></i>
+                    <h5 class="card-title mt-2" th:text="${turma.nome}"></h5>
+                    <p class="card-text small">
+                        <span th:text="${turma.serie != null ? turma.serie.nome : 'Sem série'}"></span>
+                        <span class="badge bg-primary ms-2" th:text="${#lists.size(turma.alunos)} + ' alunos'"></span>
+                    </p>
+                    <ul class="list-group list-group-flush text-start">
+                        <li th:each="aluno : ${turma.alunos}" class="list-group-item">
+                            <i class="bi bi-person-circle me-2"></i>
+                            <span th:text="${aluno.nome}"></span>
+                            <span class="badge bg-secondary float-end" th:text="${aluno.matricula}"></span>
+                        </li>
+                        <li th:if="${#lists.isEmpty(turma.alunos)}" class="list-group-item text-muted text-center">
+                            <i class="bi bi-info-circle me-1"></i> Nenhum aluno vinculado
+                        </li>
+                    </ul>
+                    <a th:href="@{/turmas/editar/{id}(id=${turma.id})}" class="btn btn-outline-info btn-sm mt-2">
+                        <i class="bi bi-pencil"></i> Editar Turma
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div th:if="${#lists.isEmpty(turmas)}" class="col-12 text-center">
+            <div class="alert alert-info" role="alert">
+                <i class="bi bi-info-circle"></i> Nenhuma turma cadastrada ainda.
+            </div>
+        </div>
+    </div>
+
+    <!-- Botão voltar -->
+    <div class="text-center mt-4">
+        <a href="/home" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Voltar ao Início
+        </a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
