@@ -43,8 +43,24 @@ public class MateriaController {
 
     @PostMapping("/salvar")
     public String salvar(@ModelAttribute Materia materia) {
+
+        // Se for NOVO cadastro, verifica se já existe
+        if (materia.getId() == null && materiaService.existeNome(materia.getNome())) {
+            return "redirect:/materias/novo?erroDuplicado";
+        }
+
+        // Se for EDIÇÃO, verifica se o novo nome pertence a outra matéria
+        if (materia.getId() != null) {
+            Materia existente = materiaService.buscarPorId(materia.getId());
+            if (existente != null && !existente.getNome().equalsIgnoreCase(materia.getNome())) {
+                if (materiaService.existeNome(materia.getNome())) {
+                    return "redirect:/materias/editar/" + materia.getId() + "?erroDuplicado";
+                }
+            }
+        }
+
         materiaService.salvar(materia);
-        return "redirect:/materias";
+        return "redirect:/materias?sucesso";
     }
 
     @GetMapping("/editar/{id}")
@@ -56,6 +72,6 @@ public class MateriaController {
     @GetMapping("/excluir/{id}")
     public String excluir(@PathVariable Long id) {
         materiaService.excluir(id);
-        return "redirect:/materias";
+        return "redirect:/materias?sucesso";
     }
 }

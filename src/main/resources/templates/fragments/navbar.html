@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+
+<!-- ========== NAVBAR PADRONIZADA ========== -->
+<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold me-3" href="/home">
+            <i class="bi bi-mortarboard"></i> Sistema Escolar
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <!-- MENU ESQUERDO -->
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','SECRETARIA')">
+                    <a class="nav-link" href="/series">Séries</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','SECRETARIA')">
+                    <a class="nav-link" href="/materias">Matérias</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','SECRETARIA')">
+                    <a class="nav-link" href="/turmas">Turmas</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','SECRETARIA')">
+                    <a class="nav-link" href="/alunos">Alunos</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','PROFESSOR')">
+                    <a class="nav-link" href="/notas/lancar">Notas</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','PROFESSOR','SECRETARIA','USER')">
+                    <a class="nav-link" href="/frequencia">Frequência</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','SECRETARIA')">
+                    <a class="nav-link" href="/financeiro">Financeiro</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/relatorios">Relatórios</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/dashboard">Dashboard</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                    <a class="nav-link" href="/usuarios">Usuários</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                    <a class="nav-link" href="/escola"><i class="bi bi-building"></i> Escola</a>
+                </li>
+            </ul>
+
+            <!-- MENU DIREITO (usuário + sair) -->
+            <ul class="navbar-nav ms-auto align-items-center">
+                <li class="nav-item me-2">
+                    <span class="user-info text-white" title="Usuário logado">
+                        <i class="bi bi-person-circle"></i>
+                        <span sec:authentication="name">usuário</span>
+                    </span>
+                </li>
+                <li class="nav-item">
+                    <a class="btn btn-outline-light btn-sm" href="/logout">
+                        <i class="bi bi-box-arrow-right"></i> Sair
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- ========== ESTILO DO NAVBAR (aplicado a todas as telas) ========== -->
+<style th:fragment="estiloNavbar">
+    .navbar .nav-link {
+        font-size: 0.92rem;
+        padding-left: 0.6rem !important;
+        padding-right: 0.6rem !important;
+        white-space: nowrap;
+    }
+    .navbar-brand {
+        white-space: nowrap;
+    }
+    .user-info {
+        background: rgba(255,255,255,0.15);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+    .navbar .btn-outline-light {
+        border-radius: 20px;
+        padding: 4px 14px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    /* Ajuste responsivo */
+    @media (max-width: 991px) {
+        .navbar-nav .nav-link {
+            padding: 8px 12px !important;
+        }
+        .user-info {
+            margin-bottom: 8px;
+        }
+    }
+</style>
+
+<!-- ========== TOAST DE NOTIFICAÇÕES ========== -->
+<div th:fragment="toast" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    <div id="toastSucesso" class="toast align-items-center text-white bg-success border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <span id="toastSucessoMensagem">Operação realizada com sucesso!</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+
+    <div id="toastErro" class="toast align-items-center text-white bg-danger border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span id="toastErroMensagem">Ocorreu um erro!</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+
+    <div id="toastAviso" class="toast align-items-center text-dark bg-warning border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <span id="toastAvisoMensagem">Atenção!</span>
+            </div>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== BOTÃO VOLTAR INTELIGENTE ========== -->
+<div th:fragment="botaoVoltar">
+    <button type="button" class="btn btn-secondary" onclick="voltarPagina()">
+        <i class="bi bi-arrow-left"></i> Voltar
+    </button>
+</div>
+
+<!-- ========== SCRIPT DO BOTÃO VOLTAR ========== -->
+<script th:fragment="scriptVoltar">
+    function voltarPagina() {
+        if (document.referrer && document.referrer.indexOf(window.location.hostname) > -1) {
+            window.history.back();
+        } else {
+            window.location.href = '/home';
+        }
+    }
+</script>
+
+<!-- ========== SCRIPT DE TOAST ========== -->
+<script th:fragment="scriptToast">
+    document.addEventListener('DOMContentLoaded', function() {
+        const params = new URLSearchParams(window.location.search);
+        let exibiu = false;
+
+        if (params.has('sucesso')) { mostrarToast('sucesso', 'Operação realizada com sucesso!'); exibiu = true; }
+        if (params.has('loteSucesso')) { mostrarToast('sucesso', params.get('loteSucesso') + ' registro(s) criado(s) com sucesso!'); exibiu = true; }
+        if (params.has('revertido')) { mostrarToast('sucesso', 'Pagamento revertido com sucesso!'); exibiu = true; }
+        if (params.has('cancelada')) { mostrarToast('sucesso', 'Registro cancelado com sucesso!'); exibiu = true; }
+        if (params.has('registroSucesso')) { mostrarToast('sucesso', 'Registro salvo com sucesso!'); exibiu = true; }
+        if (params.has('error')) { mostrarToast('erro', 'Usuário ou senha inválidos!'); exibiu = true; }
+        if (params.has('erro')) { mostrarToast('erro', 'Ocorreu um erro!'); exibiu = true; }
+        if (params.has('erroDuplicado')) { mostrarToast('erro', 'Já existe um registro com estes dados!'); exibiu = true; }
+        if (params.has('aviso')) { mostrarToast('aviso', params.get('aviso')); exibiu = true; }
+
+        if (exibiu) {
+            const url = new URL(window.location);
+            url.search = '';
+            window.history.replaceState({}, '', url);
+        }
+    });
+
+    function mostrarToast(tipo, mensagem) {
+        const idToast = 'toast' + tipo.charAt(0).toUpperCase() + tipo.slice(1);
+        const idMsg = idToast + 'Mensagem';
+        const toastEl = document.getElementById(idToast);
+        const msgEl = document.getElementById(idMsg);
+        if (toastEl && msgEl) {
+            msgEl.textContent = mensagem;
+            const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
+            toast.show();
+        }
+    }
+</script>
+
+<!-- ========== CONFIRMAÇÃO DE EXCLUSÃO PADRONIZADA ========== -->
+<script th:fragment="scriptConfirmar">
+    function confirmarExclusao(mensagem) {
+        return confirm('⚠️ ' + mensagem + '\n\nEsta ação não pode ser desfeita.');
+    }
+</script>
+
+</body>
+</html>

@@ -1,78 +1,243 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lista de Alunos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%); min-height: 100vh; }
+        .filter-card {
+            background: white; border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            padding: 20px; margin-bottom: 20px;
+        }
+        .table-card {
+            background: white; border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        .badge-info {
+            background: #e8eef5; color: #4a6fa5;
+            padding: 6px 14px; border-radius: 20px;
+            font-size: 0.85rem; font-weight: 600;
+        }
+        .table thead th {
+            background: #f8fafc; color: #6c757d;
+            font-size: 0.8rem; text-transform: uppercase;
+            letter-spacing: 0.5px; font-weight: 600;
+            border-bottom: 2px solid #e5e9f0;
+        }
+        .table tbody tr:hover { background: #f8fafc; }
+        .btn-action {
+            padding: 4px 10px; font-size: 0.75rem;
+            border-radius: 6px; margin: 1px;
+        }
+        .empty-state {
+            text-align: center; padding: 50px 20px; color: #6c757d;
+        }
+        .empty-state i { font-size: 3rem; color: #ced4da; margin-bottom: 12px; }
+    </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/home"><i class="bi bi-mortarboard"></i> Sistema Escolar</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item"><a class="nav-link" href="/series">Séries</a></li>
-                <li class="nav-item"><a class="nav-link" href="/materias">Matérias</a></li>
-                <li class="nav-item"><a class="nav-link" href="/turmas">Turmas</a></li>
-                <li class="nav-item"><a class="nav-link active" href="/alunos">Alunos</a></li>
-            </ul>
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="/logout"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
-            </ul>
+<!-- Navbar PADRONIZADA -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<th:block th:replace="~{fragments/navbar :: estiloNavbar}"></th:block>
+
+<div class="container mt-4 pb-5">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+            <h1 class="h3 mb-1"><i class="bi bi-person-video3 text-primary"></i> Alunos</h1>
+            <span class="badge-info">
+                <i class="bi bi-people-fill"></i>
+                <span th:text="${totalFiltrado}"></span> de <span th:text="${totalAlunos}"></span> aluno(s)
+            </span>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-success" onclick="exportarCSV()">
+                <i class="bi bi-file-earmark-excel"></i> Exportar CSV
+            </button>
+            <a href="/alunos/novo" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Novo Aluno
+            </a>
         </div>
     </div>
-</nav>
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1>Alunos</h1>
-        <a href="/alunos/novo" class="btn btn-success"><i class="bi bi-plus-circle"></i> Novo Aluno</a>
+    <div class="filter-card">
+        <form th:action="@{/alunos}" method="get">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label small fw-semibold text-muted">
+                        <i class="bi bi-search"></i> Buscar por nome
+                    </label>
+                    <input type="text" name="nome" class="form-control"
+                           placeholder="Digite o nome do aluno..."
+                           th:value="${filtroNome}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold text-muted">
+                        <i class="bi bi-book"></i> Série
+                    </label>
+                    <select name="serieId" class="form-select">
+                        <option value="">Todas as séries</option>
+                        <option th:each="serie : ${series}"
+                                th:value="${serie.id}"
+                                th:text="${serie.nome}"
+                                th:selected="${filtroSerieId != null and filtroSerieId == serie.id}">
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold text-muted">
+                        <i class="bi bi-people"></i> Turma
+                    </label>
+                    <select name="turmaId" class="form-select">
+                        <option value="">Todas</option>
+                        <option th:each="turma : ${turmas}"
+                                th:value="${turma.id}"
+                                th:text="${turma.nome}"
+                                th:selected="${filtroTurmaId != null and filtroTurmaId == turma.id}">
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">
+                        <i class="bi bi-funnel"></i> Filtrar
+                    </button>
+                    <a href="/alunos" class="btn btn-outline-secondary" title="Limpar">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
     </div>
 
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nome</th>
-                    <th>Matrícula</th>
-                    <th>Série</th>
-                    <th>Turma</th>
-                    <th>Responsável</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="aluno : ${alunos}">
-                    <td th:text="${aluno.id}"></td>
-                    <td th:text="${aluno.nome}"></td>
-                    <td th:text="${aluno.matricula}"></td>
-                    <td th:text="${aluno.serie != null ? aluno.serie.nome : 'N/A'}"></td>
-                    <td th:text="${aluno.turma != null ? aluno.turma.nome : 'N/A'}"></td>
-                    <td th:text="${aluno.responsavelFinanceiro != null ? aluno.responsavelFinanceiro.nome : 'N/A'}"></td>
-                    <td>
-                        <a th:href="@{/alunos/editar/{id}(id=${aluno.id})}" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i> Editar</a>
-                        <a th:href="@{/alunos/excluir/{id}(id=${aluno.id})}" class="btn btn-sm btn-danger" onclick="return confirm('Confirma exclusão?')"><i class="bi bi-trash"></i> Excluir</a>
-                        <a th:href="@{/notas/boletim/{id}(id=${aluno.id})}" class="btn btn-sm btn-info"><i class="bi bi-file-text"></i> Boletim</a>
-                        <a th:href="@{/notas/editar/{id}(id=${aluno.id})}" class="btn btn-sm btn-secondary"><i class="bi bi-pencil-square"></i> Editar Notas</a>
-                    </td>
-                </tr>
-                <tr th:if="${#lists.isEmpty(alunos)}">
-                    <td colspan="7" class="text-center text-muted">Nenhum aluno cadastrado.</td>
-                </tr>
-            </tbody>
-        </table>
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="tabelaDados">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Matrícula</th>
+                        <th>Série</th>
+                        <th>Turma</th>
+                        <th>Responsável</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="aluno : ${alunos}">
+                        <td th:text="${aluno.id}"></td>
+                        <td>
+                            <i class="bi bi-person-circle text-primary me-1"></i>
+                            <strong th:text="${aluno.nome}"></strong>
+                        </td>
+                        <td><span class="badge bg-secondary" th:text="${aluno.matricula}"></span></td>
+                        <td th:text="${aluno.serie != null ? aluno.serie.nome : 'N/A'}"></td>
+                        <td th:text="${aluno.turma != null ? aluno.turma.nome : 'N/A'}"></td>
+                        <td th:text="${aluno.responsavelFinanceiro != null ? aluno.responsavelFinanceiro.nome : 'N/A'}"></td>
+                        <td class="text-center text-nowrap">
+                            <a th:href="@{/alunos/editar/{id}(id=${aluno.id})}"
+                               class="btn btn-warning btn-action" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a th:href="@{/alunos/excluir/{id}(id=${aluno.id})}"
+                               class="btn btn-danger btn-action"
+                               th:attr="data-nome=${aluno.nome}"
+                               onclick="return confirmarExclusaoAluno(this)"
+                               title="Excluir">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                            <a th:href="@{/notas/boletim/{id}(id=${aluno.id})}"
+                               class="btn btn-info btn-action" title="Boletim">
+                                <i class="bi bi-file-text"></i>
+                            </a>
+                            <a th:href="@{/notas/editar/{id}(id=${aluno.id})}"
+                               class="btn btn-secondary btn-action" title="Editar Notas">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(alunos)}">
+                        <td colspan="7" class="empty-state">
+                            <i class="bi bi-search"></i>
+                            <h5>Nenhum aluno encontrado</h5>
+                            <p>Tente ajustar os filtros ou <a href="/alunos/novo">cadastre um novo aluno</a>.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <div class="mt-3">
-        <a href="/home" class="btn btn-secondary"><i class="bi bi-house"></i> Voltar</a>
+        <div th:replace="~{fragments/navbar :: botaoVoltar}"></div>
     </div>
 </div>
+
+<!-- Toast -->
+<div th:replace="~{fragments/navbar :: toast}"></div>
+
+<!-- Scripts -->
+<script th:replace="~{fragments/navbar :: scriptToast}"></script>
+<script th:replace="~{fragments/navbar :: scriptVoltar}"></script>
+
+<script>
+    function confirmarExclusaoAluno(el) {
+        const nome = el.getAttribute('data-nome');
+        return confirm('⚠️ Excluir o aluno "' + nome + '"?\n\nEsta ação não pode ser desfeita.');
+    }
+
+    function exportarCSV() {
+        const tabela = document.getElementById('tabelaDados');
+        if (!tabela) return;
+
+        let csv = '';
+
+        const ths = tabela.querySelectorAll('thead th');
+        const headers = [];
+        ths.forEach((th, i) => {
+            if (i < ths.length - 1) {
+                headers.push('"' + th.textContent.trim() + '"');
+            }
+        });
+        csv += headers.join(';') + '\n';
+
+        const tbody = tabela.querySelector('tbody');
+        tbody.querySelectorAll('tr').forEach(tr => {
+            if (tr.querySelector('.empty-state')) return;
+            const tds = tr.querySelectorAll('td');
+            const linha = [];
+            tds.forEach((td, i) => {
+                if (i < tds.length - 1) {
+                    let texto = td.textContent.trim().replace(/\s+/g, ' ');
+                    texto = texto.replace(/"/g, '""');
+                    linha.push('"' + texto + '"');
+                }
+            });
+            if (linha.length > 0) {
+                csv += linha.join(';') + '\n';
+            }
+        });
+
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.setAttribute('href', URL.createObjectURL(blob));
+        link.setAttribute('download', 'alunos_' + new Date().toISOString().slice(0,10) + '.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        mostrarToast('sucesso', 'Arquivo CSV gerado com sucesso!');
+    }
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>

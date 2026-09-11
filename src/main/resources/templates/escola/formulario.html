@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dados da Escola</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%); min-height: 100vh; }
+        .form-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            padding: 32px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .form-card h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 4px;
+        }
+        .form-card .subtitle {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #4a6fa5;
+            border-bottom: 2px solid #e5e9f0;
+            padding-bottom: 8px;
+            margin: 24px 0 16px 0;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+        }
+        .form-control {
+            border-radius: 10px;
+            border: 1.5px solid #e0e7ef;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+        }
+        .form-control:focus {
+            border-color: #4a6fa5;
+            box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.1);
+        }
+        .user-info {
+            background: rgba(255,255,255,0.15);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .navbar .btn-outline-light {
+            border-radius: 20px;
+            padding: 4px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+        .navbar .nav-link {
+            font-size: 0.92rem;
+            padding-left: 0.6rem !important;
+            padding-right: 0.6rem !important;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/home">
+            <i class="bi bi-mortarboard"></i> Sistema Escolar
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link" href="/home">Início</a></li>
+            </ul>
+            <ul class="navbar-nav ms-auto align-items-center">
+                <li class="nav-item me-2">
+                    <span class="user-info text-white">
+                        <i class="bi bi-person-circle"></i>
+                        <span sec:authentication="name">usuário</span>
+                    </span>
+                </li>
+                <li class="nav-item">
+                    <a class="btn btn-outline-light btn-sm" href="/logout">
+                        <i class="bi bi-box-arrow-right"></i> Sair
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4 pb-5">
+    <div class="form-card">
+        <h1><i class="bi bi-building text-primary"></i> Dados da Escola</h1>
+        <p class="subtitle">Preencha as informações da instituição. Estes dados aparecerão na tela inicial.</p>
+
+        <div th:if="${param.sucesso}" class="alert alert-success">
+            <i class="bi bi-check-circle"></i> Dados salvos com sucesso!
+        </div>
+
+        <form th:action="@{/escola/salvar}" th:object="${escola}" method="post">
+            <input type="hidden" th:field="*{id}">
+
+            <!-- Informações Básicas -->
+            <div class="section-title">
+                <i class="bi bi-info-circle"></i> Informações Básicas
+            </div>
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label">Nome da Escola *</label>
+                    <input type="text" class="form-control" th:field="*{nome}" required
+                           placeholder="Ex: Escola Municipal Dom Pedro II">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">CNPJ</label>
+                    <input type="text" class="form-control" th:field="*{cnpj}"
+                           placeholder="00.000.000/0000-00">
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Slogan / Frase</label>
+                    <input type="text" class="form-control" th:field="*{slogan}"
+                           placeholder="Ex: Educação que transforma">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Diretor(a)</label>
+                    <input type="text" class="form-control" th:field="*{diretor}"
+                           placeholder="Nome do diretor">
+                </div>
+            </div>
+
+            <!-- Contato -->
+            <div class="section-title">
+                <i class="bi bi-telephone"></i> Contato
+            </div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Telefone</label>
+                    <input type="text" class="form-control" th:field="*{telefone}"
+                           placeholder="(00) 0000-0000">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" th:field="*{email}"
+                           placeholder="contato@escola.com">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Site</label>
+                    <input type="text" class="form-control" th:field="*{site}"
+                           placeholder="www.escola.com.br">
+                </div>
+            </div>
+
+            <!-- Endereço -->
+            <div class="section-title">
+                <i class="bi bi-geo-alt"></i> Endereço
+            </div>
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label">Endereço</label>
+                    <input type="text" class="form-control" th:field="*{endereco}"
+                           placeholder="Rua, Avenida...">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Número</label>
+                    <input type="text" class="form-control" th:field="*{numero}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Bairro</label>
+                    <input type="text" class="form-control" th:field="*{bairro}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Cidade</label>
+                    <input type="text" class="form-control" th:field="*{cidade}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Estado (UF)</label>
+                    <input type="text" class="form-control" th:field="*{estado}" maxlength="2">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">CEP</label>
+                    <input type="text" class="form-control" th:field="*{cep}"
+                           placeholder="00000-000">
+                </div>
+            </div>
+
+            <!-- Observações -->
+            <div class="section-title">
+                <i class="bi bi-chat-left-text"></i> Observações
+            </div>
+            <div class="row g-3">
+                <div class="col-12">
+                    <textarea class="form-control" th:field="*{observacao}" rows="3"
+                              placeholder="Informações adicionais sobre a escola..."></textarea>
+                </div>
+            </div>
+
+            <!-- Botões -->
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-save"></i> Salvar Dados
+                </button>
+                <a href="/home" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Voltar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

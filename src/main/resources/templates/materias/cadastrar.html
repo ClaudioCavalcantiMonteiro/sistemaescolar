@@ -1,138 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastrar Matéria</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', sans-serif;
-            min-height: 100vh;
-            background: linear-gradient(145deg, #e6f0fa 0%, #d4e2f2 100%);
-            padding: 40px 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+        * { font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%); min-height: 100vh; }
         .form-card {
-            background: rgba(255,255,255,0.78);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border-radius: 32px;
-            padding: 40px 32px;
-            max-width: 560px;
-            width: 100%;
-            box-shadow: 0 20px 60px rgba(58,86,130,0.12);
-            border: 1px solid rgba(255,255,255,0.5);
+            background: white; border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            padding: 32px; max-width: 600px; margin: 0 auto;
         }
-        .form-card h1 {
-            font-size: 24px;
-            font-weight: 700;
-            color: #1a2a3a;
-            margin-bottom: 24px;
+        .form-card h1 { font-size: 1.4rem; font-weight: 700; color: #2c3e50; margin-bottom: 24px; }
+        .form-label { font-weight: 600; color: #495057; font-size: 0.9rem; }
+        .user-info {
+            background: rgba(255,255,255,0.15);
+            padding: 4px 12px; border-radius: 20px;
+            font-size: 0.82rem;
+            display: inline-flex; align-items: center; gap: 6px;
         }
-        .form-group {
-            margin-bottom: 18px;
-        }
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 500;
-            color: #1a2a3a;
-            margin-bottom: 4px;
-        }
-        .input-wrapper {
-            position: relative;
-        }
-        .input-wrapper i {
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #8a9aae;
-            font-size: 18px;
-            opacity: 0.6;
-        }
-        .input-wrapper input {
-            width: 100%;
-            padding: 12px 16px 12px 46px;
-            border: 1.5px solid #dce5ef;
-            border-radius: 14px;
-            font-size: 15px;
-            font-family: inherit;
-            background: rgba(255,255,255,0.7);
-            backdrop-filter: blur(4px);
-            transition: all 0.2s ease;
-            color: #1a2a3a;
-        }
-        .input-wrapper input:focus {
-            outline: none;
-            border-color: #4a6fa5;
-            background: white;
-            box-shadow: 0 4px 12px rgba(74,111,165,0.12);
-        }
-        .actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 8px;
-        }
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 14px;
-            font-weight: 600;
-            font-size: 15px;
-            font-family: inherit;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .btn-success {
-            background: #4a6fa5;
-            color: white;
-            box-shadow: 0 4px 12px rgba(74,111,165,0.2);
-        }
-        .btn-success:hover {
-            background: #3a5a8a;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(74,111,165,0.3);
-        }
-        .btn-secondary {
-            background: #e0e7ef;
-            color: #1a2a3a;
-        }
-        .btn-secondary:hover {
-            background: #ccd5e0;
-        }
-        @media (max-width: 600px) {
-            .form-card { padding: 24px 16px; }
-            .actions { flex-direction: column; }
-        }
+        .navbar .btn-outline-light { border-radius: 20px; padding: 4px 14px; font-size: 0.82rem; font-weight: 600; }
+        .navbar .nav-link { font-size: 0.92rem; padding-left: 0.6rem !important; padding-right: 0.6rem !important; }
     </style>
 </head>
 <body>
+
+<!-- Navbar -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<th:block th:replace="~{fragments/navbar :: estiloNavbar}"></th:block>
+
+<div class="container mt-4 pb-5">
     <div class="form-card">
-        <h1>Cadastrar/Editar Matéria</h1>
+        <h1><i class="bi bi-journal text-success"></i>
+            <span th:if="${materia.id == null}">Nova Matéria</span>
+            <span th:if="${materia.id != null}">Editar Matéria</span>
+        </h1>
+
+        <div th:if="${param.erroDuplicado}" class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>Matéria já existe!</strong> Escolha outro nome.
+        </div>
+
         <form th:action="@{/materias/salvar}" th:object="${materia}" method="post">
             <input type="hidden" th:field="*{id}">
-            <div class="form-group">
-                <label for="nome">Nome</label>
-                <div class="input-wrapper">
-                    <i class="bi bi-tag"></i>
-                    <input type="text" id="nome" th:field="*{nome}" placeholder="Ex: Matemática" required>
-                </div>
+
+            <div class="mb-4">
+                <label class="form-label">Nome da Matéria</label>
+                <input type="text" class="form-control" th:field="*{nome}" required
+                       placeholder="Ex: Matemática, Português, História">
             </div>
-            <div class="actions">
-                <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Salvar</button>
-                <a href="/materias" class="btn btn-secondary"><i class="bi bi-x-lg"></i> Cancelar</a>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success"><i class="bi bi-save"></i> Salvar</button>
+                <a href="/materias" class="btn btn-secondary">Cancelar</a>
             </div>
         </form>
     </div>
+</div>
+
+<div th:replace="~{fragments/navbar :: toast}"></div>
+<script th:replace="~{fragments/navbar :: scriptToast}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

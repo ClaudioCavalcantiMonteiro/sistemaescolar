@@ -26,4 +26,9 @@ public class ResponsavelFinanceiroService {
     public void excluirPorAlunoId(Long alunoId) {
         responsavelRepository.findByAlunoId(alunoId).ifPresent(responsavelRepository::delete);
     }
+
+    public boolean existeCpf(String cpf) {
+        if (cpf == null || cpf.isEmpty()) return false;
+        return responsavelRepository.existsByCpf(cpf);
+    }
 }

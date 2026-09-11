@@ -1,137 +1,291 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lançar Notas</title>
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%); min-height: 100vh; }
+
+        .page-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #4a6fa5 100%);
+            color: white;
+            padding: 32px;
+            border-radius: 16px;
+            margin-bottom: 28px;
+            box-shadow: 0 8px 24px rgba(44, 62, 80, 0.15);
+        }
+        .page-header h1 { font-weight: 700; margin-bottom: 4px; }
+        .page-header p { opacity: 0.85; margin: 0; }
+
+        .step-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, #4a6fa5, #5b82b8);
+            color: white;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-right: 12px;
+        }
+        .step-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .big-select {
+            width: 100%;
+            padding: 16px 20px;
+            font-size: 1.05rem;
+            font-weight: 500;
+            border: 2px solid #e0e7ef;
+            border-radius: 12px;
+            background: #f8fafc;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .big-select:focus {
+            outline: none;
+            border-color: #4a6fa5;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(74, 111, 165, 0.1);
+        }
+
+        .btn-continuar {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            padding: 18px 40px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 4px 16px rgba(39, 174, 96, 0.3);
+        }
+        .btn-continuar:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(39, 174, 96, 0.4);
+        }
+        .btn-continuar:disabled {
+            background: #ccc;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        .unidade-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 10px;
+            background: #f8fafc;
+            border: 2px solid #e0e7ef;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            color: #495057;
+        }
+        .unidade-btn:hover {
+            border-color: #4a6fa5;
+            background: #eef3f9;
+        }
+        .unidade-btn.active {
+            background: linear-gradient(135deg, #4a6fa5, #5b82b8);
+            color: white;
+            border-color: #4a6fa5;
+            box-shadow: 0 4px 16px rgba(74, 111, 165, 0.3);
+        }
+        .unidade-btn .numero {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        .unidade-btn .label { font-size: 0.8rem; opacity: 0.85; }
+
+        /* Botões de ação no topo */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn-action-top {
+            border-radius: 12px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-action-top:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+        }
+    </style>
 </head>
 <body>
 
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/home"><i class="bi bi-mortarboard"></i> Sistema Escolar</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item"><a class="nav-link" href="/series">Séries</a></li>
-                <li class="nav-item"><a class="nav-link" href="/materias">Matérias</a></li>
-                <li class="nav-item"><a class="nav-link" href="/turmas">Turmas</a></li>
-                <li class="nav-item"><a class="nav-link" href="/alunos">Alunos</a></li>
-                <li class="nav-item"><a class="nav-link active" href="/notas/lancar">Lançar Notas</a></li>
-            </ul>
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="/logout"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<th:block th:replace="~{fragments/navbar :: estiloNavbar}"></th:block>
 
-<!-- Conteúdo principal -->
-<div class="container mt-4">
-    <h1>Lançar Notas</h1>
-    <div th:if="${param.sucesso}" class="alert alert-success">Nota salva com sucesso!</div>
+<div class="container mt-4 pb-5">
 
-    <div class="card">
-        <div class="card-body">
-            <form th:action="@{/notas/salvar}" method="post">
-                <!-- Filtro por turma -->
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Filtrar por Turma</label>
-                        <select class="form-select" id="turmaSelect" onchange="filtrarPorTurma()">
-                            <option value="">Todas as turmas</option>
-                            <option th:each="turma : ${turmas}" th:value="${turma.id}" th:text="${turma.nome}" th:selected="${turma.id == turmaId}"></option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Campos do formulário -->
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Aluno</label>
-                        <select class="form-select" name="aluno.id" required>
-                            <option value="">Selecione</option>
-                            <option th:each="aluno : ${alunos}" th:value="${aluno.id}" th:text="${aluno.nome}"></option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Matéria</label>
-                        <select class="form-select" name="materia.id" required>
-                            <option value="">Selecione</option>
-                            <option th:each="materia : ${materias}" th:value="${materia.id}" th:text="${materia.nome}"></option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Unidade</label>
-                        <select class="form-select" name="unidade" required>
-                            <option value="1">1ª Unidade</option>
-                            <option value="2">2ª Unidade</option>
-                            <option value="3">3ª Unidade</option>
-                            <option value="4">4ª Unidade</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Notas -->
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <label class="form-label">Nota 1</label>
-                        <input type="number" class="form-control" step="0.1" min="0" max="10" name="nota1">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Nota 2</label>
-                        <input type="number" class="form-control" step="0.1" min="0" max="10" name="nota2">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Nota 3</label>
-                        <input type="number" class="form-control" step="0.1" min="0" max="10" name="nota3">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Nota 4</label>
-                        <input type="number" class="form-control" step="0.1" min="0" max="10" name="nota4">
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Recuperação (opcional)</label>
-                        <input type="number" class="form-control" step="0.1" min="0" max="10" name="recuperacao">
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Salvar Nota</button>
-                <a href="/home" class="btn btn-secondary">Voltar</a>
-            </form>
-
-            <!-- Botão listar alunos da turma -->
-            <div th:if="${turmaId != null}" class="mt-3">
-                <a th:href="@{/notas/turma/{id}(id=${turmaId})}" class="btn btn-info">
-                    <i class="bi bi-list-ul"></i> Listar Alunos da Turma com Notas
+    <!-- Cabeçalho com botões -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h1><i class="bi bi-pencil-square"></i> Lançar Notas</h1>
+                <p>Siga os passos abaixo para lançar as notas da turma inteira.</p>
+            </div>
+            <div class="action-buttons">
+                <a href="/notas/turma" class="btn btn-light btn-action-top">
+                    <i class="bi bi-file-earmark-text"></i> Ver Boletins
+                </a>
+                <a href="/home" class="btn btn-outline-light btn-action-top">
+                    <i class="bi bi-house-door"></i> Início
                 </a>
             </div>
         </div>
     </div>
+
+    <form th:action="@{/notas/lancar}" method="get" id="formLancar">
+
+        <!-- PASSO 1: Turma -->
+        <div class="step-card">
+            <div class="step-title">
+                <span class="step-number">1</span>
+                Escolha a Turma
+            </div>
+            <select name="turmaId" class="big-select" required id="turmaSelect">
+                <option value="">-- Selecione a turma --</option>
+                <option th:each="t : ${turmas}"
+                        th:value="${t.id}"
+                        th:text="${t.nome}"
+                        th:selected="${turmaId != null and turmaId == t.id}"></option>
+            </select>
+        </div>
+
+        <!-- PASSO 2: Matéria -->
+        <div class="step-card">
+            <div class="step-title">
+                <span class="step-number">2</span>
+                Escolha a Matéria
+            </div>
+            <select name="materiaId" class="big-select" required id="materiaSelect">
+                <option value="">-- Selecione a matéria --</option>
+                <option th:each="m : ${materias}"
+                        th:value="${m.id}"
+                        th:text="${m.nome}"
+                        th:selected="${materiaId != null and materiaId == m.id}"></option>
+            </select>
+        </div>
+
+        <!-- PASSO 3: Unidade -->
+        <div class="step-card">
+            <div class="step-title">
+                <span class="step-number">3</span>
+                Escolha a Unidade
+            </div>
+            <input type="hidden" name="unidade" id="unidadeInput" th:value="${unidade != null ? unidade : 1}">
+            <div class="row g-3">
+                <div class="col-3">
+                    <div class="unidade-btn" data-unidade="1" onclick="selecionarUnidade(1)">
+                        <span class="numero">1ª</span>
+                        <span class="label">Unidade</span>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="unidade-btn" data-unidade="2" onclick="selecionarUnidade(2)">
+                        <span class="numero">2ª</span>
+                        <span class="label">Unidade</span>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="unidade-btn" data-unidade="3" onclick="selecionarUnidade(3)">
+                        <span class="numero">3ª</span>
+                        <span class="label">Unidade</span>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="unidade-btn" data-unidade="4" onclick="selecionarUnidade(4)">
+                        <span class="numero">4ª</span>
+                        <span class="label">Unidade</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botão continuar -->
+        <button type="submit" class="btn-continuar" id="btnContinuar" disabled>
+            <i class="bi bi-arrow-right-circle"></i> Continuar para Lançar Notas
+        </button>
+    </form>
+
+    <!-- Botões inferiores -->
+    <div class="d-flex justify-content-center gap-3 mt-4">
+        <a href="/notas/turma" class="btn btn-info btn-lg">
+            <i class="bi bi-file-earmark-text"></i> Ver Boletins das Turmas
+        </a>
+        <a href="/home" class="btn btn-secondary btn-lg">
+            <i class="bi bi-house-door"></i> Voltar ao Início
+        </a>
+    </div>
 </div>
 
-<!-- Script para filtro de turma -->
+<div th:replace="~{fragments/navbar :: toast}"></div>
+<script th:replace="~{fragments/navbar :: scriptToast}"></script>
+
 <script>
-    function filtrarPorTurma() {
-        var turmaId = document.getElementById('turmaSelect').value;
-        var url = '/notas/lancar';
-        if (turmaId) {
-            url += '?turmaId=' + turmaId;
-        }
-        window.location.href = url;
+    const turmaSelect = document.getElementById('turmaSelect');
+    const materiaSelect = document.getElementById('materiaSelect');
+    const btnContinuar = document.getElementById('btnContinuar');
+    const unidadeInput = document.getElementById('unidadeInput');
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const unidadeAtual = parseInt(unidadeInput.value) || 1;
+        selecionarUnidade(unidadeAtual);
+        verificarBotao();
+    });
+
+    function selecionarUnidade(numero) {
+        unidadeInput.value = numero;
+        document.querySelectorAll('.unidade-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (parseInt(btn.getAttribute('data-unidade')) === numero) {
+                btn.classList.add('active');
+            }
+        });
     }
+
+    function verificarBotao() {
+        btnContinuar.disabled = !(turmaSelect.value && materiaSelect.value);
+    }
+
+    turmaSelect.addEventListener('change', verificarBotao);
+    materiaSelect.addEventListener('change', verificarBotao);
 </script>
 
-<!-- Bootstrap JS (opcional, mas necessário para alguns componentes) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

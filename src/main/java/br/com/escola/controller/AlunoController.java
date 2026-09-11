@@ -10,7 +10,15 @@ import br.com.escola.service.ResponsavelFinanceiroService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/alunos")
@@ -32,8 +40,41 @@ public class AlunoController {
     private NotaService notaService;
 
     @GetMapping
-    public String listar(Model model) {
-        model.addAttribute("alunos", alunoService.listarTodos());
+    public String listar(@RequestParam(required = false) String nome,
+                         @RequestParam(required = false) Long serieId,
+                         @RequestParam(required = false) Long turmaId,
+                         Model model) {
+
+        List<Aluno> alunos = alunoService.listarTodos();
+
+        if (nome != null && !nome.trim().isEmpty()) {
+            String termo = nome.trim().toLowerCase();
+            alunos = alunos.stream()
+                    .filter(a -> a.getNome() != null && a.getNome().toLowerCase().contains(termo))
+                    .collect(Collectors.toList());
+        }
+
+        if (serieId != null && serieId > 0) {
+            alunos = alunos.stream()
+                    .filter(a -> a.getSerie() != null && a.getSerie().getId().equals(serieId))
+                    .collect(Collectors.toList());
+        }
+
+        if (turmaId != null && turmaId > 0) {
+            alunos = alunos.stream()
+                    .filter(a -> a.getTurma() != null && a.getTurma().getId().equals(turmaId))
+                    .collect(Collectors.toList());
+        }
+
+        model.addAttribute("alunos", alunos);
+        model.addAttribute("series", serieService.listarTodas());
+        model.addAttribute("turmas", turmaService.listarTodas());
+        model.addAttribute("filtroNome", nome);
+        model.addAttribute("filtroSerieId", serieId);
+        model.addAttribute("filtroTurmaId", turmaId);
+        model.addAttribute("totalAlunos", alunoService.listarTodos().size());
+        model.addAttribute("totalFiltrado", alunos.size());
+
         return "alunos/listar";
     }
 
@@ -49,7 +90,36 @@ public class AlunoController {
 
     @PostMapping("/salvar")
     public String salvar(@ModelAttribute Aluno aluno) {
-        // Se for edição, busca o existente e atualiza
+
+        ResponsavelFinanceiro respForm = aluno.getResponsavelFinanceiro();
+
+        if (respForm != null && respForm.getNome() != null && !respForm.getNome().isEmpty()) {
+
+            if (respForm.getCpf() != null && !respForm.getCpf().trim().isEmpty()) {
+                if (!br.com.escola.util.CpfValidator.isValid(respForm.getCpf())) {
+                    return "redirect:/alunos/novo?cpfInvalido";
+                }
+
+                String cpfLimpo = respForm.getCpf().replaceAll("[^0-9]", "");
+
+                if (aluno.getId() == null) {
+                    if (responsavelService.existeCpf(cpfLimpo)) {
+                        return "redirect:/alunos/novo?cpfDuplicado";
+                    }
+                } else {
+                    Aluno existenteAluno = alunoService.buscarPorId(aluno.getId());
+                    if (existenteAluno != null && existenteAluno.getResponsavelFinanceiro() != null) {
+                        ResponsavelFinanceiro respAtual = responsavelService.buscarPorAlunoId(aluno.getId());
+                        if (respAtual != null && !respAtual.getCpf().replaceAll("[^0-9]", "").equals(cpfLimpo)) {
+                            if (responsavelService.existeCpf(cpfLimpo)) {
+                                return "redirect:/alunos/editar/" + aluno.getId() + "?cpfDuplicado";
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         if (aluno.getId() != null) {
             Aluno existente = alunoService.buscarPorId(aluno.getId());
             if (existente != null) {
@@ -59,12 +129,9 @@ public class AlunoController {
                 existente.setSerie(aluno.getSerie());
                 existente.setTurma(aluno.getTurma());
 
-                // -- CORREÇÃO: atualiza o responsável a partir do objeto aluno --
-                ResponsavelFinanceiro respForm = aluno.getResponsavelFinanceiro();
                 if (respForm != null && respForm.getNome() != null && !respForm.getNome().isEmpty()) {
                     ResponsavelFinanceiro respExistente = responsavelService.buscarPorAlunoId(existente.getId());
                     if (respExistente != null) {
-                        // Atualiza o existente
                         respExistente.setNome(respForm.getNome());
                         respExistente.setGrauParentesco(respForm.getGrauParentesco());
                         respExistente.setEndereco(respForm.getEndereco());
@@ -79,30 +146,20 @@ public class AlunoController {
                         respExistente.setEmail(respForm.getEmail());
                         responsavelService.salvar(respExistente);
                     } else {
-                        // Cria novo responsável
                         respForm.setAluno(existente);
                         responsavelService.salvar(respForm);
                     }
-                } else {
-                    // Se o responsável foi removido (nome vazio), apaga o existente
-                    ResponsavelFinanceiro respExistente = responsavelService.buscarPorAlunoId(existente.getId());
-                    if (respExistente != null) {
-                        responsavelService.excluir(respExistente.getId());
-                    }
                 }
-
-                aluno = existente; // usa o existente para salvar
+                aluno = existente;
             }
         } else {
-            // Novo aluno: vincula o responsável se houver
-            if (aluno.getResponsavelFinanceiro() != null && aluno.getResponsavelFinanceiro().getNome() != null
-                    && !aluno.getResponsavelFinanceiro().getNome().isEmpty()) {
-                aluno.getResponsavelFinanceiro().setAluno(aluno);
+            if (respForm != null && respForm.getNome() != null && !respForm.getNome().isEmpty()) {
+                respForm.setAluno(aluno);
             }
         }
 
         alunoService.salvar(aluno);
-        return "redirect:/alunos";
+        return "redirect:/alunos?sucesso";
     }
 
     @GetMapping("/editar/{id}")
@@ -122,6 +179,6 @@ public class AlunoController {
         responsavelService.excluirPorAlunoId(id);
         notaService.excluirPorAlunoId(id);
         alunoService.excluir(id);
-        return "redirect:/alunos";
+        return "redirect:/alunos?sucesso";
     }
 }

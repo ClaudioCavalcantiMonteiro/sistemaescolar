@@ -28,4 +28,8 @@ public class MateriaService {
     public void excluir(Long id) {
         materiaRepository.deleteById(id);
     }
+
+    public boolean existeNome(String nome) {
+        return materiaRepository.existsByNomeIgnoreCase(nome);
+    }
 }

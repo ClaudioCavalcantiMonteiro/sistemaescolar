@@ -42,19 +42,107 @@ public class NotaController {
     @Autowired
     private PdfService pdfService;
 
-    // ========== LANÇAR NOTAS ==========
+    // ==================== TELA INICIAL DE LANÇAMENTO ====================
     @GetMapping("/lancar")
-    public String lancar(@RequestParam(required = false) Long turmaId, Model model) {
+    public String lancar(@RequestParam(required = false) Long turmaId,
+                         @RequestParam(required = false) Long materiaId,
+                         @RequestParam(required = false) Integer unidade,
+                         Model model) {
+
         model.addAttribute("turmas", turmaService.listarTodas());
-        List<Aluno> alunos = (turmaId != null && turmaId > 0) ?
-                alunoService.buscarPorTurma(turmaId) : alunoService.listarTodos();
-        model.addAttribute("alunos", alunos);
         model.addAttribute("materias", materiaService.listarTodas());
+
+        if (turmaId != null && turmaId > 0 && materiaId != null && materiaId > 0) {
+            return carregarAlunosParaLancamento(turmaId, materiaId, unidade, model);
+        }
+
         model.addAttribute("turmaId", turmaId);
+        model.addAttribute("materiaId", materiaId);
+        model.addAttribute("unidade", unidade);
         return "notas/lancar";
     }
 
-    // ========== SALVAR UMA NOTA ==========
+    private String carregarAlunosParaLancamento(Long turmaId, Long materiaId,
+                                                 Integer unidade, Model model) {
+        if (unidade == null) unidade = 1;
+
+        List<Aluno> alunos = alunoService.buscarPorTurma(turmaId);
+
+        Map<Long, Nota> notasPorAluno = new HashMap<>();
+        for (Aluno aluno : alunos) {
+            List<Nota> notas = notaService.buscarPorAlunoMateriaEUnidade(aluno.getId(), materiaId, unidade);
+            if (!notas.isEmpty()) {
+                notasPorAluno.put(aluno.getId(), notas.get(0));
+            }
+        }
+
+        model.addAttribute("turmaSelecionada", turmaService.buscarPorId(turmaId));
+        model.addAttribute("materiaSelecionada", materiaService.buscarPorId(materiaId));
+        model.addAttribute("unidadeSelecionada", unidade);
+        model.addAttribute("alunos", alunos);
+        model.addAttribute("notasPorAluno", notasPorAluno);
+        model.addAttribute("turmaId", turmaId);
+        model.addAttribute("materiaId", materiaId);
+        model.addAttribute("unidade", unidade);
+
+        return "notas/lancar-turma";
+    }
+
+    // ==================== SALVAR EM LOTE ====================
+    @PostMapping("/salvar-lote")
+    public String salvarLote(@RequestParam Long turmaId,
+                              @RequestParam Long materiaId,
+                              @RequestParam Integer unidade,
+                              @RequestParam Map<String, String> params) {
+
+        List<Aluno> alunos = alunoService.buscarPorTurma(turmaId);
+        Materia materia = materiaService.buscarPorId(materiaId);
+
+        int salvas = 0;
+        for (Aluno aluno : alunos) {
+            String prefix = "nota_" + aluno.getId() + "_";
+            String n1 = params.get(prefix + "1");
+            String n2 = params.get(prefix + "2");
+            String n3 = params.get(prefix + "3");
+            String n4 = params.get(prefix + "4");
+            String rec = params.get(prefix + "rec");
+
+            boolean temValor = (n1 != null && !n1.isEmpty()) ||
+                               (n2 != null && !n2.isEmpty()) ||
+                               (n3 != null && !n3.isEmpty()) ||
+                               (n4 != null && !n4.isEmpty()) ||
+                               (rec != null && !rec.isEmpty());
+
+            if (!temValor) continue;
+
+            List<Nota> existentes = notaService.buscarPorAlunoMateriaEUnidade(aluno.getId(), materiaId, unidade);
+            Nota nota;
+            if (!existentes.isEmpty()) {
+                nota = existentes.get(0);
+            } else {
+                nota = new Nota();
+                nota.setAluno(aluno);
+                nota.setMateria(materia);
+                nota.setUnidade(unidade);
+            }
+
+            nota.setNota1(parseDouble(n1));
+            nota.setNota2(parseDouble(n2));
+            nota.setNota3(parseDouble(n3));
+            nota.setNota4(parseDouble(n4));
+            nota.setRecuperacao(parseDouble(rec));
+
+            notaService.salvar(nota);
+            salvas++;
+        }
+
+        return "redirect:/notas/lancar?turmaId=" + turmaId +
+               "&materiaId=" + materiaId +
+               "&unidade=" + unidade +
+               "&loteSucesso=" + salvas;
+    }
+
+    // ==================== SALVAR UMA NOTA ====================
     @PostMapping("/salvar")
     public String salvar(@RequestParam("aluno.id") Long alunoId,
                          @RequestParam("materia.id") Long materiaId,
@@ -64,8 +152,6 @@ public class NotaController {
                          @RequestParam(value = "nota3", required = false) Double nota3,
                          @RequestParam(value = "nota4", required = false) Double nota4,
                          @RequestParam(value = "recuperacao", required = false) Double recuperacao) {
-
-        System.out.println(">>> Salvando nota: aluno=" + alunoId + ", materia=" + materiaId + ", unidade=" + unidade);
 
         List<Nota> existentes = notaService.buscarPorAlunoMateriaEUnidade(alunoId, materiaId, unidade);
         Nota nota;
@@ -87,7 +173,55 @@ public class NotaController {
         return "redirect:/notas/lancar?sucesso";
     }
 
-    // ========== BOLETIM (com gráfico) ==========
+    // ==================== TELA DE SELEÇÃO DE TURMA (VER BOLETINS) ====================
+    @GetMapping("/turma")
+    public String selecionarTurma(Model model) {
+        model.addAttribute("turmas", turmaService.listarTodasComAlunos());
+        return "notas/turma-selecionar";
+    }
+
+    // ==================== NOTAS POR TURMA (LISTAGEM) ====================
+    @GetMapping("/turma/{turmaId}")
+    public String listarNotasPorTurma(@PathVariable Long turmaId, Model model) {
+        model.addAttribute("turma", turmaService.buscarPorId(turmaId));
+        List<Aluno> alunos = alunoService.buscarPorTurma(turmaId);
+        model.addAttribute("alunos", alunos);
+        List<Materia> materias = materiaService.listarTodas();
+        model.addAttribute("materias", materias);
+
+        Map<Long, Map<Long, Map<Integer, Nota>>> notasPorAlunoMateria = new HashMap<>();
+        Map<Long, Double> mediaGeralPorAluno = new HashMap<>();
+
+        for (Aluno aluno : alunos) {
+            Map<Long, Map<Integer, Nota>> porMateria = new HashMap<>();
+            List<Nota> notasAluno = notaService.listarPorAluno(aluno.getId());
+
+            for (Nota n : notasAluno) {
+                porMateria.computeIfAbsent(n.getMateria().getId(), k -> new HashMap<>())
+                        .put(n.getUnidade(), n);
+            }
+            notasPorAlunoMateria.put(aluno.getId(), porMateria);
+
+            double soma = 0;
+            int count = 0;
+            for (Map<Integer, Nota> unidadeMap : porMateria.values()) {
+                for (Nota n : unidadeMap.values()) {
+                    Double media = n.getMediaFinal();
+                    if (media != null) {
+                        soma += media;
+                        count++;
+                    }
+                }
+            }
+            mediaGeralPorAluno.put(aluno.getId(), count > 0 ? soma / count : 0.0);
+        }
+
+        model.addAttribute("notasPorAlunoMateria", notasPorAlunoMateria);
+        model.addAttribute("mediaGeralPorAluno", mediaGeralPorAluno);
+        return "notas/turma";
+    }
+
+    // ==================== BOLETIM INDIVIDUAL ====================
     @GetMapping("/boletim/{alunoId}")
     public String boletim(@PathVariable Long alunoId, Model model) {
         Aluno aluno = alunoService.buscarPorId(alunoId);
@@ -100,7 +234,6 @@ public class NotaController {
                     .put(n.getUnidade(), n);
         }
 
-        // ===== Gerar JSON do gráfico =====
         StringBuilder datasetsJson = new StringBuilder("[");
         String[] cores = {"#4a6fa5", "#e74c3c", "#27ae60", "#f39c12", "#9b59b6",
                           "#16a085", "#d35400", "#2c3e50", "#e91e63", "#00bcd4"};
@@ -156,7 +289,7 @@ public class NotaController {
         return "notas/boletim";
     }
 
-    // ========== BAIXAR PDF DO BOLETIM ==========
+    // ==================== BAIXAR PDF ====================
     @GetMapping("/boletim/{alunoId}/pdf")
     public ResponseEntity<InputStreamResource> baixarBoletimPdf(@PathVariable Long alunoId) {
         Aluno aluno = alunoService.buscarPorId(alunoId);
@@ -168,55 +301,12 @@ public class NotaController {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Disposition", "inline; filename=" + nomeArquivo);
 
-        return ResponseEntity
-                .ok()
-                .headers(headers)
+        return ResponseEntity.ok().headers(headers)
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(new InputStreamResource(pdf));
     }
 
-    // ========== LISTAR NOTAS POR TURMA ==========
-    @GetMapping("/turma/{turmaId}")
-    public String listarNotasPorTurma(@PathVariable Long turmaId, Model model) {
-        model.addAttribute("turma", turmaService.buscarPorId(turmaId));
-        List<Aluno> alunos = alunoService.buscarPorTurma(turmaId);
-        model.addAttribute("alunos", alunos);
-        List<Materia> materias = materiaService.listarTodas();
-        model.addAttribute("materias", materias);
-
-        Map<Long, Map<Long, Map<Integer, Nota>>> notasPorAlunoMateria = new HashMap<>();
-        Map<Long, Double> mediaGeralPorAluno = new HashMap<>();
-
-        for (Aluno aluno : alunos) {
-            Map<Long, Map<Integer, Nota>> porMateria = new HashMap<>();
-            List<Nota> notasAluno = notaService.listarPorAluno(aluno.getId());
-
-            for (Nota n : notasAluno) {
-                porMateria.computeIfAbsent(n.getMateria().getId(), k -> new HashMap<>())
-                        .put(n.getUnidade(), n);
-            }
-            notasPorAlunoMateria.put(aluno.getId(), porMateria);
-
-            double soma = 0;
-            int count = 0;
-            for (Map<Integer, Nota> unidadeMap : porMateria.values()) {
-                for (Nota n : unidadeMap.values()) {
-                    Double media = n.getMediaFinal();
-                    if (media != null) {
-                        soma += media;
-                        count++;
-                    }
-                }
-            }
-            mediaGeralPorAluno.put(aluno.getId(), count > 0 ? soma / count : 0.0);
-        }
-
-        model.addAttribute("notasPorAlunoMateria", notasPorAlunoMateria);
-        model.addAttribute("mediaGeralPorAluno", mediaGeralPorAluno);
-        return "notas/turma";
-    }
-
-    // ========== EDITAR NOTAS ==========
+    // ==================== EDITAR NOTAS ====================
     @GetMapping("/editar/{alunoId}")
     public String editarNotas(@PathVariable Long alunoId, Model model) {
         Aluno aluno = alunoService.buscarPorId(alunoId);
@@ -235,7 +325,7 @@ public class NotaController {
         return "notas/editar";
     }
 
-    // ========== SALVAR TODAS AS NOTAS ==========
+    // ==================== SALVAR TODAS AS NOTAS ====================
     @PostMapping("/salvar-todas")
     public String salvarTodas(@RequestParam Long alunoId,
                               @RequestParam Map<String, String> params) {
@@ -277,16 +367,13 @@ public class NotaController {
                 }
             }
         }
-
-        System.out.println("Notas recriadas: " + notasCriadas);
         return "redirect:/notas/boletim/" + alunoId + "?sucesso";
     }
 
-    // ========== AUXILIAR ==========
     private Double parseDouble(String value) {
         if (value == null || value.isEmpty()) return null;
         try {
-            return Double.parseDouble(value);
+            return Double.parseDouble(value.replace(",", "."));
         } catch (NumberFormatException e) {
             return null;
         }
