@@ -2,10 +2,12 @@ package br.com.escola.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+
 import java.time.LocalDate;
 
 @Entity
 public class Aluno {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -15,6 +17,12 @@ public class Aluno {
 
     private LocalDate dataNascimento;
     private String matricula;
+
+    // ===== NOVOS CAMPOS =====
+    private Integer anoLetivo;
+    private LocalDate dataMatricula;
+    private Boolean matriculaAtiva = true;
+    // =========================
 
     @ManyToOne
     @JoinColumn(name = "serie_id")
@@ -27,7 +35,21 @@ public class Aluno {
     @OneToOne(mappedBy = "aluno", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private ResponsavelFinanceiro responsavelFinanceiro;
 
-    // Getters e Setters
+    @PrePersist
+    public void prePersist() {
+        if (this.anoLetivo == null) {
+            this.anoLetivo = LocalDate.now().getYear();
+        }
+        if (this.dataMatricula == null) {
+            this.dataMatricula = LocalDate.now();
+        }
+        if (this.matriculaAtiva == null) {
+            this.matriculaAtiva = true;
+        }
+    }
+
+    // ===== Getters e Setters =====
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -39,6 +61,15 @@ public class Aluno {
 
     public String getMatricula() { return matricula; }
     public void setMatricula(String matricula) { this.matricula = matricula; }
+
+    public Integer getAnoLetivo() { return anoLetivo; }
+    public void setAnoLetivo(Integer anoLetivo) { this.anoLetivo = anoLetivo; }
+
+    public LocalDate getDataMatricula() { return dataMatricula; }
+    public void setDataMatricula(LocalDate dataMatricula) { this.dataMatricula = dataMatricula; }
+
+    public Boolean getMatriculaAtiva() { return matriculaAtiva; }
+    public void setMatriculaAtiva(Boolean matriculaAtiva) { this.matriculaAtiva = matriculaAtiva; }
 
     public Serie getSerie() { return serie; }
     public void setSerie(Serie serie) { this.serie = serie; }

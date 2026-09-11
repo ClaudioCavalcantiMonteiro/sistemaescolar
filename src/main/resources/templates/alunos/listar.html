@@ -37,6 +37,8 @@
             padding: 4px 10px; font-size: 0.75rem;
             border-radius: 6px; margin: 1px;
         }
+        .badge-ativa { background: #d1e7dd; color: #0f5132; }
+        .badge-inativa { background: #f8d7da; color: #842029; }
         .empty-state {
             text-align: center; padding: 50px 20px; color: #6c757d;
         }
@@ -45,11 +47,22 @@
 </head>
 <body>
 
-<!-- Navbar PADRONIZADA -->
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 <th:block th:replace="~{fragments/navbar :: estiloNavbar}"></th:block>
 
 <div class="container mt-4 pb-5">
+	<!-- Alertas de feedback (flash) -->
+	<div th:if="${mensagemErro}" class="alert alert-danger alert-dismissible fade show d-flex align-items-center" role="alert">
+	    <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i>
+	    <div th:text="${mensagemErro}"></div>
+	    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Fechar"></button>
+	</div>
+
+	<div th:if="${mensagemSucesso}" class="alert alert-success alert-dismissible fade show d-flex align-items-center" role="alert">
+	    <i class="bi bi-check-circle-fill me-2 fs-4"></i>
+	    <div th:text="${mensagemSucesso}"></div>
+	    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Fechar"></button>
+	</div>
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
         <div>
             <h1 class="h3 mb-1"><i class="bi bi-person-video3 text-primary"></i> Alunos</h1>
@@ -68,23 +81,21 @@
         </div>
     </div>
 
+    <!-- Filtros -->
     <div class="filter-card">
         <form th:action="@{/alunos}" method="get">
             <div class="row g-2 align-items-end">
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <label class="form-label small fw-semibold text-muted">
                         <i class="bi bi-search"></i> Buscar por nome
                     </label>
                     <input type="text" name="nome" class="form-control"
-                           placeholder="Digite o nome do aluno..."
-                           th:value="${filtroNome}">
+                           placeholder="Digite o nome..." th:value="${filtroNome}">
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label small fw-semibold text-muted">
-                        <i class="bi bi-book"></i> Série
-                    </label>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold text-muted">Série</label>
                     <select name="serieId" class="form-select">
-                        <option value="">Todas as séries</option>
+                        <option value="">Todas</option>
                         <option th:each="serie : ${series}"
                                 th:value="${serie.id}"
                                 th:text="${serie.nome}"
@@ -93,9 +104,7 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small fw-semibold text-muted">
-                        <i class="bi bi-people"></i> Turma
-                    </label>
+                    <label class="form-label small fw-semibold text-muted">Turma</label>
                     <select name="turmaId" class="form-select">
                         <option value="">Todas</option>
                         <option th:each="turma : ${turmas}"
@@ -105,11 +114,17 @@
                         </option>
                     </select>
                 </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold text-muted">Ano Letivo</label>
+                    <input type="number" name="anoLetivo" class="form-control"
+                           th:value="${filtroAnoLetivo}" min="2020" max="2100"
+                           th:placeholder="${anoAtual}">
+                </div>
                 <div class="col-md-2 d-flex gap-2">
                     <button type="submit" class="btn btn-primary flex-fill">
                         <i class="bi bi-funnel"></i> Filtrar
                     </button>
-                    <a href="/alunos" class="btn btn-outline-secondary" title="Limpar">
+                    <a href="/alunos" class="btn btn-outline-secondary">
                         <i class="bi bi-x-lg"></i>
                     </a>
                 </div>
@@ -117,6 +132,7 @@
         </form>
     </div>
 
+    <!-- Tabela -->
     <div class="table-card">
         <div class="table-responsive">
             <table class="table table-hover mb-0" id="tabelaDados">
@@ -125,9 +141,10 @@
                         <th>ID</th>
                         <th>Nome</th>
                         <th>Matrícula</th>
+                        <th>Ano</th>
                         <th>Série</th>
                         <th>Turma</th>
-                        <th>Responsável</th>
+                        <th>Status</th>
                         <th class="text-center">Ações</th>
                     </tr>
                 </thead>
@@ -139,36 +156,80 @@
                             <strong th:text="${aluno.nome}"></strong>
                         </td>
                         <td><span class="badge bg-secondary" th:text="${aluno.matricula}"></span></td>
+                        <td th:text="${aluno.anoLetivo}"></td>
                         <td th:text="${aluno.serie != null ? aluno.serie.nome : 'N/A'}"></td>
                         <td th:text="${aluno.turma != null ? aluno.turma.nome : 'N/A'}"></td>
-                        <td th:text="${aluno.responsavelFinanceiro != null ? aluno.responsavelFinanceiro.nome : 'N/A'}"></td>
-                        <td class="text-center text-nowrap">
-                            <a th:href="@{/alunos/editar/{id}(id=${aluno.id})}"
-                               class="btn btn-warning btn-action" title="Editar">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <a th:href="@{/alunos/excluir/{id}(id=${aluno.id})}"
-                               class="btn btn-danger btn-action"
-                               th:attr="data-nome=${aluno.nome}"
-                               onclick="return confirmarExclusaoAluno(this)"
-                               title="Excluir">
-                                <i class="bi bi-trash"></i>
-                            </a>
-                            <a th:href="@{/notas/boletim/{id}(id=${aluno.id})}"
-                               class="btn btn-info btn-action" title="Boletim">
-                                <i class="bi bi-file-text"></i>
-                            </a>
-                            <a th:href="@{/notas/editar/{id}(id=${aluno.id})}"
-                               class="btn btn-secondary btn-action" title="Editar Notas">
-                                <i class="bi bi-pencil-square"></i>
-                            </a>
+                        
+                        <!-- ✅ CORREÇÃO DO STATUS AQUI -->
+                        <td>
+                            <!-- Se for verdadeiro, mostra como Ativa -->
+                            <span th:if="${aluno.matriculaAtiva}" class="badge badge-ativa">
+                                <i class="bi bi-check-circle"></i> Ativa
+                            </span>
+                            <!-- Se for nulo OU falso, mostra como Inativa -->
+                            <span th:if="${aluno.matriculaAtiva == null or !aluno.matriculaAtiva}" class="badge badge-inativa">
+                                <i class="bi bi-x-circle"></i> Inativa
+                            </span>
                         </td>
+                        <!-- ✅ FIM DA CORREÇÃO -->
+                        
+						<td class="text-center text-nowrap">
+						    <!-- EDITAR (não tem confirmação, sem problema) -->
+						    <a th:href="@{/alunos/editar/{id}(id=${aluno.id})}"
+						       class="btn btn-warning btn-action" title="Editar">
+						        <i class="bi bi-pencil"></i>
+						    </a>
+
+						    <!-- REMATRICULAR (usa th:data-nome) -->
+						    <a th:href="@{/alunos/rematricular/{id}(id=${aluno.id})}"
+						       class="btn btn-primary btn-action"
+						       th:data-nome="${aluno.nome}"
+						       onclick="return confirm('Rematricular ' + this.dataset.nome + ' para o próximo ano letivo?')"
+						       title="Rematricular">
+						        <i class="bi bi-arrow-repeat"></i>
+						    </a>
+
+						    <!-- DESATIVAR (só aparece se estiver ativo) -->
+						    <a th:if="${aluno.matriculaAtiva}"
+						       th:href="@{/alunos/desativar/{id}(id=${aluno.id})}"
+						       class="btn btn-secondary btn-action"
+						       th:data-nome="${aluno.nome}"
+						       onclick="return confirm('Desativar a matrícula de ' + this.dataset.nome + '?')"
+						       title="Desativar Matrícula">
+						        <i class="bi bi-pause-circle"></i>
+						    </a>
+
+						    <!-- ATIVAR (só aparece se estiver inativo) -->
+						    <a th:if="${aluno.matriculaAtiva == null or !aluno.matriculaAtiva}"
+						       th:href="@{/alunos/ativar/{id}(id=${aluno.id})}"
+						       class="btn btn-success btn-action"
+						       th:data-nome="${aluno.nome}"
+						       onclick="return confirm('Ativar a matrícula de ' + this.dataset.nome + '?')"
+						       title="Ativar Matrícula">
+						        <i class="bi bi-play-circle"></i>
+						    </a>
+
+						    <!-- BOLETIM (não tem confirmação) -->
+						    <a th:href="@{/notas/boletim/{id}(id=${aluno.id})}"
+						       class="btn btn-info btn-action" title="Boletim">
+						        <i class="bi bi-file-text"></i>
+						    </a>
+
+						    <!-- EXCLUIR (usa th:data-nome) -->
+						    <a th:href="@{/alunos/excluir/{id}(id=${aluno.id})}"
+						       class="btn btn-danger btn-action"
+						       th:data-nome="${aluno.nome}"
+						       onclick="return confirm('EXCLUIR o aluno ' + this.dataset.nome + '? Esta ação não pode ser desfeita.')"
+						       title="Excluir">
+						        <i class="bi bi-trash"></i>
+						    </a>
+						</td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(alunos)}">
-                        <td colspan="7" class="empty-state">
+                        <td colspan="8" class="empty-state">
                             <i class="bi bi-search"></i>
                             <h5>Nenhum aluno encontrado</h5>
-                            <p>Tente ajustar os filtros ou <a href="/alunos/novo">cadastre um novo aluno</a>.</p>
+                            <p>Ajuste os filtros ou <a href="/alunos/novo">cadastre um novo aluno</a>.</p>
                         </td>
                     </tr>
                 </tbody>
@@ -177,35 +238,24 @@
     </div>
 
     <div class="mt-3">
-        <div th:replace="~{fragments/navbar :: botaoVoltar}"></div>
-    </div>
+	    <div th:replace="~{fragments/navbar :: botaoInicio}"></div>
+	    <div th:replace="~{fragments/navbar :: botaoVoltar}"></div>
+	</div>
 </div>
 
-<!-- Toast -->
 <div th:replace="~{fragments/navbar :: toast}"></div>
-
-<!-- Scripts -->
 <script th:replace="~{fragments/navbar :: scriptToast}"></script>
 <script th:replace="~{fragments/navbar :: scriptVoltar}"></script>
 
 <script>
-    function confirmarExclusaoAluno(el) {
-        const nome = el.getAttribute('data-nome');
-        return confirm('⚠️ Excluir o aluno "' + nome + '"?\n\nEsta ação não pode ser desfeita.');
-    }
-
     function exportarCSV() {
         const tabela = document.getElementById('tabelaDados');
         if (!tabela) return;
-
         let csv = '';
-
         const ths = tabela.querySelectorAll('thead th');
         const headers = [];
         ths.forEach((th, i) => {
-            if (i < ths.length - 1) {
-                headers.push('"' + th.textContent.trim() + '"');
-            }
+            if (i < ths.length - 1) headers.push('"' + th.textContent.trim() + '"');
         });
         csv += headers.join(';') + '\n';
 
@@ -221,9 +271,7 @@
                     linha.push('"' + texto + '"');
                 }
             });
-            if (linha.length > 0) {
-                csv += linha.join(';') + '\n';
-            }
+            if (linha.length > 0) csv += linha.join(';') + '\n';
         });
 
         const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -234,7 +282,6 @@
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-
         mostrarToast('sucesso', 'Arquivo CSV gerado com sucesso!');
     }
 </script>

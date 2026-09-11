@@ -1,5 +1,6 @@
 package br.com.escola.controller;
 
+import br.com.escola.util.CpfValidator;
 import br.com.escola.model.Aluno;
 import br.com.escola.model.ResponsavelFinanceiro;
 import br.com.escola.service.AlunoService;
@@ -8,18 +9,17 @@ import br.com.escola.service.SerieService;
 import br.com.escola.service.TurmaService;
 import br.com.escola.service.ResponsavelFinanceiroService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("unused")
 @Controller
 @RequestMapping("/alunos")
 public class AlunoController {
@@ -43,6 +43,7 @@ public class AlunoController {
     public String listar(@RequestParam(required = false) String nome,
                          @RequestParam(required = false) Long serieId,
                          @RequestParam(required = false) Long turmaId,
+                         @RequestParam(required = false) Integer anoLetivo,
                          Model model) {
 
         List<Aluno> alunos = alunoService.listarTodos();
@@ -53,16 +54,19 @@ public class AlunoController {
                     .filter(a -> a.getNome() != null && a.getNome().toLowerCase().contains(termo))
                     .collect(Collectors.toList());
         }
-
         if (serieId != null && serieId > 0) {
             alunos = alunos.stream()
                     .filter(a -> a.getSerie() != null && a.getSerie().getId().equals(serieId))
                     .collect(Collectors.toList());
         }
-
         if (turmaId != null && turmaId > 0) {
             alunos = alunos.stream()
                     .filter(a -> a.getTurma() != null && a.getTurma().getId().equals(turmaId))
+                    .collect(Collectors.toList());
+        }
+        if (anoLetivo != null && anoLetivo > 0) {
+            alunos = alunos.stream()
+                    .filter(a -> a.getAnoLetivo() != null && a.getAnoLetivo().equals(anoLetivo))
                     .collect(Collectors.toList());
         }
 
@@ -72,6 +76,8 @@ public class AlunoController {
         model.addAttribute("filtroNome", nome);
         model.addAttribute("filtroSerieId", serieId);
         model.addAttribute("filtroTurmaId", turmaId);
+        model.addAttribute("filtroAnoLetivo", anoLetivo);
+        model.addAttribute("anoAtual", LocalDate.now().getYear());
         model.addAttribute("totalAlunos", alunoService.listarTodos().size());
         model.addAttribute("totalFiltrado", alunos.size());
 
@@ -82,6 +88,9 @@ public class AlunoController {
     public String novo(Model model) {
         Aluno aluno = new Aluno();
         aluno.setResponsavelFinanceiro(new ResponsavelFinanceiro());
+        aluno.setAnoLetivo(LocalDate.now().getYear());
+        aluno.setDataMatricula(LocalDate.now());
+        aluno.setMatriculaAtiva(true);
         model.addAttribute("aluno", aluno);
         model.addAttribute("series", serieService.listarTodas());
         model.addAttribute("turmas", turmaService.listarTodas());
@@ -97,7 +106,10 @@ public class AlunoController {
 
             if (respForm.getCpf() != null && !respForm.getCpf().trim().isEmpty()) {
                 if (!br.com.escola.util.CpfValidator.isValid(respForm.getCpf())) {
-                    return "redirect:/alunos/novo?cpfInvalido";
+                    String url = aluno.getId() != null
+                            ? "/alunos/editar/" + aluno.getId()
+                            : "/alunos/novo";
+                    return "redirect:" + url + "?cpfInvalido";
                 }
 
                 String cpfLimpo = respForm.getCpf().replaceAll("[^0-9]", "");
@@ -128,6 +140,9 @@ public class AlunoController {
                 existente.setMatricula(aluno.getMatricula());
                 existente.setSerie(aluno.getSerie());
                 existente.setTurma(aluno.getTurma());
+                existente.setAnoLetivo(aluno.getAnoLetivo());
+                existente.setDataMatricula(aluno.getDataMatricula());
+                existente.setMatriculaAtiva(aluno.getMatriculaAtiva());
 
                 if (respForm != null && respForm.getNome() != null && !respForm.getNome().isEmpty()) {
                     ResponsavelFinanceiro respExistente = responsavelService.buscarPorAlunoId(existente.getId());
@@ -174,11 +189,59 @@ public class AlunoController {
         return "alunos/cadastrar";
     }
 
+    // ===== EXCLUIR (com tratamento de erro amigável) =====
     @GetMapping("/excluir/{id}")
-    public String excluir(@PathVariable Long id) {
-        responsavelService.excluirPorAlunoId(id);
-        notaService.excluirPorAlunoId(id);
-        alunoService.excluir(id);
-        return "redirect:/alunos?sucesso";
+    public String excluir(@PathVariable Long id, RedirectAttributes attributes) {
+        try {
+            responsavelService.excluirPorAlunoId(id);
+            notaService.excluirPorAlunoId(id);
+            alunoService.excluir(id);
+            attributes.addFlashAttribute("mensagemSucesso", "Aluno excluído com sucesso!");
+        } catch (DataIntegrityViolationException e) {
+            attributes.addFlashAttribute("mensagemErro",
+                    "Não é possível excluir este aluno pois ele possui mensalidades, notas ou frequências vinculadas. " +
+                    "Use a opção 'Desativar Matrícula' para preservar o histórico.");
+        } catch (Exception e) {
+            attributes.addFlashAttribute("mensagemErro",
+                    "Erro ao excluir o aluno: " + e.getMessage());
+        }
+        return "redirect:/alunos";
+    }
+
+    // ===== REMATRICULAR =====
+    @GetMapping("/rematricular/{id}")
+    public String rematricular(@PathVariable Long id) {
+        Aluno aluno = alunoService.buscarPorId(id);
+        if (aluno != null) {
+            int anoAtual = aluno.getAnoLetivo() != null ? aluno.getAnoLetivo() : LocalDate.now().getYear();
+            aluno.setAnoLetivo(anoAtual + 1);
+            aluno.setDataMatricula(LocalDate.now());
+            aluno.setMatriculaAtiva(true);
+            alunoService.salvar(aluno);
+            return "redirect:/alunos?rematriculado=" + aluno.getNome();
+        }
+        return "redirect:/alunos";
+    }
+
+    // ===== DESATIVAR MATRÍCULA =====
+    @GetMapping("/desativar/{id}")
+    public String desativar(@PathVariable Long id) {
+        Aluno aluno = alunoService.buscarPorId(id);
+        if (aluno != null) {
+            aluno.setMatriculaAtiva(false);
+            alunoService.salvar(aluno);
+        }
+        return "redirect:/alunos?desativado";
+    }
+
+    // ===== NOVO: ATIVAR MATRÍCULA =====
+    @GetMapping("/ativar/{id}")
+    public String ativar(@PathVariable Long id) {
+        Aluno aluno = alunoService.buscarPorId(id);
+        if (aluno != null) {
+            aluno.setMatriculaAtiva(true);
+            alunoService.salvar(aluno);
+        }
+        return "redirect:/alunos?ativado";
     }
 }

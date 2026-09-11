@@ -3,7 +3,6 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
 
-<!-- ========== NAVBAR PADRONIZADA ========== -->
 <nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
     <div class="container-fluid">
         <a class="navbar-brand fw-bold me-3" href="/home">
@@ -13,7 +12,6 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-            <!-- MENU ESQUERDO -->
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','SECRETARIA')">
                     <a class="nav-link" href="/series">Séries</a>
@@ -25,7 +23,7 @@
                     <a class="nav-link" href="/turmas">Turmas</a>
                 </li>
                 <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','SECRETARIA')">
-                    <a class="nav-link" href="/alunos">Alunos</a>
+                    <a class="nav-link" href="/alunos">Matrículas</a>
                 </li>
                 <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','PROFESSOR')">
                     <a class="nav-link" href="/notas/lancar">Notas</a>
@@ -49,8 +47,6 @@
                     <a class="nav-link" href="/escola"><i class="bi bi-building"></i> Escola</a>
                 </li>
             </ul>
-
-            <!-- MENU DIREITO (usuário + sair) -->
             <ul class="navbar-nav ms-auto align-items-center">
                 <li class="nav-item me-2">
                     <span class="user-info text-white" title="Usuário logado">
@@ -68,7 +64,6 @@
     </div>
 </nav>
 
-<!-- ========== ESTILO DO NAVBAR (aplicado a todas as telas) ========== -->
 <style th:fragment="estiloNavbar">
     .navbar .nav-link {
         font-size: 0.92rem;
@@ -76,9 +71,7 @@
         padding-right: 0.6rem !important;
         white-space: nowrap;
     }
-    .navbar-brand {
-        white-space: nowrap;
-    }
+    .navbar-brand { white-space: nowrap; }
     .user-info {
         background: rgba(255,255,255,0.15);
         padding: 4px 12px;
@@ -96,18 +89,12 @@
         font-weight: 600;
         white-space: nowrap;
     }
-    /* Ajuste responsivo */
     @media (max-width: 991px) {
-        .navbar-nav .nav-link {
-            padding: 8px 12px !important;
-        }
-        .user-info {
-            margin-bottom: 8px;
-        }
+        .navbar-nav .nav-link { padding: 8px 12px !important; }
+        .user-info { margin-bottom: 8px; }
     }
 </style>
 
-<!-- ========== TOAST DE NOTIFICAÇÕES ========== -->
 <div th:fragment="toast" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
     <div id="toastSucesso" class="toast align-items-center text-white bg-success border-0" role="alert">
         <div class="d-flex">
@@ -118,7 +105,6 @@
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
         </div>
     </div>
-
     <div id="toastErro" class="toast align-items-center text-white bg-danger border-0" role="alert">
         <div class="d-flex">
             <div class="toast-body">
@@ -128,7 +114,6 @@
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
         </div>
     </div>
-
     <div id="toastAviso" class="toast align-items-center text-dark bg-warning border-0" role="alert">
         <div class="d-flex">
             <div class="toast-body">
@@ -140,14 +125,20 @@
     </div>
 </div>
 
-<!-- ========== BOTÃO VOLTAR INTELIGENTE ========== -->
-<div th:fragment="botaoVoltar">
+<!-- Botão Início reutilizável -->
+<div th:fragment="botaoInicio" class="d-inline-block me-2">
+    <a href="/home" class="btn btn-primary">
+        <i class="bi bi-house-door"></i> Início
+    </a>
+</div>
+
+<!-- Botão Voltar reutilizável -->
+<div th:fragment="botaoVoltar" class="d-inline-block">
     <button type="button" class="btn btn-secondary" onclick="voltarPagina()">
         <i class="bi bi-arrow-left"></i> Voltar
     </button>
 </div>
 
-<!-- ========== SCRIPT DO BOTÃO VOLTAR ========== -->
 <script th:fragment="scriptVoltar">
     function voltarPagina() {
         if (document.referrer && document.referrer.indexOf(window.location.hostname) > -1) {
@@ -158,29 +149,30 @@
     }
 </script>
 
-<!-- ========== SCRIPT DE TOAST ========== -->
 <script th:fragment="scriptToast">
     document.addEventListener('DOMContentLoaded', function() {
         const params = new URLSearchParams(window.location.search);
         let exibiu = false;
-
         if (params.has('sucesso')) { mostrarToast('sucesso', 'Operação realizada com sucesso!'); exibiu = true; }
         if (params.has('loteSucesso')) { mostrarToast('sucesso', params.get('loteSucesso') + ' registro(s) criado(s) com sucesso!'); exibiu = true; }
         if (params.has('revertido')) { mostrarToast('sucesso', 'Pagamento revertido com sucesso!'); exibiu = true; }
         if (params.has('cancelada')) { mostrarToast('sucesso', 'Registro cancelado com sucesso!'); exibiu = true; }
         if (params.has('registroSucesso')) { mostrarToast('sucesso', 'Registro salvo com sucesso!'); exibiu = true; }
+        if (params.has('rematriculado')) { mostrarToast('sucesso', params.get('rematriculado') + ' foi rematriculado!'); exibiu = true; }
+        if (params.has('desativado')) { mostrarToast('aviso', 'Matrícula desativada.'); exibiu = true; }
+        if (params.has('ativado')) { mostrarToast('sucesso', 'Matrícula ativada com sucesso!'); exibiu = true; }
         if (params.has('error')) { mostrarToast('erro', 'Usuário ou senha inválidos!'); exibiu = true; }
         if (params.has('erro')) { mostrarToast('erro', 'Ocorreu um erro!'); exibiu = true; }
         if (params.has('erroDuplicado')) { mostrarToast('erro', 'Já existe um registro com estes dados!'); exibiu = true; }
+        if (params.has('cpfInvalido')) { mostrarToast('erro', 'CPF inválido!'); exibiu = true; }
+        if (params.has('cpfDuplicado')) { mostrarToast('erro', 'CPF já cadastrado!'); exibiu = true; }
         if (params.has('aviso')) { mostrarToast('aviso', params.get('aviso')); exibiu = true; }
-
         if (exibiu) {
             const url = new URL(window.location);
             url.search = '';
             window.history.replaceState({}, '', url);
         }
     });
-
     function mostrarToast(tipo, mensagem) {
         const idToast = 'toast' + tipo.charAt(0).toUpperCase() + tipo.slice(1);
         const idMsg = idToast + 'Mensagem';
@@ -194,7 +186,6 @@
     }
 </script>
 
-<!-- ========== CONFIRMAÇÃO DE EXCLUSÃO PADRONIZADA ========== -->
 <script th:fragment="scriptConfirmar">
     function confirmarExclusao(mensagem) {
         return confirm('⚠️ ' + mensagem + '\n\nEsta ação não pode ser desfeita.');

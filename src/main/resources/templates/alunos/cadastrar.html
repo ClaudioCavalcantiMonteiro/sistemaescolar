@@ -54,31 +54,10 @@
             border-color: #4a6fa5;
             box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.1);
         }
-        .user-info {
-            background: rgba(255,255,255,0.15);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.82rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .navbar .btn-outline-light {
-            border-radius: 20px;
-            padding: 4px 14px;
-            font-size: 0.82rem;
-            font-weight: 600;
-        }
-        .navbar .nav-link {
-            font-size: 0.92rem;
-            padding-left: 0.6rem !important;
-            padding-right: 0.6rem !important;
-        }
     </style>
 </head>
 <body>
 
-<!-- Navbar PADRONIZADA -->
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 <th:block th:replace="~{fragments/navbar :: estiloNavbar}"></th:block>
 
@@ -86,8 +65,8 @@
     <div class="form-card">
         <h1>
             <i class="bi bi-person-plus-fill text-primary"></i>
-            <span th:if="${aluno.id == null}">Novo Aluno</span>
-            <span th:if="${aluno.id != null}">Editar Aluno</span>
+            <span th:if="${aluno.id == null}">Nova Matrícula</span>
+            <span th:if="${aluno.id != null}">Editar Matrícula</span>
         </h1>
         <p class="subtitle">Preencha os dados do aluno e do responsável financeiro.</p>
 
@@ -141,6 +120,22 @@
                         <option th:each="turma : ${turmas}"
                                 th:value="${turma.id}"
                                 th:text="${turma.nome}"></option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Ano Letivo</label>
+                    <input type="number" class="form-control" th:field="*{anoLetivo}"
+                           min="2020" max="2100" placeholder="Ex: 2026">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Data da Matrícula</label>
+                    <input type="date" class="form-control" th:field="*{dataMatricula}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Status da Matrícula</label>
+                    <select class="form-select" th:field="*{matriculaAtiva}">
+                        <option th:value="true">Ativa</option>
+                        <option th:value="false">Inativa</option>
                     </select>
                 </div>
             </div>
@@ -225,18 +220,18 @@
                 <button type="submit" class="btn btn-success">
                     <i class="bi bi-save"></i> Salvar
                 </button>
+                <a href="/home" class="btn btn-primary">
+                    <i class="bi bi-house-door"></i> Início
+                </a>
                 <a href="/alunos" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left"></i> Cancelar
+                    <i class="bi bi-arrow-left"></i> Voltar
                 </a>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Toast -->
 <div th:replace="~{fragments/navbar :: toast}"></div>
-
-<!-- Scripts -->
 <script th:replace="~{fragments/navbar :: scriptToast}"></script>
 
 <script>
