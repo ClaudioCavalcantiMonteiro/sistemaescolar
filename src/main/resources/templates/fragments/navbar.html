@@ -46,6 +46,11 @@
                 <li class="nav-item" sec:authorize="hasRole('ADMIN')">
                     <a class="nav-link" href="/escola"><i class="bi bi-building"></i> Escola</a>
                 </li>
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                    <a class="nav-link" href="/licenca/status" title="Status da Licença">
+                        <i class="bi bi-shield-check"></i> Licença
+                    </a>
+                </li>
             </ul>
             <ul class="navbar-nav ms-auto align-items-center">
                 <li class="nav-item me-2">

@@ -47,6 +47,19 @@
             <span th:if="${usuario.id != null}">Editar Usuário</span>
         </h1>
 
+        <!-- ===== ALERTAS FLASH ===== -->
+        <div th:if="${mensagemSucesso}" class="alert alert-success alert-dismissible fade show d-flex align-items-center" role="alert">
+            <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+            <div th:text="${mensagemSucesso}"></div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div th:if="${mensagemErro}" class="alert alert-danger alert-dismissible fade show d-flex align-items-center" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+            <div th:text="${mensagemErro}"></div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+        </div>
+
         <div class="role-info">
             <strong>Perfis disponíveis:</strong><br>
             <i class="bi bi-shield-fill-check text-danger"></i> <strong>ADMIN</strong> – acesso total (inclui gerenciar usuários)<br>

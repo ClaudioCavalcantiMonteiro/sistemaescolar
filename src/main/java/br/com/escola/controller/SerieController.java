@@ -3,9 +3,11 @@ package br.com.escola.controller;
 import br.com.escola.model.Serie;
 import br.com.escola.service.SerieService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,8 +44,13 @@ public class SerieController {
     }
 
     @PostMapping("/salvar")
-    public String salvar(@ModelAttribute Serie serie) {
-        serieService.salvar(serie);
+    public String salvar(@ModelAttribute Serie serie, RedirectAttributes attributes) {
+        try {
+            serieService.salvar(serie);
+            attributes.addFlashAttribute("mensagemSucesso", "Série salva com sucesso!");
+        } catch (Exception e) {
+            attributes.addFlashAttribute("mensagemErro", "Erro ao salvar a série: " + e.getMessage());
+        }
         return "redirect:/series";
     }
 
@@ -54,8 +61,16 @@ public class SerieController {
     }
 
     @GetMapping("/excluir/{id}")
-    public String excluir(@PathVariable Long id) {
-        serieService.excluir(id);
+    public String excluir(@PathVariable Long id, RedirectAttributes attributes) {
+        try {
+            serieService.excluir(id);
+            attributes.addFlashAttribute("mensagemSucesso", "Série excluída com sucesso!");
+        } catch (DataIntegrityViolationException e) {
+            attributes.addFlashAttribute("mensagemErro",
+                    "Não é possível excluir esta série, pois existem turmas ou alunos vinculados.");
+        } catch (Exception e) {
+            attributes.addFlashAttribute("mensagemErro", "Erro ao excluir: " + e.getMessage());
+        }
         return "redirect:/series";
     }
 }

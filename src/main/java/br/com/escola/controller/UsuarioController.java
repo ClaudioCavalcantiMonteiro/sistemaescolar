@@ -3,9 +3,11 @@ package br.com.escola.controller;
 import br.com.escola.model.Usuario;
 import br.com.escola.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -49,17 +51,27 @@ public class UsuarioController {
     @GetMapping("/novo")
     public String novo(Model model) {
         Usuario u = new Usuario();
-        u.setRole("PROFESSOR"); // Valor padrão sugerido
+        u.setRole("PROFESSOR");
         model.addAttribute("usuario", u);
         return "usuarios/cadastrar";
     }
 
     @PostMapping("/salvar")
-    public String salvar(@ModelAttribute Usuario usuario) {
-        System.out.println(">>> Salvando usuário: " + usuario.getEmail() +
-                          " | role recebida: " + usuario.getRole() +
-                          " | id: " + usuario.getId());
-        usuarioService.salvar(usuario);
+    public String salvar(@ModelAttribute Usuario usuario, RedirectAttributes attributes) {
+        try {
+            usuarioService.salvar(usuario);
+            attributes.addFlashAttribute("mensagemSucesso", "Usuário salvo com sucesso!");
+        } catch (DataIntegrityViolationException e) {
+            attributes.addFlashAttribute("mensagemErro",
+                    "Já existe um usuário cadastrado com este e-mail!");
+            if (usuario.getId() != null) {
+                return "redirect:/usuarios/editar/" + usuario.getId();
+            }
+            return "redirect:/usuarios/novo";
+        } catch (Exception e) {
+            attributes.addFlashAttribute("mensagemErro", "Erro ao salvar o usuário: " + e.getMessage());
+            return "redirect:/usuarios";
+        }
         return "redirect:/usuarios";
     }
 
@@ -71,18 +83,29 @@ public class UsuarioController {
     }
 
     @GetMapping("/excluir/{id}")
-    public String excluir(@PathVariable Long id) {
+    public String excluir(@PathVariable Long id, RedirectAttributes attributes) {
         Usuario usuario = usuarioService.buscarPorId(id);
-        // Impede exclusão do último admin
+
         if (usuario != null && "ADMIN".equals(usuario.getRole())) {
             long admins = usuarioService.listarTodos().stream()
                     .filter(u -> "ADMIN".equals(u.getRole()))
                     .count();
             if (admins <= 1) {
-                return "redirect:/usuarios?erroUltimoAdmin";
+                attributes.addFlashAttribute("mensagemErro",
+                        "Não é possível excluir o último administrador do sistema.");
+                return "redirect:/usuarios";
             }
         }
-        usuarioService.excluir(id);
+
+        try {
+            usuarioService.excluir(id);
+            attributes.addFlashAttribute("mensagemSucesso", "Usuário excluído com sucesso!");
+        } catch (DataIntegrityViolationException e) {
+            attributes.addFlashAttribute("mensagemErro",
+                    "Não é possível excluir este usuário, pois ele está vinculado a registros do sistema.");
+        } catch (Exception e) {
+            attributes.addFlashAttribute("mensagemErro", "Erro ao excluir: " + e.getMessage());
+        }
         return "redirect:/usuarios";
     }
 }

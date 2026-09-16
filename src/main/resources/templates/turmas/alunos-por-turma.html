@@ -1,174 +1,219 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alunos por Turma</title>
+    <title>Turmas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        * { font-family: 'Inter', sans-serif; }
         body { background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%); min-height: 100vh; }
+
+        .header-card {
+            background: linear-gradient(135deg, #4a6fa5 0%, #3a5a8a 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 24px rgba(74,111,165,0.25);
+        }
+        .header-card h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .header-card p {
+            opacity: 0.9;
+            margin-bottom: 0;
+            font-size: 1rem;
+        }
+
         .turma-card {
             background: white;
-            border-radius: 16px;
+            border-radius: 14px;
             box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-            transition: transform 0.25s, box-shadow 0.25s;
-            height: 100%;
             overflow: hidden;
+            transition: all 0.3s ease;
+            height: 100%;
         }
         .turma-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+            transform: translateY(-6px);
+            box-shadow: 0 12px 32px rgba(74,111,165,0.2);
         }
-        .turma-card .card-header-turma {
-            background: linear-gradient(135deg, #4a6fa5 0%, #5b82b8 100%);
+
+        .turma-header {
+            background: linear-gradient(135deg, #4a6fa5 0%, #3a5a8a 100%);
             color: white;
             padding: 16px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .turma-card .card-header-turma h5 {
+        .turma-header h5 {
+            font-size: 1.1rem;
+            font-weight: 700;
             margin: 0;
-            font-weight: 600;
-            font-size: 1.05rem;
         }
-        .turma-card .card-body {
+        .turma-header .badge-alunos {
+            background: rgba(255,255,255,0.25);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .turma-header .badge-alunos.zero {
+            background: #dc3545;
+        }
+        .turma-header .badge-alunos.tem {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .turma-body {
             padding: 20px;
         }
         .info-row {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-            font-size: 0.9rem;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-size: 0.92rem;
             color: #495057;
         }
         .info-row i {
             color: #4a6fa5;
-            width: 20px;
             font-size: 1rem;
+            width: 20px;
+            text-align: center;
         }
-        .alunos-badge {
-            background: rgba(255,255,255,0.25);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
+        .info-row strong {
+            color: #1e293b;
         }
-        .alunos-badge.zero {
-            background: rgba(220, 53, 69, 0.9);
-        }
+
         .btn-visualizar {
             width: 100%;
-            border-radius: 10px;
-            font-weight: 600;
-            padding: 10px;
-            font-size: 0.9rem;
-        }
-        .page-header {
-            background: linear-gradient(135deg, #2c3e50 0%, #4a6fa5 100%);
+            background: #4a6fa5;
             color: white;
-            padding: 24px;
-            border-radius: 12px;
-            margin-bottom: 24px;
+            padding: 10px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            text-decoration: none;
+            margin-top: 16px;
         }
+        .btn-visualizar:hover {
+            background: #3a5a8a;
+            color: white;
+            transform: translateY(-2px);
+        }
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
             background: white;
-            border-radius: 16px;
-            color: #6c757d;
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
         }
-        .empty-state i { font-size: 3rem; color: #ced4da; margin-bottom: 12px; }
+        .empty-state i {
+            font-size: 4rem;
+            color: #ced4da;
+            margin-bottom: 16px;
+        }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/home"><i class="bi bi-mortarboard"></i> Sistema Escolar</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item"><a class="nav-link" href="/series">Séries</a></li>
-                <li class="nav-item"><a class="nav-link" href="/materias">Matérias</a></li>
-                <li class="nav-item"><a class="nav-link" href="/turmas">Turmas</a></li>
-                <li class="nav-item"><a class="nav-link" href="/alunos">Alunos</a></li>
-                <li class="nav-item"><a class="nav-link active" href="/turmas/alunos">Alunos por Turma</a></li>
-            </ul>
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="/logout"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<th:block th:replace="~{fragments/navbar :: estiloNavbar}"></th:block>
 
 <div class="container mt-4 pb-5">
-    <div class="page-header">
-        <h1 class="mb-1"><i class="bi bi-diagram-3-fill"></i> Turmas</h1>
-        <p class="mb-0 opacity-75">Clique em "Visualizar Turma" para ver os alunos matriculados.</p>
+
+    <!-- ===== CABEÇALHO ===== -->
+    <div class="header-card">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h1><i class="bi bi-people-fill"></i> Turmas</h1>
+                <p>Clique em "Visualizar Turma" para ver os alunos matriculados.</p>
+            </div>
+            <a href="/home" class="btn btn-light">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+        </div>
     </div>
 
+    <!-- ===== CARDS DE TURMAS ===== -->
     <div class="row g-4">
-        <div th:each="turma : ${turmas}" class="col-md-6 col-lg-4">
+        <div class="col-md-6 col-lg-4" th:each="turma : ${turmas}">
             <div class="turma-card">
-                <div class="card-header-turma">
-                    <h5><i class="bi bi-people-fill me-2"></i><span th:text="${turma.nome}"></span></h5>
-                    <span th:with="qtd=${#lists.size(turma.alunos)}"
-                          class="alunos-badge"
-                          th:classappend="${qtd == 0} ? 'zero' : ''">
+                <div class="turma-header">
+                    <h5>
+                        <i class="bi bi-people-fill"></i>
+                        <span th:text="${turma.nome}">Turma</span>
+                    </h5>
+                    <span class="badge-alunos"
+                          th:classappend="${turma.alunos != null && !turma.alunos.isEmpty()} ? 'tem' : 'zero'">
                         <i class="bi bi-person-fill"></i>
-                        <span th:text="${qtd}"></span>
+                        <span th:text="${turma.alunos != null ? #lists.size(turma.alunos) : 0}">0</span>
                     </span>
                 </div>
-                <div class="card-body">
+                <div class="turma-body">
                     <div class="info-row">
-                        <i class="bi bi-book-fill"></i>
-                        <span><strong>Série:</strong> <span th:text="${turma.serie != null ? turma.serie.nome : 'N/A'}"></span></span>
+                        <i class="bi bi-book"></i>
+                        <span><strong>Série:</strong></span>
+                        <span th:text="${turma.serie != null ? turma.serie.nome : 'N/A'}">-</span>
                     </div>
-                    <div class="info-row" th:if="${turma.ano != null and !turma.ano.isEmpty()}">
-                        <i class="bi bi-calendar-fill"></i>
-                        <span><strong>Ano:</strong> <span th:text="${turma.ano}"></span></span>
+                    <div class="info-row">
+                        <i class="bi bi-calendar"></i>
+                        <span><strong>Ano:</strong></span>
+                        <span th:text="${turma.ano != null ? turma.ano : '-'}">-</span>
                     </div>
-                    <div class="info-row" th:if="${turma.turno != null and !turma.turno.isEmpty()}">
-                        <i class="bi bi-clock-fill"></i>
-                        <span><strong>Turno:</strong> <span th:text="${turma.turno}"></span></span>
+                    <div class="info-row">
+                        <i class="bi bi-clock"></i>
+                        <span><strong>Turno:</strong></span>
+                        <span th:text="${turma.turno != null ? turma.turno : '-'}">-</span>
                     </div>
 
-                    <div class="d-grid mt-4">
-                        <a th:href="@{/turmas/{id}/alunos(id=${turma.id})}"
-                           class="btn btn-primary btn-visualizar">
-                            <i class="bi bi-eye-fill"></i> Visualizar Turma
-                        </a>
-                    </div>
+                    <a th:href="@{/turmas/{id}/alunos(id=${turma.id})}"
+                       class="btn-visualizar">
+                        <i class="bi bi-eye-fill"></i> Visualizar Turma
+                    </a>
                 </div>
             </div>
         </div>
 
-        <div th:if="${#lists.isEmpty(turmas)}" class="col-12">
+        <!-- ===== ESTADO VAZIO ===== -->
+        <div class="col-12" th:if="${#lists.isEmpty(turmas)}">
             <div class="empty-state">
                 <i class="bi bi-inbox"></i>
                 <h4>Nenhuma turma cadastrada</h4>
-                <p>Cadastre uma turma para começar a vincular alunos.</p>
-                <a href="/turmas/novo" class="btn btn-primary">
-                    <i class="bi bi-plus-circle"></i> Cadastrar Turma
+                <p class="text-muted">Cadastre uma turma para começar.</p>
+                <a href="/turmas/novo" class="btn btn-primary mt-2">
+                    <i class="bi bi-plus-circle"></i> Nova Turma
                 </a>
             </div>
         </div>
     </div>
 
+    <!-- ===== RODAPÉ ===== -->
     <div class="mt-4">
-        <a href="/home" class="btn btn-secondary"><i class="bi bi-house"></i> Voltar ao Início</a>
+        <a href="/home" class="btn btn-secondary">
+            <i class="bi bi-house"></i> Voltar ao Início
+        </a>
     </div>
+
 </div>
 
+<div th:replace="~{fragments/navbar :: toast}"></div>
+<script th:replace="~{fragments/navbar :: scriptToast}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

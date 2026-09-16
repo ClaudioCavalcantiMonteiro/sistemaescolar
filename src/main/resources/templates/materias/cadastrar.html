@@ -40,9 +40,17 @@
             <span th:if="${materia.id != null}">Editar Matéria</span>
         </h1>
 
-        <div th:if="${param.erroDuplicado}" class="alert alert-warning">
-            <i class="bi bi-exclamation-triangle"></i>
-            <strong>Matéria já existe!</strong> Escolha outro nome.
+        <!-- ===== ALERTAS FLASH ===== -->
+        <div th:if="${mensagemSucesso}" class="alert alert-success alert-dismissible fade show d-flex align-items-center" role="alert">
+            <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+            <div th:text="${mensagemSucesso}"></div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div th:if="${mensagemErro}" class="alert alert-danger alert-dismissible fade show d-flex align-items-center" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+            <div th:text="${mensagemErro}"></div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
         </div>
 
         <form th:action="@{/materias/salvar}" th:object="${materia}" method="post">

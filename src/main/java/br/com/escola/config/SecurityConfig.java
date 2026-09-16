@@ -23,14 +23,18 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(authz -> authz
-                // Públicas
+                // Publicas
                 .requestMatchers("/login", "/css/**", "/js/**",
-                                 "/images/**", "/h2-console/**", "/error").permitAll()
+                                 "/images/**", "/h2-console/**", "/error",
+                                 "/licenca/ativar", "/licenca/bloqueada").permitAll()
+
+                // Licenca - demais rotas exigem ADMIN
+                .requestMatchers("/licenca/**").hasRole("ADMIN")
 
                 // Apenas ADMIN
                 .requestMatchers("/usuarios/**").hasRole("ADMIN")
 
-                // Cadastros básicos (ADMIN + SECRETARIA)
+                // Cadastros basicos (ADMIN + SECRETARIA)
                 .requestMatchers("/series/**").hasAnyRole("ADMIN", "SECRETARIA")
                 .requestMatchers("/materias/**").hasAnyRole("ADMIN", "SECRETARIA")
                 .requestMatchers("/turmas/**").hasAnyRole("ADMIN", "SECRETARIA")
@@ -39,13 +43,13 @@ public class SecurityConfig {
                 // Notas (ADMIN + PROFESSOR)
                 .requestMatchers("/notas/**").hasAnyRole("ADMIN", "PROFESSOR")
 
-                // Frequência (ADMIN + PROFESSOR + SECRETARIA)
+                // Frequencia
                 .requestMatchers("/frequencia/**").hasAnyRole("ADMIN", "PROFESSOR", "SECRETARIA")
 
-                // Financeiro (ADMIN + SECRETARIA)
+                // Financeiro
                 .requestMatchers("/financeiro/**").hasAnyRole("ADMIN", "SECRETARIA")
 
-                // Relatórios e Dashboard
+                // Relatorios e Dashboard
                 .requestMatchers("/relatorios/**", "/dashboard/**")
                     .hasAnyRole("ADMIN", "PROFESSOR", "SECRETARIA")
 

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ativar Licença</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%); min-height: 100vh; }
+        .ativar-card {
+            background: white; border-radius: 16px; padding: 40px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            max-width: 600px; margin: 40px auto;
+        }
+        .id-box {
+            background: #f1f5f9; padding: 16px;
+            border-radius: 10px; font-family: monospace;
+            font-size: 1.2rem; text-align: center;
+            border: 2px dashed #94a3b8;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="ativar-card">
+        <h1 class="h3 mb-4 text-center">
+            <i class="bi bi-key-fill text-success"></i> Ativar Licença
+        </h1>
+
+        <!-- Mensagens -->
+        <div th:if="${mensagemSucesso}" class="alert alert-success">
+            <i class="bi bi-check-circle-fill"></i>
+            <span th:text="${mensagemSucesso}"></span>
+        </div>
+
+        <div th:if="${mensagemErro}" class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span th:text="${mensagemErro}"></span>
+        </div>
+
+        <!-- ID de Instalação -->
+        <p class="text-muted text-center">Envie este ID para o suporte:</p>
+        <div class="id-box mb-4" th:text="${licenca.idInstalacao}"></div>
+
+        <!-- Formulário -->
+        <form action="/licenca/ativar" method="post">
+            <div class="mb-3">
+                <label class="form-label fw-bold">
+                    <i class="bi bi-key"></i> Chave de Ativação
+                </label>
+                <input type="text"
+                       name="chave"
+                       class="form-control form-control-lg text-center"
+                       placeholder="2026-1215-A8B2-C3D4"
+                       maxlength="19"
+                       style="font-family: monospace; letter-spacing: 2px;"
+                       required>
+                <small class="text-muted">
+                    Formato: <code>AAAA-MMDD-XXXX-XXXX</code>
+                </small>
+            </div>
+
+            <button type="submit" class="btn btn-success btn-lg w-100">
+                <i class="bi bi-check-circle"></i> Ativar Licença
+            </button>
+        </form>
+
+        <!-- Contato -->
+        <div class="alert alert-info mt-4">
+            <i class="bi bi-headset"></i> <strong>Precisa de uma chave?</strong><br>
+            📧 claudio.filho7@hotmail.com<br>
+            📱 (81) 99896-6624
+        </div>
+
+        <div class="text-center">
+            <a href="/home" class="btn btn-link">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

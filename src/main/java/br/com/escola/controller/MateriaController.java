@@ -3,9 +3,11 @@ package br.com.escola.controller;
 import br.com.escola.model.Materia;
 import br.com.escola.service.MateriaService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,11 +44,12 @@ public class MateriaController {
     }
 
     @PostMapping("/salvar")
-    public String salvar(@ModelAttribute Materia materia) {
+    public String salvar(@ModelAttribute Materia materia, RedirectAttributes attributes) {
 
         // Se for NOVO cadastro, verifica se já existe
         if (materia.getId() == null && materiaService.existeNome(materia.getNome())) {
-            return "redirect:/materias/novo?erroDuplicado";
+            attributes.addFlashAttribute("mensagemErro", "Já existe uma matéria com este nome!");
+            return "redirect:/materias/novo";
         }
 
         // Se for EDIÇÃO, verifica se o novo nome pertence a outra matéria
@@ -54,13 +57,19 @@ public class MateriaController {
             Materia existente = materiaService.buscarPorId(materia.getId());
             if (existente != null && !existente.getNome().equalsIgnoreCase(materia.getNome())) {
                 if (materiaService.existeNome(materia.getNome())) {
-                    return "redirect:/materias/editar/" + materia.getId() + "?erroDuplicado";
+                    attributes.addFlashAttribute("mensagemErro", "Já existe uma matéria com este nome!");
+                    return "redirect:/materias/editar/" + materia.getId();
                 }
             }
         }
 
-        materiaService.salvar(materia);
-        return "redirect:/materias?sucesso";
+        try {
+            materiaService.salvar(materia);
+            attributes.addFlashAttribute("mensagemSucesso", "Matéria salva com sucesso!");
+        } catch (Exception e) {
+            attributes.addFlashAttribute("mensagemErro", "Erro ao salvar a matéria: " + e.getMessage());
+        }
+        return "redirect:/materias";
     }
 
     @GetMapping("/editar/{id}")
@@ -70,8 +79,16 @@ public class MateriaController {
     }
 
     @GetMapping("/excluir/{id}")
-    public String excluir(@PathVariable Long id) {
-        materiaService.excluir(id);
-        return "redirect:/materias?sucesso";
+    public String excluir(@PathVariable Long id, RedirectAttributes attributes) {
+        try {
+            materiaService.excluir(id);
+            attributes.addFlashAttribute("mensagemSucesso", "Matéria excluída com sucesso!");
+        } catch (DataIntegrityViolationException e) {
+            attributes.addFlashAttribute("mensagemErro",
+                    "Não é possível excluir esta matéria, pois existem notas ou frequências vinculadas.");
+        } catch (Exception e) {
+            attributes.addFlashAttribute("mensagemErro", "Erro ao excluir: " + e.getMessage());
+        }
+        return "redirect:/materias";
     }
 }

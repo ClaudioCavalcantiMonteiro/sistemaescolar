@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status da Licença</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%); min-height: 100vh; }
+        .licenca-card {
+            background: white; border-radius: 16px; padding: 40px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            max-width: 700px; margin: 40px auto;
+        }
+        .status-box {
+            text-align: center; padding: 30px;
+            border-radius: 12px; margin: 24px 0;
+        }
+        .status-ativa { background: #d1e7dd; color: #0f5132; }
+        .status-aviso { background: #fff3cd; color: #664d03; }
+        .status-bloqueada { background: #f8d7da; color: #842029; }
+        .status-box .icone { font-size: 3rem; margin-bottom: 12px; }
+        .status-box h2 { font-weight: 700; margin-bottom: 8px; }
+        .info-row { padding: 12px 0; border-bottom: 1px solid #e5e9f0; display: flex; justify-content: space-between; }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: #6c757d; font-weight: 500; }
+        .info-valor { font-weight: 600; color: #1e293b; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="licenca-card">
+        <h1 class="h3 mb-4 text-center">
+            <i class="bi bi-shield-check text-primary"></i> Status da Licença
+        </h1>
+
+        <!-- Status Box -->
+        <div th:if="${status == 'ATIVA'}" class="status-box status-ativa">
+            <div class="icone">✅</div>
+            <h2>Licença Ativa</h2>
+            <p>Sua licença está válida. Aproveite o sistema!</p>
+        </div>
+
+        <div th:if="${status == 'EM_AVISO'}" class="status-box status-aviso">
+            <div class="icone">⚠️</div>
+            <h2>Atenção: Licença Próxima do Vencimento</h2>
+            <p th:if="${licenca.diasParaVencer >= 0}">
+                Faltam <strong th:text="${licenca.diasParaVencer}"></strong> dias para o vencimento.
+                Entre em contato para renovar.
+            </p>
+            <p th:if="${licenca.diasParaVencer < 0}">
+                Licença vencida há <strong th:text="${licenca.diasAtraso}"></strong> dias.
+                Você tem <strong th:text="${5 - licenca.diasAtraso}"></strong> dias antes do bloqueio.
+            </p>
+        </div>
+
+        <div th:if="${status == 'BLOQUEADA'}" class="status-box status-bloqueada">
+            <div class="icone">🔒</div>
+            <h2>Sistema Bloqueado</h2>
+            <p>Sua licença expirou. Entre em contato para reativar.</p>
+        </div>
+
+        <!-- Detalhes -->
+        <h3 class="h5 mt-4 mb-3">
+            <i class="bi bi-info-circle"></i> Detalhes
+        </h3>
+
+        <div class="info-row">
+            <span class="info-label">ID de Instalação:</span>
+            <span class="info-valor" th:text="${licenca.idInstalacao}"></span>
+        </div>
+
+        <div class="info-row">
+            <span class="info-label">Data de Instalação:</span>
+            <span class="info-valor" th:text="${#temporals.format(licenca.dataInstalacao, 'dd/MM/yyyy')}"></span>
+        </div>
+
+        <div class="info-row">
+            <span class="info-label">Data de Vencimento:</span>
+            <span class="info-valor" th:text="${#temporals.format(licenca.dataVencimento, 'dd/MM/yyyy')}"></span>
+        </div>
+
+        <div class="info-row">
+            <span class="info-label">Última Ativação:</span>
+            <span class="info-valor"
+                  th:text="${licenca.dataUltimaAtivacao != null ? #temporals.format(licenca.dataUltimaAtivacao, 'dd/MM/yyyy HH:mm') : 'Nunca'}"></span>
+        </div>
+
+        <div class="info-row">
+            <span class="info-label">Chave Atual:</span>
+            <span class="info-valor" th:text="${licenca.chaveAtivacao != null ? licenca.chaveAtivacao : 'Nenhuma'}"></span>
+        </div>
+
+        <!-- Contato -->
+        <div class="alert alert-info mt-4">
+            <i class="bi bi-headset"></i> <strong>Suporte:</strong><br>
+            📧 claudio.filho7@hotmail.com<br>
+            📱 (81) 99896-6624
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="/home" class="btn btn-primary">
+                <i class="bi bi-house-door"></i> Voltar ao Início
+            </a>
+            <a th:if="${status == 'BLOQUEADA' || status == 'EM_AVISO'}"
+               href="/licenca/ativar" class="btn btn-success">
+                <i class="bi bi-key"></i> Ativar Nova Licença
+            </a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

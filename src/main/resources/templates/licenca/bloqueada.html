@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Bloqueado</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            padding: 20px; font-family: 'Inter', sans-serif;
+        }
+        .bloqueio-card {
+            background: white; border-radius: 16px; padding: 50px 40px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+            max-width: 640px; width: 100%; text-align: center;
+        }
+        .lock-icon {
+            font-size: 5rem; color: #dc3545; margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .id-box {
+            background: #f1f5f9; padding: 16px;
+            border-radius: 10px; font-family: monospace;
+            font-size: 1.3rem; text-align: center;
+            border: 2px dashed #94a3b8;
+            letter-spacing: 3px; font-weight: bold;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="bloqueio-card">
+    <div class="lock-icon">🔒</div>
+
+    <h1 class="h3 text-danger mb-3">Sistema Bloqueado</h1>
+
+    <p class="text-muted mb-4">
+        Sua licença de uso expirou e o sistema foi bloqueado.
+        <br>Entre em contato com o suporte para reativar.
+    </p>
+
+    <div class="alert alert-warning">
+        <strong>Período de carência encerrado.</strong>
+        <br>Vencimento: <strong th:text="${licenca != null ? #temporals.format(licenca.dataVencimento, 'dd/MM/yyyy') : '---'}"></strong>
+    </div>
+
+    <p class="text-muted">Envie este ID para o suporte:</p>
+    <div class="id-box" th:text="${licenca != null ? licenca.idInstalacao : '---'}">---</div>
+
+    <div class="d-grid gap-2 mt-4">
+        <a href="/licenca/ativar" class="btn btn-success btn-lg">
+            <i class="bi bi-key-fill"></i> Ativar Nova Licença
+        </a>
+    </div>
+
+    <hr class="my-4">
+
+    <h6 class="text-muted">📞 Suporte</h6>
+    <p class="mb-1">
+        📧 <a href="mailto:claudio.filho7@hotmail.com">claudio.filho7@hotmail.com</a>
+    </p>
+    <p>
+        📱 <a href="https://wa.me/5581998966624">(81) 99896-6624</a>
+    </p>
+</div>
+
+</body>
+</html>

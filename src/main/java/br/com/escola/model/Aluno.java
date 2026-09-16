@@ -1,10 +1,12 @@
 package br.com.escola.model;
 
 import jakarta.persistence.*;
+import org.springframework.format.annotation.DateTimeFormat;
 import jakarta.validation.constraints.NotBlank;
 
 import java.time.LocalDate;
 
+@SuppressWarnings("unused")
 @Entity
 public class Aluno {
 
@@ -15,11 +17,14 @@ public class Aluno {
     @NotBlank
     private String nome;
 
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate dataNascimento;
     private String matricula;
 
     // ===== NOVOS CAMPOS =====
     private Integer anoLetivo;
+
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate dataMatricula;
     private Boolean matriculaAtiva = true;
     // =========================

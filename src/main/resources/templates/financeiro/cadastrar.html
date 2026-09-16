@@ -14,6 +14,14 @@
         }
         .form-card h1 { font-size: 1.4rem; font-weight: 700; color: #2c3e50; margin-bottom: 24px; }
         .form-label { font-weight: 600; color: #495057; font-size: 0.9rem; }
+        .filtro-box {
+            background: #f8fafc;
+            border: 1px solid #e5e9f0;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 20px;
+        }
+        .filtro-box .form-label { font-size: 0.8rem; color: #6c757d; }
     </style>
 </head>
 <body>
@@ -34,12 +42,43 @@
         <h1><i class="bi bi-cash-coin text-success"></i> Nova Mensalidade</h1>
 
         <form th:action="@{/financeiro/salvar}" method="post">
+
+            <!-- ===== FILTROS DE SÉRIE E TURMA ===== -->
+            <div class="filtro-box">
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label"><i class="bi bi-book"></i> Filtrar por Série</label>
+                        <select id="filtroSerie" class="form-select form-select-sm">
+                            <option value="">Todas as séries</option>
+                            <option th:each="s : ${series}" th:value="${s.id}" th:text="${s.nome}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label"><i class="bi bi-people"></i> Filtrar por Turma</label>
+                        <select id="filtroTurma" class="form-select form-select-sm">
+                            <option value="">Todas as turmas</option>
+                            <option th:each="t : ${turmas}"
+                                    th:value="${t.id}"
+                                    th:text="${t.nome}"
+                                    th:attr="data-serie-id=${t.serie != null ? t.serie.id : ''}"></option>
+                        </select>
+                    </div>
+                </div>
+                <small class="text-muted d-block mt-2">
+                    <i class="bi bi-info-circle"></i> Use os filtros acima para encontrar o aluno mais rápido.
+                </small>
+            </div>
+
+            <!-- ===== SELECT DE ALUNOS (com data-attributes para filtro) ===== -->
             <div class="mb-3">
                 <label class="form-label"><i class="bi bi-person"></i> Aluno</label>
-                <select name="alunoId" class="form-select" required>
+                <select name="alunoId" id="selectAluno" class="form-select" required>
                     <option value="">Selecione um aluno</option>
-                    <option th:each="a : ${alunos}" th:value="${a.id}"
-                            th:text="${a.nome} + (${a.turma != null} ? ' (' + ${a.turma.nome} + ')' : '')">
+                    <option th:each="a : ${alunos}"
+                            th:value="${a.id}"
+                            th:text="${a.nome} + (${a.turma != null} ? ' (' + ${a.turma.nome} + ')' : '')"
+                            th:attr="data-serie-id=${a.serie != null ? a.serie.id : ''},
+                                     data-turma-id=${a.turma != null ? a.turma.id : ''}">
                     </option>
                 </select>
             </div>
@@ -79,5 +118,68 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // ===== FILTRO DINÂMICO DE ALUNOS POR SÉRIE E TURMA =====
+    document.addEventListener('DOMContentLoaded', function() {
+        const filtroSerie = document.getElementById('filtroSerie');
+        const filtroTurma = document.getElementById('filtroTurma');
+        const selectAluno = document.getElementById('selectAluno');
+        const todasOpcoesAluno = Array.from(selectAluno.querySelectorAll('option'));
+
+        // Guarda as opções de turma para filtrar depois
+        const todasOpcoesTurma = Array.from(filtroTurma.querySelectorAll('option'));
+
+        function aplicarFiltros() {
+            const serieId = filtroSerie.value;
+            const turmaId = filtroTurma.value;
+
+            // 1) Filtra o dropdown de turmas com base na série escolhida
+            todasOpcoesTurma.forEach(function(opt, i) {
+                if (i === 0) return; // primeira opção ("Todas as turmas") sempre visível
+                const serieDaTurma = opt.getAttribute('data-serie-id');
+                const deveMostrar = !serieId || serieDaTurma === serieId;
+                opt.style.display = deveMostrar ? '' : 'none';
+                opt.disabled = !deveMostrar;
+
+                // Se a turma selecionada não pertence mais à série, limpa
+                if (!deveMostrar && opt.value === turmaId) {
+                    filtroTurma.value = '';
+                }
+            });
+
+            // 2) Filtra o dropdown de alunos
+            const turmaIdEfetiva = filtroTurma.value;
+            let primeiroVisivel = null;
+
+            todasOpcoesAluno.forEach(function(opt) {
+                if (opt.value === '') return; // placeholder sempre visível
+                const serieDoAluno = opt.getAttribute('data-serie-id');
+                const turmaDoAluno = opt.getAttribute('data-turma-id');
+
+                const matchSerie = !serieId || serieDoAluno === serieId;
+                const matchTurma = !turmaIdEfetiva || turmaDoAluno === turmaIdEfetiva;
+
+                const deveMostrar = matchSerie && matchTurma;
+                opt.style.display = deveMostrar ? '' : 'none';
+                opt.disabled = !deveMostrar;
+
+                if (deveMostrar && !primeiroVisivel) {
+                    primeiroVisivel = opt;
+                }
+            });
+
+            // Se o aluno selecionado não está mais visível, limpa
+            const opcaoAtual = selectAluno.options[selectAluno.selectedIndex];
+            if (opcaoAtual && opcaoAtual.value && opcaoAtual.disabled) {
+                selectAluno.value = '';
+            }
+        }
+
+        filtroSerie.addEventListener('change', aplicarFiltros);
+        filtroTurma.addEventListener('change', aplicarFiltros);
+    });
+</script>
+
 </body>
 </html>

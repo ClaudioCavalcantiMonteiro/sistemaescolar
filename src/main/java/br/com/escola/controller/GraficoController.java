@@ -5,8 +5,13 @@ import br.com.escola.model.Nota;
 import br.com.escola.service.AlunoService;
 import br.com.escola.service.MateriaService;
 import br.com.escola.service.NotaService;
+import br.com.escola.service.PdfService;
 import br.com.escola.service.SerieService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,16 +41,17 @@ public class GraficoController {
     @Autowired
     private SerieService serieService;
 
-    // Página de relatórios
+    @Autowired
+    private PdfService pdfService;
+
     @GetMapping
     public String paginaRelatorios(Model model) {
         model.addAttribute("alunos", alunoService.listarTodos());
         model.addAttribute("materias", materiaService.listarTodas());
-        model.addAttribute("series", serieService.listarTodas()); // NOVO
+        model.addAttribute("series", serieService.listarTodas());
         return "relatorios/graficos";
     }
 
-    // ========== API: Alunos por série ==========
     @GetMapping("/api/alunos-por-serie/{serieId}")
     @ResponseBody
     public List<Map<String, Object>> alunosPorSerie(@PathVariable Long serieId) {
@@ -58,7 +65,6 @@ public class GraficoController {
         return resultado;
     }
 
-    // ========== API: Evolução individual (uma matéria) ==========
     @GetMapping("/api/evolucao/{alunoId}/{materiaId}")
     @ResponseBody
     public Map<String, Object> dadosEvolucao(@PathVariable Long alunoId,
@@ -86,13 +92,11 @@ public class GraficoController {
         return resultado;
     }
 
-    // ========== API: Evolução geral (todas as matérias) ==========
     @GetMapping("/api/evolucao-geral/{alunoId}")
     @ResponseBody
     public Map<String, Object> dadosEvolucaoGeral(@PathVariable Long alunoId) {
         Map<String, Object> resultado = new HashMap<>();
 
-        // Labels fixos
         List<String> labels = new ArrayList<>();
         labels.add("1ª Unidade");
         labels.add("2ª Unidade");
@@ -100,7 +104,6 @@ public class GraficoController {
         labels.add("4ª Unidade");
         resultado.put("labels", labels);
 
-        // Cores para as linhas
         String[] cores = {"#4a6fa5", "#e74c3c", "#27ae60", "#f39c12", "#9b59b6",
                           "#16a085", "#d35400", "#2c3e50", "#e91e63", "#00bcd4"};
 
@@ -145,5 +148,47 @@ public class GraficoController {
 
         resultado.put("datasets", datasets);
         return resultado;
+    }
+
+    // ==================================================================
+    // DECLARACAO DE MATRICULA (PDF)
+    // ==================================================================
+    @GetMapping("/declaracao-matricula/{alunoId}")
+    public ResponseEntity<byte[]> declaracaoMatricula(@PathVariable Long alunoId) {
+        try {
+            var aluno = alunoService.buscarPorId(alunoId);
+            if (aluno == null) {
+                System.err.println("[PDF] Aluno nao encontrado: " + alunoId);
+                return ResponseEntity.notFound().build();
+            }
+
+            String nomeArquivo = "declaracao_matricula_" +
+                    aluno.getNome().replaceAll("\\s+", "_") + ".pdf";
+
+            System.out.println("[PDF] Gerando declaracao para: " + aluno.getNome());
+
+            ByteArrayInputStream pdfStream = pdfService.gerarDeclaracaoMatricula(alunoId);
+            byte[] bytes = pdfStream.readAllBytes();
+
+            System.out.println("[PDF] Tamanho do PDF: " + bytes.length + " bytes");
+
+            if (bytes.length == 0) {
+                System.err.println("[PDF] ERRO: PDF vazio!");
+                return ResponseEntity.status(500).build();
+            }
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Content-Disposition", "inline; filename=" + nomeArquivo);
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentLength(bytes.length);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(bytes);
+        } catch (Exception e) {
+            System.err.println("[PDF] ERRO: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).build();
+        }
     }
 }
