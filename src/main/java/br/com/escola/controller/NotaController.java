@@ -4,6 +4,7 @@ import br.com.escola.model.Aluno;
 import br.com.escola.model.Materia;
 import br.com.escola.model.Nota;
 import br.com.escola.service.AlunoService;
+import br.com.escola.service.EscolaService;
 import br.com.escola.service.MateriaService;
 import br.com.escola.service.NotaService;
 import br.com.escola.service.PdfService;
@@ -42,7 +43,10 @@ public class NotaController {
     @Autowired
     private PdfService pdfService;
 
-    // ==================== TELA INICIAL DE LANÇAMENTO ====================
+    @Autowired
+    private EscolaService escolaService;   // NOVO
+
+    // ==================== TELA INICIAL DE LANCAMENTO ====================
     @GetMapping("/lancar")
     public String lancar(@RequestParam(required = false) Long turmaId,
                          @RequestParam(required = false) Long materiaId,
@@ -173,14 +177,14 @@ public class NotaController {
         return "redirect:/notas/lancar?sucesso";
     }
 
-    // ==================== TELA DE SELEÇÃO DE TURMA (VER BOLETINS) ====================
+    // ==================== TELA DE SELECAO DE TURMA ====================
     @GetMapping("/turma")
     public String selecionarTurma(Model model) {
         model.addAttribute("turmas", turmaService.listarTodasComAlunos());
         return "notas/turma-selecionar";
     }
 
-    // ==================== NOTAS POR TURMA (LISTAGEM) ====================
+    // ==================== NOTAS POR TURMA ====================
     @GetMapping("/turma/{turmaId}")
     public String listarNotasPorTurma(@PathVariable Long turmaId, Model model) {
         model.addAttribute("turma", turmaService.buscarPorId(turmaId));
@@ -285,6 +289,7 @@ public class NotaController {
         model.addAttribute("notasPorMateria", notasPorMateria);
         model.addAttribute("graficoLabels", "[\"1ª Unidade\",\"2ª Unidade\",\"3ª Unidade\",\"4ª Unidade\"]");
         model.addAttribute("graficoDatasets", datasetsJson.toString());
+        model.addAttribute("escola", escolaService.buscarEscola());   // NOVO
 
         return "notas/boletim";
     }

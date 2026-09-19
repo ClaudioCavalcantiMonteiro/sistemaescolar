@@ -3,15 +3,30 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
 
+<!-- ======================================================================
+     NAVBAR PRINCIPAL
+     ====================================================================== -->
 <nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
     <div class="container-fluid">
+
         <a class="navbar-brand fw-bold me-3" href="/home">
             <i class="bi bi-mortarboard"></i> Sistema Escolar
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+
+        <!-- Botão hamburguer (celular) -->
+        <button class="navbar-toggler" type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbarNav"
+                aria-controls="navbarNav"
+                aria-expanded="false"
+                aria-label="Alternar navegação">
             <span class="navbar-toggler-icon"></span>
         </button>
+
+        <!-- Menu colapsável -->
         <div class="collapse navbar-collapse" id="navbarNav">
+
+            <!-- Links da esquerda -->
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','SECRETARIA')">
                     <a class="nav-link" href="/series">Séries</a>
@@ -52,6 +67,8 @@
                     </a>
                 </li>
             </ul>
+
+            <!-- Usuário + Sair -->
             <ul class="navbar-nav ms-auto align-items-center">
                 <li class="nav-item me-2">
                     <span class="user-info text-white" title="Usuário logado">
@@ -69,7 +86,13 @@
     </div>
 </nav>
 
+
+<!-- ======================================================================
+     ESTILOS DA NAVBAR + RESPONSIVIDADE GLOBAL
+     ====================================================================== -->
 <style th:fragment="estiloNavbar">
+
+    /* ===== NAVBAR (DESKTOP) ===== */
     .navbar .nav-link {
         font-size: 0.92rem;
         padding-left: 0.6rem !important;
@@ -94,13 +117,222 @@
         font-weight: 600;
         white-space: nowrap;
     }
+
+
+    /* ======================================================================
+       RESPONSIVIDADE GLOBAL - CELULAR E TABLET
+       ====================================================================== */
+
+    /* ===== NAVBAR NO MOBILE (até 992px) ===== */
     @media (max-width: 991px) {
-        .navbar-nav .nav-link { padding: 8px 12px !important; }
-        .user-info { margin-bottom: 8px; }
+
+        .navbar-nav .nav-link {
+            padding: 10px 14px !important;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+        .navbar-nav .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .user-info {
+            margin: 8px 0;
+            width: 100%;
+            justify-content: center;
+        }
+        .navbar-nav .btn-outline-light {
+            width: 100%;
+            padding: 10px !important;
+            font-size: 0.9rem !important;
+        }
     }
+
+    /* ===== CELULAR (até 768px) ===== */
+    @media (max-width: 768px) {
+
+        /* Tipografia */
+        h1, .h1 { font-size: 1.5rem !important; }
+        h2, .h2 { font-size: 1.3rem !important; }
+        h3, .h3 { font-size: 1.15rem !important; }
+        h4, .h4 { font-size: 1.05rem !important; }
+        h5, .h5 { font-size: 1rem !important; }
+
+        /* Botões maiores para toque */
+        .btn {
+            min-height: 42px;
+            padding: 10px 16px;
+            font-size: 0.9rem;
+        }
+        .btn-sm {
+            min-height: 36px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        /* Containers */
+        .container, .container-fluid {
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+
+        /* Cards */
+        .card, .form-card, .filter-card, .table-card {
+            border-radius: 10px;
+        }
+
+        /* Colunas: campos ocupam largura total no mobile */
+        .row > [class*="col-md-"],
+        .row > [class*="col-lg-"] {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+
+        /* Inputs maiores para toque (evita zoom iOS) */
+        .form-control, .form-select {
+            min-height: 44px;
+            font-size: 16px;
+            padding: 10px 14px;
+        }
+
+        /* ===== TABELAS RESPONSIVAS ===== */
+        .table-responsive {
+            -webkit-overflow-scrolling: touch;
+            border-radius: 10px;
+        }
+        .table-responsive::after {
+            content: "⟵ Deslize para ver mais ⟶";
+            display: block;
+            text-align: center;
+            font-size: 0.7rem;
+            color: #94a3b8;
+            padding: 8px 0;
+            background: #f8fafc;
+            border-top: 1px solid #e5e9f0;
+        }
+        .table {
+            font-size: 0.82rem;
+        }
+        .table th, .table td {
+            padding: 8px 10px !important;
+            white-space: nowrap;
+        }
+
+        /* Botões de ação em tabela */
+        .btn-action {
+            min-width: 36px;
+            min-height: 36px;
+            padding: 6px 8px !important;
+            font-size: 0.75rem !important;
+            margin: 2px 1px !important;
+        }
+
+        /* Alertas */
+        .alert {
+            padding: 12px 16px;
+            font-size: 0.88rem;
+        }
+
+        /* ===== CABEÇALHO DA ESCOLA ===== */
+        .escola-header {
+            padding: 16px 20px !important;
+            border-radius: 12px !important;
+            margin-bottom: 16px !important;
+        }
+        .escola-header .escola-nome {
+            font-size: 1.1rem !important;
+        }
+        .escola-header .escola-info {
+            padding-left: 0 !important;
+            gap: 12px !important;
+            font-size: 0.7rem !important;
+            margin-top: 8px;
+        }
+        .escola-header .logo-icon {
+            width: 42px !important;
+            height: 42px !important;
+            font-size: 1.2rem !important;
+        }
+
+        /* ===== HOME - Cards de módulos ===== */
+        .home-card .card-body {
+            min-height: 150px !important;
+            padding: 14px 8px !important;
+        }
+        .home-card .card-body i {
+            font-size: 1.9rem !important;
+        }
+        .home-card .card-title {
+            font-size: 0.85rem !important;
+        }
+        .home-card .card-text {
+            font-size: 0.72rem !important;
+        }
+
+        /* Cabeçalho de boas-vindas */
+        .welcome-header {
+            padding: 20px 22px !important;
+        }
+        .welcome-title-row h1 {
+            font-size: 1.1rem !important;
+        }
+        .welcome-title-row i {
+            font-size: 1.3rem !important;
+        }
+        .welcome-header p {
+            font-size: 0.82rem !important;
+            padding-left: 0 !important;
+        }
+    }
+
+
+    /* ===== CELULAR PEQUENO (até 576px) ===== */
+    @media (max-width: 576px) {
+
+        /* Toasts em largura total */
+        .toast-container {
+            padding: 8px !important;
+            width: 100%;
+        }
+        .toast {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        /* Botões de rodapé */
+        .btn-rodape {
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        /* Gráficos */
+        .grafico-container {
+            height: 280px !important;
+        }
+
+        /* Estatísticas do dashboard */
+        .stat-card .stat-value {
+            font-size: 1.5rem !important;
+        }
+        .stat-card .stat-icon {
+            width: 40px !important;
+            height: 40px !important;
+            font-size: 18px !important;
+        }
+    }
+
+
+    /* ===== TABLET (769px a 992px) ===== */
+    @media (min-width: 769px) and (max-width: 992px) {
+        .container { max-width: 100%; }
+    }
+
 </style>
 
+
+<!-- ======================================================================
+     TOASTS (MENSAGENS DE FEEDBACK)
+     ====================================================================== -->
 <div th:fragment="toast" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+
     <div id="toastSucesso" class="toast align-items-center text-white bg-success border-0" role="alert">
         <div class="d-flex">
             <div class="toast-body">
@@ -110,6 +342,7 @@
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
         </div>
     </div>
+
     <div id="toastErro" class="toast align-items-center text-white bg-danger border-0" role="alert">
         <div class="d-flex">
             <div class="toast-body">
@@ -119,6 +352,7 @@
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
         </div>
     </div>
+
     <div id="toastAviso" class="toast align-items-center text-dark bg-warning border-0" role="alert">
         <div class="d-flex">
             <div class="toast-body">
@@ -128,22 +362,33 @@
             <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
         </div>
     </div>
+
 </div>
 
-<!-- Botão Início reutilizável -->
+
+<!-- ======================================================================
+     BOTÃO INÍCIO (REUTILIZÁVEL)
+     ====================================================================== -->
 <div th:fragment="botaoInicio" class="d-inline-block me-2">
     <a href="/home" class="btn btn-primary">
         <i class="bi bi-house-door"></i> Início
     </a>
 </div>
 
-<!-- Botão Voltar reutilizável -->
+
+<!-- ======================================================================
+     BOTÃO VOLTAR (REUTILIZÁVEL)
+     ====================================================================== -->
 <div th:fragment="botaoVoltar" class="d-inline-block">
     <button type="button" class="btn btn-secondary" onclick="voltarPagina()">
         <i class="bi bi-arrow-left"></i> Voltar
     </button>
 </div>
 
+
+<!-- ======================================================================
+     SCRIPT: BOTÃO VOLTAR
+     ====================================================================== -->
 <script th:fragment="scriptVoltar">
     function voltarPagina() {
         if (document.referrer && document.referrer.indexOf(window.location.hostname) > -1) {
@@ -154,6 +399,10 @@
     }
 </script>
 
+
+<!-- ======================================================================
+     SCRIPT: TOASTS (MENSAGENS DE FEEDBACK)
+     ====================================================================== -->
 <script th:fragment="scriptToast">
     document.addEventListener('DOMContentLoaded', function() {
         const params = new URLSearchParams(window.location.search);
@@ -178,6 +427,7 @@
             window.history.replaceState({}, '', url);
         }
     });
+
     function mostrarToast(tipo, mensagem) {
         const idToast = 'toast' + tipo.charAt(0).toUpperCase() + tipo.slice(1);
         const idMsg = idToast + 'Mensagem';
@@ -191,6 +441,10 @@
     }
 </script>
 
+
+<!-- ======================================================================
+     SCRIPT: CONFIRMAR EXCLUSÃO
+     ====================================================================== -->
 <script th:fragment="scriptConfirmar">
     function confirmarExclusao(mensagem) {
         return confirm('⚠️ ' + mensagem + '\n\nEsta ação não pode ser desfeita.');

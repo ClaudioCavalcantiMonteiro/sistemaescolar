@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>Boletim do Aluno</title>
@@ -7,17 +7,257 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        @media print {
-            .no-print { display: none !important; }
-            body { margin: 0; padding: 0; }
-            .container { max-width: 100%; }
-            .grafico-container { page-break-inside: avoid; }
+        body {
+            background: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .table-bordered th, .table-bordered td { border: 1px solid #dee2e6; }
+
+        /* ===== CABEÇALHO DA ESCOLA (MODERNO) ===== */
+        .escola-header {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 60%, #0f172a 100%);
+            border-radius: 16px;
+            padding: 28px 36px;
+            margin-bottom: 28px;
+            color: white;
+            box-shadow: 0 8px 28px rgba(30,64,175,0.25);
+            position: relative;
+            overflow: hidden;
+        }
+        .escola-header::before {
+            content: '🎓';
+            position: absolute;
+            right: -20px;
+            top: -40px;
+            font-size: 200px;
+            opacity: 0.07;
+            pointer-events: none;
+        }
+        .escola-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #fbbf24, #f59e0b, #fbbf24);
+        }
+        .escola-header .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 14px;
+        }
+        .escola-header .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            border: 1px solid rgba(255,255,255,0.25);
+            flex-shrink: 0;
+        }
+        .escola-header .escola-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.75;
+            margin-bottom: 2px;
+        }
+        .escola-header .escola-nome {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -0.5px;
+            line-height: 1.15;
+        }
+        .escola-header .escola-info {
+            display: flex;
+            gap: 28px;
+            flex-wrap: wrap;
+            font-size: 0.85rem;
+            opacity: 0.9;
+            padding-left: 78px;
+        }
+        .escola-header .escola-info span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .escola-header .escola-info i {
+            color: #93c5fd;
+            font-size: 0.9rem;
+        }
+
+        .escola-fallback {
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            box-shadow: 0 8px 28px rgba(100,116,139,0.25);
+        }
+
+        /* ===== TÍTULO DO BOLETIM ===== */
+        .boletim-titulo {
+            background: white;
+            border-radius: 16px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            text-align: center;
+        }
+        .boletim-titulo .titulo-principal {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #1e293b;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 8px;
+        }
+        .boletim-titulo .aluno-nome {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 14px;
+        }
+        .boletim-titulo .aluno-dados {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            flex-wrap: wrap;
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+        .boletim-titulo .aluno-dados strong {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        /* ===== TABELA ===== */
+        .table-bordered th, .table-bordered td {
+            border: 1px solid #e2e8f0;
+            padding: 12px 14px;
+            vertical-align: middle;
+        }
+        .table thead th {
+            background: linear-gradient(135deg, #1e40af, #1e3a8a);
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-color: #1e3a8a !important;
+        }
+        .table tbody tr:hover {
+            background: #f8fafc;
+        }
+
         .grafico-container {
             position: relative;
             height: 400px;
             width: 100%;
+        }
+
+        /* ===== IMPRESSÃO (MODERNA) ===== */
+        @media print {
+            @page {
+                size: A4;
+                margin: 12mm;
+            }
+            .no-print { display: none !important; }
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+            .container {
+                max-width: 100%;
+                padding: 0;
+            }
+
+            /* Cabeçalho mantém o gradiente na impressão */
+            .escola-header {
+                background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 60%, #0f172a 100%) !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                border-radius: 12px;
+                padding: 22px 28px;
+                margin-bottom: 16px;
+                box-shadow: none !important;
+            }
+            .escola-header::before {
+                font-size: 160px;
+                opacity: 0.08;
+            }
+            .escola-header::after {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .escola-header .logo-icon {
+                background: rgba(255,255,255,0.2) !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .escola-header .escola-nome {
+                font-size: 1.4rem;
+            }
+            .escola-header .escola-info {
+                padding-left: 0;
+                margin-top: 8px;
+                gap: 20px;
+            }
+
+            /* Título do boletim */
+            .boletim-titulo {
+                box-shadow: none;
+                border: 1px solid #e2e8f0;
+                padding: 20px;
+                margin-bottom: 16px;
+            }
+            .boletim-titulo .titulo-principal {
+                font-size: 1.2rem;
+                letter-spacing: 2px;
+            }
+            .boletim-titulo .aluno-nome {
+                font-size: 1.3rem;
+            }
+
+            /* Tabela com cores na impressão */
+            .table thead th {
+                background: linear-gradient(135deg, #1e40af, #1e3a8a) !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color: white !important;
+                font-size: 0.75rem;
+            }
+            .table-bordered th, .table-bordered td {
+                padding: 8px 10px;
+                font-size: 0.85rem;
+            }
+
+            .grafico-container {
+                page-break-inside: avoid;
+                height: 320px;
+            }
+
+            /* Rodapé de assinatura */
+            .assinatura-rodape {
+                page-break-inside: avoid;
+                margin-top: 40px;
+                text-align: center;
+            }
+        }
+
+        /* Rodapé de assinatura (visualização) */
+        .assinatura-rodape {
+            margin-top: 40px;
+            text-align: center;
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+        .assinatura-linha {
+            border-top: 1px solid #94a3b8;
+            width: 300px;
+            margin: 0 auto 8px;
+            padding-top: 4px;
         }
     </style>
 </head>
@@ -50,33 +290,76 @@
     </div>
 </nav>
 
-<div class="container mt-4">
-    <div class="text-center mb-4">
-        <h1>Boletim Escolar</h1>
-        <h2 th:text="${aluno.nome}"></h2>
-        <p>
-            <strong>Série:</strong> <span th:text="${aluno.serie != null ? aluno.serie.nome : 'N/A'}"></span> |
-            <strong>Turma:</strong> <span th:text="${aluno.turma != null ? aluno.turma.nome : 'N/A'}"></span> |
-            <strong>Matrícula:</strong> <span th:text="${aluno.matricula}"></span>
-        </p>
+<div class="container mt-4 pb-5">
+
+    <!-- ===== CABEÇALHO DA ESCOLA ===== -->
+    <div class="escola-header" th:if="${escola != null}">
+        <div class="logo-area">
+            <div class="logo-icon">🎓</div>
+            <div>
+                <div class="escola-label">Instituição de Ensino</div>
+                <h1 class="escola-nome" th:text="${escola.nome}">Nome da Escola</h1>
+            </div>
+        </div>
+        <div class="escola-info">
+            <span th:if="${escola.cnpj != null and !escola.cnpj.isEmpty()}">
+                <i class="bi bi-file-earmark-text-fill"></i>
+                CNPJ: <strong th:text="${escola.cnpj}"></strong>
+            </span>
+            <span th:if="${escola.enderecoCompleto != null and !escola.enderecoCompleto.isEmpty()}">
+                <i class="bi bi-geo-alt-fill"></i>
+                <span th:text="${escola.enderecoCompleto}"></span>
+            </span>
+            <span th:if="${escola.telefone != null and !escola.telefone.isEmpty()}">
+                <i class="bi bi-telephone-fill"></i>
+                <span th:text="${escola.telefone}"></span>
+            </span>
+            <span th:if="${escola.email != null and !escola.email.isEmpty()}">
+                <i class="bi bi-envelope-fill"></i>
+                <span th:text="${escola.email}"></span>
+            </span>
+        </div>
     </div>
 
+    <!-- Fallback -->
+    <div class="escola-header escola-fallback" th:if="${escola == null}">
+        <div class="logo-area">
+            <div class="logo-icon">🎓</div>
+            <div>
+                <div class="escola-label">Instituição de Ensino</div>
+                <h1 class="escola-nome">SISTEMA ESCOLAR</h1>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TÍTULO DO BOLETIM ===== -->
+    <div class="boletim-titulo">
+        <div class="titulo-principal">Boletim Escolar</div>
+        <div class="aluno-nome" th:text="${aluno.nome}">Nome do Aluno</div>
+        <div class="aluno-dados">
+            <span><strong>Série:</strong> <span th:text="${aluno.serie != null ? aluno.serie.nome : 'N/A'}"></span></span>
+            <span><strong>Turma:</strong> <span th:text="${aluno.turma != null ? aluno.turma.nome : 'N/A'}"></span></span>
+            <span><strong>Matrícula:</strong> <span th:text="${aluno.matricula}"></span></span>
+        </div>
+    </div>
+
+    <!-- ===== TABELA DE NOTAS ===== -->
     <table class="table table-bordered table-striped">
-        <thead class="table-primary">
+        <thead>
             <tr>
                 <th>Matéria</th>
-                <th>1ª Unidade</th>
-                <th>2ª Unidade</th>
-                <th>3ª Unidade</th>
-                <th>4ª Unidade</th>
-                <th>Média Final</th>
-                <th>Resultado</th>
+                <th class="text-center">1ª Unidade</th>
+                <th class="text-center">2ª Unidade</th>
+                <th class="text-center">3ª Unidade</th>
+                <th class="text-center">4ª Unidade</th>
+                <th class="text-center">Média Final</th>
+                <th class="text-center">Resultado</th>
             </tr>
         </thead>
         <tbody>
             <tr th:each="materia : ${materias}">
-                <td th:text="${materia.nome}"></td>
-                <td th:each="unidade : ${#numbers.sequence(1, 4)}">
+                <td><strong th:text="${materia.nome}"></strong></td>
+                <td class="text-center" th:each="unidade : ${#numbers.sequence(1, 4)}">
                     <span th:with="notaMap=${notasPorMateria.get(materia.id)}">
                         <span th:with="nota=${notaMap != null ? notaMap.get(unidade) : null}">
                             <span th:if="${nota != null and nota.mediaFinal != null}" th:text="${#numbers.formatDecimal(nota.mediaFinal, 1, 1)}"></span>
@@ -84,16 +367,18 @@
                         </span>
                     </span>
                 </td>
-                <td>
+                <td class="text-center">
                     <span th:with="medias=${notasPorMateria.get(materia.id) != null ? notasPorMateria.get(materia.id).values().![mediaFinal].?[#this != null] : null}">
-                        <span th:if="${medias != null and !medias.isEmpty()}" th:text="${#numbers.formatDecimal(#aggregates.avg(medias), 1, 1)}"></span>
+                        <strong th:if="${medias != null and !medias.isEmpty()}" th:text="${#numbers.formatDecimal(#aggregates.avg(medias), 1, 1)}"></strong>
                         <span th:if="${medias == null or medias.isEmpty()}">-</span>
                     </span>
                 </td>
-                <td>
+                <td class="text-center">
                     <span th:with="medias=${notasPorMateria.get(materia.id) != null ? notasPorMateria.get(materia.id).values().![mediaFinal].?[#this != null] : null}">
-                        <span th:if="${medias != null and !medias.isEmpty() and #aggregates.avg(medias) >= 6}" style="color: green; font-weight: bold;">Aprovado</span>
-                        <span th:if="${medias != null and !medias.isEmpty() and #aggregates.avg(medias) < 6}" style="color: red; font-weight: bold;">Reprovado</span>
+                        <span th:if="${medias != null and !medias.isEmpty() and #aggregates.avg(medias) >= 6}"
+                              style="color: #16a34a; font-weight: 700;">✓ Aprovado</span>
+                        <span th:if="${medias != null and !medias.isEmpty() and #aggregates.avg(medias) < 6}"
+                              style="color: #dc2626; font-weight: 700;">✗ Reprovado</span>
                         <span th:if="${medias == null or medias.isEmpty()}">-</span>
                     </span>
                 </td>
@@ -101,7 +386,7 @@
         </tbody>
     </table>
 
-    <!-- GRÁFICO -->
+    <!-- ===== GRÁFICO ===== -->
     <div class="card mt-4">
         <div class="card-header bg-primary text-white">
             <h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> Evolução do Aluno por Unidade</h5>
@@ -113,7 +398,16 @@
         </div>
     </div>
 
-    <!-- Botões -->
+    <!-- ===== RODAPÉ DE ASSINATURA ===== -->
+    <div class="assinatura-rodape">
+        <div class="assinatura-linha"></div>
+        <div>Assinatura da Direção / Coordenação</div>
+        <div style="margin-top: 8px; font-size: 0.75rem; opacity: 0.7;">
+            Emitido em <span th:text="${#temporals.format(#temporals.createToday(), 'dd/MM/yyyy')}"></span>
+        </div>
+    </div>
+
+    <!-- ===== BOTÕES ===== -->
     <div class="no-print text-center mt-4">
         <button class="btn btn-primary" onclick="window.print()">
             <i class="bi bi-printer"></i> Imprimir

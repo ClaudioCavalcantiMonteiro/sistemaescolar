@@ -12,12 +12,40 @@
             padding: 40px; max-width: 700px; margin: 0 auto;
             box-shadow: 0 4px 16px rgba(0,0,0,0.08);
         }
+
+        /* ===== CABEÇALHO DA ESCOLA ===== */
         .recibo-header {
             border-bottom: 2px solid #4a6fa5;
             padding-bottom: 20px; margin-bottom: 24px;
         }
-        .recibo-header h1 { color: #2c3e50; font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
-        .recibo-header p { color: #6c757d; margin: 0; font-size: 0.9rem; }
+        .recibo-header .escola-nome {
+            color: #1e40af;
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: -0.3px;
+        }
+        .recibo-header .escola-info {
+            color: #6c757d;
+            font-size: 0.82rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+        .recibo-header .escola-info i {
+            color: #4a6fa5;
+            margin-right: 4px;
+        }
+        .recibo-header .titulo-recibo {
+            color: #2c3e50;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-top: 12px;
+            margin-bottom: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
         .valor-destaque {
             background: #e8f4ea; border-radius: 10px;
             padding: 20px; text-align: center;
@@ -56,9 +84,43 @@
     </div>
 
     <div class="recibo">
+
+        <!-- ===== CABEÇALHO DINÂMICO ===== -->
         <div class="recibo-header">
-            <h1><i class="bi bi-mortarboard-fill"></i> SISTEMA ESCOLAR</h1>
-            <p>Recibo de Pagamento de Mensalidade</p>
+
+            <!-- Quando a escola ESTÁ cadastrada -->
+            <div th:if="${escola != null}">
+                <div class="escola-nome" th:text="${escola.nome}">Nome da Escola</div>
+                <p class="escola-info">
+                    <span th:if="${escola.cnpj != null and !escola.cnpj.isEmpty()}">
+                        <i class="bi bi-file-earmark-text-fill"></i>
+                        CNPJ: <strong th:text="${escola.cnpj}"></strong>
+                    </span>
+                    <span th:if="${escola.enderecoCompleto != null and !escola.enderecoCompleto.isEmpty()}">
+                        &nbsp;•&nbsp;
+                        <i class="bi bi-geo-alt-fill"></i>
+                        <span th:text="${escola.enderecoCompleto}"></span>
+                    </span>
+                    <span th:if="${escola.telefone != null and !escola.telefone.isEmpty()}">
+                        &nbsp;•&nbsp;
+                        <i class="bi bi-telephone-fill"></i>
+                        <span th:text="${escola.telefone}"></span>
+                    </span>
+                    <span th:if="${escola.email != null and !escola.email.isEmpty()}">
+                        &nbsp;•&nbsp;
+                        <i class="bi bi-envelope-fill"></i>
+                        <span th:text="${escola.email}"></span>
+                    </span>
+                </p>
+                <p class="titulo-recibo">Recibo de Pagamento de Mensalidade</p>
+            </div>
+
+            <!-- Quando a escola NÃO está cadastrada -->
+            <div th:if="${escola == null}">
+                <div class="escola-nome">SISTEMA ESCOLAR</div>
+                <p class="escola-info">Recibo de Pagamento de Mensalidade</p>
+            </div>
+
         </div>
 
         <div class="linha-info">

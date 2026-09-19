@@ -1,15 +1,13 @@
 package br.com.escola.controller;
 
-import br.com.escola.model.Aluno;
-import br.com.escola.model.Materia;
-import br.com.escola.model.Nota;
-import br.com.escola.model.Turma;
 import br.com.escola.service.AlunoService;
+import br.com.escola.service.EscolaService;
 import br.com.escola.service.MateriaService;
 import br.com.escola.service.NotaService;
 import br.com.escola.service.SerieService;
 import br.com.escola.service.TurmaService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,62 +27,46 @@ public class DashboardController {
     private AlunoService alunoService;
 
     @Autowired
-    private TurmaService turmaService;
+    private SerieService serieService;
 
     @Autowired
     private MateriaService materiaService;
 
     @Autowired
-    private SerieService serieService;
+    private TurmaService turmaService;
 
     @Autowired
     private NotaService notaService;
 
+    @Autowired
+    private EscolaService escolaService;   // NOVO
+
     @GetMapping
     public String dashboard(Model model) {
-        // Totais gerais
-        int totalAlunos = alunoService.listarTodos().size();
-        int totalTurmas = turmaService.listarTodas().size();
-        int totalMaterias = materiaService.listarTodas().size();
-        int totalSeries = serieService.listarTodas().size();
+        // Totais
+        model.addAttribute("totalAlunos", alunoService.listarTodos().size());
+        model.addAttribute("totalSeries", serieService.listarTodas().size());
+        model.addAttribute("totalMaterias", materiaService.listarTodas().size());
+        model.addAttribute("totalTurmas", turmaService.listarTodas().size());
 
-        model.addAttribute("totalAlunos", totalAlunos);
-        model.addAttribute("totalTurmas", totalTurmas);
-        model.addAttribute("totalMaterias", totalMaterias);
-        model.addAttribute("totalSeries", totalSeries);
+        // Media geral
+        Double mediaGeral = notaService.calcularMediaGeralEscola();
+        model.addAttribute("mediaGeral", mediaGeral != null ? String.format("%.1f", mediaGeral) : "0.0");
 
-        // Média geral da escola
-        double mediaGeral = calcularMediaGeral();
-        model.addAttribute("mediaGeral", String.format(java.util.Locale.US, "%.1f", mediaGeral));
+        // Aprovados e reprovados
+        int[] resultado = notaService.contarAprovadosReprovados();
+        model.addAttribute("aprovados", resultado[0]);
+        model.addAttribute("reprovados", resultado[1]);
 
-        // Alunos aprovados/reprovados
-        int aprovados = 0;
-        int reprovados = 0;
-        for (Aluno aluno : alunoService.listarTodos()) {
-            List<Nota> notas = notaService.listarPorAluno(aluno.getId());
-            if (notas.isEmpty()) continue;
-
-            double soma = 0;
-            int count = 0;
-            for (Nota n : notas) {
-                if (n.getMediaFinal() != null) {
-                    soma += n.getMediaFinal();
-                    count++;
-                }
-            }
-            if (count > 0) {
-                double media = soma / count;
-                if (media >= 6) aprovados++;
-                else reprovados++;
-            }
-        }
-        model.addAttribute("aprovados", aprovados);
-        model.addAttribute("reprovados", reprovados);
+        // Dados da escola (para o cabecalho)
+        model.addAttribute("escola", escolaService.buscarEscola());   // NOVO
 
         return "dashboard";
     }
 
-    // API: Alunos por série
+    // ==================================================================
+    // API: Alunos por Serie
+    // ==================================================================
     @GetMapping("/api/alunos-por-serie")
     @ResponseBody
     public Map<String, Object> alunosPorSerie() {
@@ -92,63 +74,48 @@ public class DashboardController {
         List<String> labels = new ArrayList<>();
         List<Integer> valores = new ArrayList<>();
 
-        serieService.listarTodas().forEach(serie -> {
-            labels.add(serie.getNome());
-            valores.add(alunoService.buscarPorSerie(serie.getId()).size());
-        });
+        for (var serie : serieService.listarTodas()) {
+            long total = alunoService.listarTodos().stream()
+                    .filter(a -> a.getSerie() != null && a.getSerie().getId().equals(serie.getId()))
+                    .count();
+            if (total > 0) {
+                labels.add(serie.getNome());
+                valores.add((int) total);
+            }
+        }
 
         resultado.put("labels", labels);
         resultado.put("valores", valores);
         return resultado;
     }
 
-    // API: Média por matéria
+    // ==================================================================
+    // API: Media por Materia
+    // ==================================================================
     @GetMapping("/api/media-por-materia")
     @ResponseBody
     public Map<String, Object> mediaPorMateria() {
         Map<String, Object> resultado = new HashMap<>();
         List<String> labels = new ArrayList<>();
         List<Double> valores = new ArrayList<>();
+        List<String> cores = new ArrayList<>();
 
-        String[] cores = {"#4a6fa5", "#e74c3c", "#27ae60", "#f39c12", "#9b59b6",
-                          "#16a085", "#d35400", "#2c3e50", "#e91e63", "#00bcd4"};
-        List<String> coresList = new ArrayList<>();
+        String[] paleta = {"#4a6fa5", "#e74c3c", "#27ae60", "#f39c12",
+                           "#9b59b6", "#16a085", "#d35400", "#2c3e50",
+                           "#e91e63", "#00bcd4"};
 
-        for (Materia materia : materiaService.listarTodas()) {
-            double soma = 0;
-            int count = 0;
-            for (Aluno aluno : alunoService.listarTodos()) {
-                for (Nota nota : notaService.listarPorAlunoEMateria(aluno.getId(), materia.getId())) {
-                    if (nota.getMediaFinal() != null) {
-                        soma += nota.getMediaFinal();
-                        count++;
-                    }
-                }
-            }
-            if (count > 0) {
-                labels.add(materia.getNome());
-                valores.add(Math.round((soma / count) * 10.0) / 10.0);
-                coresList.add(cores[labels.size() % cores.length]);
-            }
+        int i = 0;
+        for (var materia : materiaService.listarTodas()) {
+            Double media = notaService.calcularMediaPorMateria(materia.getId());
+            labels.add(materia.getNome());
+            valores.add(media != null ? media : 0.0);
+            cores.add(paleta[i % paleta.length]);
+            i++;
         }
 
         resultado.put("labels", labels);
         resultado.put("valores", valores);
-        resultado.put("cores", coresList);
+        resultado.put("cores", cores);
         return resultado;
-    }
-
-    private double calcularMediaGeral() {
-        double soma = 0;
-        int count = 0;
-        for (Aluno aluno : alunoService.listarTodos()) {
-            for (Nota nota : notaService.listarPorAluno(aluno.getId())) {
-                if (nota.getMediaFinal() != null) {
-                    soma += nota.getMediaFinal();
-                    count++;
-                }
-            }
-        }
-        return count > 0 ? soma / count : 0;
     }
 }

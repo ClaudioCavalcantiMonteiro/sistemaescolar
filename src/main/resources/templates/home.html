@@ -14,61 +14,174 @@
             background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
             min-height: 100vh;
         }
+
+        /* ===== CABEÇALHO DE BOAS-VINDAS (menor) ===== */
         .welcome-header {
             background: white;
-            border-radius: 16px;
+            border-radius: 14px;
             box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-            padding: 22px 28px;
-            margin-bottom: 24px;
-            border-left: 4px solid #4a6fa5;
+            padding: 24px 28px;
+            margin-bottom: 20px;
+            border-left: 4px solid #1e40af;
         }
-        .welcome-header h1 {
-            font-size: 1.5rem;
+        .welcome-title-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+        .welcome-title-row h1 {
+            font-size: 1.3rem;
             font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 4px;
+            color: #1e40af;
+            margin: 0;
         }
-        .welcome-header h1 i { color: #4a6fa5; }
-        .welcome-header p { color: #6c757d; margin: 0; font-size: 0.9rem; }
+        .welcome-title-row i {
+            font-size: 1.5rem;
+            color: #1e40af;
+        }
+        .welcome-header p {
+            color: #6c757d;
+            margin: 0;
+            font-size: 0.88rem;
+            padding-left: 38px;
+        }
 
-        .school-info {
-            background: linear-gradient(135deg, #f8fafc 0%, #eef3f9 100%);
-            border-radius: 12px;
-            padding: 16px 18px;
-            border-left: 4px solid #4a6fa5;
+        /* ===== CARD DA ESCOLA (full width + gradiente) ===== */
+        .school-section {
+            margin-bottom: 24px;
         }
-        .school-info-header {
+
+        .school-card-full {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 60%, #0f172a 100%);
+            border-radius: 14px;
+            padding: 24px 32px;
+            color: white;
             display: flex;
             align-items: center;
-            gap: 8px;
-            color: #2c3e50;
-            font-size: 0.95rem;
-            margin-bottom: 10px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #e0e7ef;
+            justify-content: space-between;
+            gap: 24px;
+            box-shadow: 0 8px 24px rgba(30,64,175,0.25);
+            position: relative;
+            overflow: hidden;
         }
-        .school-info-header i { color: #4a6fa5; font-size: 1.1rem; }
-        .school-info-body { display: flex; flex-direction: column; gap: 4px; }
-        .school-info-item {
+        .school-card-full::before {
+            content: '🎓';
+            position: absolute;
+            right: -20px;
+            top: -40px;
+            font-size: 180px;
+            opacity: 0.06;
+            pointer-events: none;
+        }
+
+        .school-logo-area {
             display: flex;
             align-items: center;
-            gap: 8px;
-            color: #5a6a7a;
-            font-size: 0.82rem;
+            gap: 16px;
+            flex-shrink: 0;
         }
-        .school-info-item i { color: #7a8a9a; width: 16px; font-size: 0.85rem; }
-        .school-info-item strong { color: #2c3e50; }
-        .school-info-empty {
+        .school-logo-icon {
+            width: 56px;
+            height: 56px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 14px;
             display: flex;
             align-items: center;
-            background: #fff3cd;
-            border-radius: 10px;
-            padding: 12px 16px;
-            color: #856404;
+            justify-content: center;
+            font-size: 1.6rem;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .school-nome {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -0.3px;
+            line-height: 1.2;
+        }
+        .school-label {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+        }
+
+        .school-info-row {
+            display: flex;
+            gap: 32px;
+            flex-wrap: wrap;
+            flex-grow: 1;
+            justify-content: flex-end;
+        }
+        .school-info-block {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             font-size: 0.85rem;
-            border-left: 4px solid #ffc107;
+        }
+        .school-info-block i {
+            font-size: 1.1rem;
+            color: #93c5fd;
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .school-info-block .info-label {
+            font-size: 0.7rem;
+            opacity: 0.65;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: block;
+            line-height: 1.1;
+        }
+        .school-info-block .info-valor {
+            font-weight: 600;
+            font-size: 0.88rem;
+            line-height: 1.2;
         }
 
+        /* Card vazio (sem escola cadastrada) */
+        .school-empty-full {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 14px;
+            padding: 20px 32px;
+            border-left: 4px solid #f59e0b;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .school-empty-full .texto {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            color: #92400e;
+        }
+        .school-empty-full .texto i {
+            font-size: 1.8rem;
+            color: #f59e0b;
+        }
+        .school-empty-full .texto h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0;
+            color: #78350f;
+        }
+        .school-empty-full .texto p {
+            font-size: 0.82rem;
+            margin: 0;
+            color: #92400e;
+        }
+        .school-empty-full .btn {
+            border-radius: 10px;
+            padding: 9px 22px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        /* ===== CARDS DOS MÓDULOS ===== */
         .home-card {
             border: none;
             border-radius: 14px;
@@ -131,9 +244,31 @@
             transition: all 0.2s ease;
         }
         .home-card .btn:hover { transform: translateY(-1px); }
+
+        /* ===== RESPONSIVO ===== */
+        @media (max-width: 992px) {
+            .school-card-full {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 22px 24px;
+            }
+            .school-info-row {
+                justify-content: flex-start;
+                width: 100%;
+            }
+        }
         @media (max-width: 768px) {
-            .welcome-header { padding: 18px 20px; }
-            .welcome-header h1 { font-size: 1.2rem; }
+            .welcome-header { padding: 20px 22px; }
+            .welcome-title-row h1 { font-size: 1.1rem; }
+            .welcome-title-row i { font-size: 1.3rem; }
+            .welcome-header p { font-size: 0.82rem; padding-left: 34px; }
+
+            .school-card-full { padding: 20px; }
+            .school-nome { font-size: 1.05rem; }
+            .school-logo-icon { width: 48px; height: 48px; font-size: 1.4rem; }
+            .school-info-row { gap: 16px; }
+            .school-info-block { font-size: 0.8rem; }
+
             .home-card .card-body { min-height: 160px; padding: 16px 10px; }
             .home-card .card-body i { font-size: 1.9rem; }
         }
@@ -148,42 +283,81 @@
 <!-- Conteúdo -->
 <div class="container mt-4 pb-5">
 
+    <!-- ===== CABEÇALHO DE BOAS-VINDAS (compacto) ===== -->
     <div class="welcome-header">
-        <div class="row align-items-center">
-            <div class="col-lg-7">
-                <h1><i class="bi bi-house-heart-fill me-2"></i>Bem-vindo ao Sistema Escolar</h1>
-                <p class="mb-0">Gerencie séries, matérias, turmas, alunos, notas, frequência, financeiro e relatórios.</p>
+        <div class="welcome-title-row">
+            <i class="bi bi-house-heart-fill"></i>
+            <h1>Bem-vindo ao Sistema Escolar</h1>
+        </div>
+        <p>Gerencie séries, matérias, turmas, alunos, notas, frequência, financeiro e relatórios.</p>
+    </div>
+
+    <!-- ===== CARD DA ESCOLA (full width + gradiente) ===== -->
+    <div class="school-section" th:if="${escola != null}">
+        <div class="school-card-full">
+            <div class="school-logo-area">
+                <div class="school-logo-icon">
+                    <i class="bi bi-building-fill"></i>
+                </div>
+                <div>
+                    <div class="school-label">Instituição de Ensino</div>
+                    <h2 class="school-nome" th:text="${escola.nome}">Nome da Escola</h2>
+                </div>
             </div>
-            <div class="col-lg-5 mt-3 mt-lg-0">
-                <div class="school-info" th:if="${escola != null}">
-                    <div class="school-info-header">
-                        <i class="bi bi-building-fill"></i>
-                        <strong th:text="${escola.nome}">Nome da Escola</strong>
-                    </div>
-                    <div class="school-info-body">
-                        <div th:if="${escola.cnpj != null and !escola.cnpj.isEmpty()}" class="school-info-item">
-                            <i class="bi bi-file-earmark-text"></i>
-                            <span>CNPJ: <strong th:text="${escola.cnpj}"></strong></span>
-                        </div>
-                        <div th:if="${escola.telefone != null and !escola.telefone.isEmpty()}" class="school-info-item">
-                            <i class="bi bi-telephone"></i>
-                            <span th:text="${escola.telefone}"></span>
-                        </div>
-                        <div th:if="${escola.email != null and !escola.email.isEmpty()}" class="school-info-item">
-                            <i class="bi bi-envelope"></i>
-                            <span th:text="${escola.email}"></span>
-                        </div>
+
+            <div class="school-info-row">
+                <div th:if="${escola.cnpj != null and !escola.cnpj.isEmpty()}" class="school-info-block">
+                    <i class="bi bi-file-earmark-text-fill"></i>
+                    <div>
+                        <span class="info-label">CNPJ</span>
+                        <div class="info-valor" th:text="${escola.cnpj}"></div>
                     </div>
                 </div>
-                <div th:if="${escola == null}" class="school-info-empty">
-                    <i class="bi bi-info-circle"></i>
-                    <span>Cadastre os dados da escola</span>
-                    <a href="/escola" class="btn btn-sm btn-primary ms-2">Cadastrar</a>
+
+                <div th:if="${escola.telefone != null and !escola.telefone.isEmpty()}" class="school-info-block">
+                    <i class="bi bi-telephone-fill"></i>
+                    <div>
+                        <span class="info-label">Telefone</span>
+                        <div class="info-valor" th:text="${escola.telefone}"></div>
+                    </div>
+                </div>
+
+                <div th:if="${escola.email != null and !escola.email.isEmpty()}" class="school-info-block">
+                    <i class="bi bi-envelope-fill"></i>
+                    <div>
+                        <span class="info-label">E-mail</span>
+                        <div class="info-valor" th:text="${escola.email}"></div>
+                    </div>
+                </div>
+
+                <div th:if="${escola.cidade != null and !escola.cidade.isEmpty()}" class="school-info-block">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    <div>
+                        <span class="info-label">Cidade</span>
+                        <div class="info-valor" th:text="${escola.cidade + (escola.estado != null ? '/' + escola.estado : '')}"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- ===== CARD VAZIO (sem escola cadastrada) ===== -->
+    <div class="school-section" th:if="${escola == null}">
+        <div class="school-empty-full">
+            <div class="texto">
+                <i class="bi bi-building-exclamation"></i>
+                <div>
+                    <h4>Cadastre os dados da sua escola</h4>
+                    <p>Personalize boletins, relatórios e declarações com os dados da instituição.</p>
+                </div>
+            </div>
+            <a href="/escola" class="btn btn-warning">
+                <i class="bi bi-plus-circle"></i> Cadastrar Escola
+            </a>
+        </div>
+    </div>
+
+    <!-- ===== MÓDULOS ===== -->
     <div class="row g-3">
 
         <div class="col-6 col-sm-6 col-md-4 col-lg-3 col-xl-2" sec:authorize="hasAnyRole('ADMIN','SECRETARIA')">

@@ -3,6 +3,7 @@ package br.com.escola.controller;
 import br.com.escola.model.Materia;
 import br.com.escola.model.Nota;
 import br.com.escola.service.AlunoService;
+import br.com.escola.service.EscolaService;
 import br.com.escola.service.MateriaService;
 import br.com.escola.service.NotaService;
 import br.com.escola.service.PdfService;
@@ -44,11 +45,15 @@ public class GraficoController {
     @Autowired
     private PdfService pdfService;
 
+    @Autowired
+    private EscolaService escolaService;   // NOVO
+
     @GetMapping
     public String paginaRelatorios(Model model) {
         model.addAttribute("alunos", alunoService.listarTodos());
         model.addAttribute("materias", materiaService.listarTodas());
         model.addAttribute("series", serieService.listarTodas());
+        model.addAttribute("escola", escolaService.buscarEscola());   // NOVO
         return "relatorios/graficos";
     }
 

@@ -44,7 +44,7 @@ public class PdfService {
     private EscolaRepository escolaRepository;
 
     // ==================================================================
-    // BOLETIM INDIVIDUAL
+    // BOLETIM INDIVIDUAL (com cabecalho da escola)
     // ==================================================================
     public ByteArrayInputStream gerarBoletimPdf(Long alunoId) {
         Document document = new Document(PageSize.A4, 40, 40, 40, 40);
@@ -54,56 +54,85 @@ public class PdfService {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            Font titulo = new Font(Font.HELVETICA, 18, Font.BOLD, new Color(44, 62, 80));
-            Font subtitulo = new Font(Font.HELVETICA, 12, Font.NORMAL, new Color(108, 117, 125));
-            Font sectionTitle = new Font(Font.HELVETICA, 12, Font.BOLD, new Color(74, 111, 165));
+            // Fontes
+            Font escolaNome = new Font(Font.HELVETICA, 16, Font.BOLD, new Color(30, 64, 175));
+            Font escolaInfo = new Font(Font.HELVETICA, 9, Font.NORMAL, new Color(108, 117, 125));
+            Font tituloBoletim = new Font(Font.HELVETICA, 14, Font.BOLD, new Color(44, 62, 80));
+            Font subtitulo = new Font(Font.HELVETICA, 11, Font.NORMAL, new Color(108, 117, 125));
+            Font sectionTitle = new Font(Font.HELVETICA, 12, Font.BOLD, new Color(30, 64, 175));
             Font headerFont = new Font(Font.HELVETICA, 10, Font.BOLD, Color.WHITE);
             Font cellFont = new Font(Font.HELVETICA, 10, Font.NORMAL, new Color(33, 37, 41));
             Font cellBold = new Font(Font.HELVETICA, 10, Font.BOLD, new Color(33, 37, 41));
             Font smallFont = new Font(Font.HELVETICA, 8, Font.NORMAL, new Color(108, 117, 125));
 
-            Paragraph sistema = new Paragraph("SISTEMA ESCOLAR", titulo);
-            sistema.setAlignment(Element.ALIGN_CENTER);
-            document.add(sistema);
-
-            Paragraph tituloBoletim = new Paragraph("BOLETIM ESCOLAR", subtitulo);
-            tituloBoletim.setAlignment(Element.ALIGN_CENTER);
-            tituloBoletim.setSpacingAfter(20f);
-            document.add(tituloBoletim);
-
+            // Buscar aluno
             Aluno aluno = alunoService.buscarPorId(alunoId);
             if (aluno == null) {
                 document.close();
                 return new ByteArrayInputStream(out.toByteArray());
             }
 
-            PdfPTable dadosAluno = new PdfPTable(2);
-            dadosAluno.setWidthPercentage(100);
-            dadosAluno.setWidths(new float[]{1, 3});
-            dadosAluno.setSpacingAfter(20f);
+            // Buscar escola
+            List<Escola> escolas = escolaRepository.findAll();
+            Escola escola = escolas.isEmpty() ? null : escolas.get(0);
 
-            adicionarLinhaInfo(dadosAluno, "Nome:", aluno.getNome(), cellBold, cellFont);
-            adicionarLinhaInfo(dadosAluno, "Matrícula:",
-                    aluno.getMatricula() != null ? aluno.getMatricula() : "-", cellBold, cellFont);
-            adicionarLinhaInfo(dadosAluno, "Série:",
-                    aluno.getSerie() != null ? aluno.getSerie().getNome() : "-", cellBold, cellFont);
-            adicionarLinhaInfo(dadosAluno, "Turma:",
-                    aluno.getTurma() != null ? aluno.getTurma().getNome() : "-", cellBold, cellFont);
-            adicionarLinhaInfo(dadosAluno, "Data Nascimento:",
-                    aluno.getDataNascimento() != null ?
-                            aluno.getDataNascimento().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "-",
-                    cellBold, cellFont);
-            if (aluno.getResponsavelFinanceiro() != null) {
-                adicionarLinhaInfo(dadosAluno, "Responsável:",
-                        aluno.getResponsavelFinanceiro().getNome(), cellBold, cellFont);
+            // ===== CABECALHO DA ESCOLA =====
+            if (escola != null) {
+                Paragraph nomeEsc = new Paragraph(escola.getNome().toUpperCase(), escolaNome);
+                nomeEsc.setAlignment(Element.ALIGN_CENTER);
+                document.add(nomeEsc);
+
+                StringBuilder infoEscola = new StringBuilder();
+                if (escola.getCnpj() != null && !escola.getCnpj().isEmpty()) {
+                    infoEscola.append("CNPJ: ").append(escola.getCnpj());
+                }
+                if (escola.getEnderecoCompleto() != null && !escola.getEnderecoCompleto().isEmpty()) {
+                    if (infoEscola.length() > 0) infoEscola.append(" | ");
+                    infoEscola.append(escola.getEnderecoCompleto());
+                }
+                if (escola.getTelefone() != null && !escola.getTelefone().isEmpty()) {
+                    if (infoEscola.length() > 0) infoEscola.append(" | ");
+                    infoEscola.append("Tel: ").append(escola.getTelefone());
+                }
+
+                Paragraph info = new Paragraph(infoEscola.toString(), escolaInfo);
+                info.setAlignment(Element.ALIGN_CENTER);
+                info.setSpacingAfter(8f);
+                document.add(info);
+            } else {
+                Paragraph nomePadrao = new Paragraph("SISTEMA ESCOLAR", escolaNome);
+                nomePadrao.setAlignment(Element.ALIGN_CENTER);
+                nomePadrao.setSpacingAfter(8f);
+                document.add(nomePadrao);
             }
 
-            document.add(dadosAluno);
+            // Linha separadora
+            Paragraph linha = new Paragraph("_______________________________________________________________________________", escolaInfo);
+            linha.setAlignment(Element.ALIGN_CENTER);
+            linha.setSpacingAfter(16f);
+            document.add(linha);
 
-            Paragraph tituloNotas = new Paragraph("Notas por Unidade", sectionTitle);
-            tituloNotas.setSpacingAfter(8f);
-            document.add(tituloNotas);
+            // Titulo
+            Paragraph titulo = new Paragraph("BOLETIM ESCOLAR", tituloBoletim);
+            titulo.setAlignment(Element.ALIGN_CENTER);
+            titulo.setSpacingAfter(6f);
+            document.add(titulo);
 
+            Paragraph nomeAluno = new Paragraph(aluno.getNome(),
+                    new Font(Font.HELVETICA, 14, Font.BOLD, new Color(30, 64, 175)));
+            nomeAluno.setAlignment(Element.ALIGN_CENTER);
+            nomeAluno.setSpacingAfter(4f);
+            document.add(nomeAluno);
+
+            String dadosAluno = "Série: " + (aluno.getSerie() != null ? aluno.getSerie().getNome() : "N/A") +
+                    " | Turma: " + (aluno.getTurma() != null ? aluno.getTurma().getNome() : "N/A") +
+                    " | Matrícula: " + (aluno.getMatricula() != null ? aluno.getMatricula() : "-");
+            Paragraph dados = new Paragraph(dadosAluno, subtitulo);
+            dados.setAlignment(Element.ALIGN_CENTER);
+            dados.setSpacingAfter(20f);
+            document.add(dados);
+
+            // ===== TABELA DE NOTAS =====
             List<Materia> materias = materiaService.listarTodas();
             List<Nota> notas = notaService.listarPorAluno(alunoId);
 
@@ -118,7 +147,7 @@ public class PdfService {
             tabela.setWidths(new float[]{2.5f, 1, 1, 1, 1, 1.2f, 1.3f});
             tabela.setSpacingAfter(20f);
 
-            Color headerColor = new Color(74, 111, 165);
+            Color headerColor = new Color(30, 64, 175);
             adicionarCelulaHeader(tabela, "Matéria", headerFont, headerColor);
             adicionarCelulaHeader(tabela, "1ª Un.", headerFont, headerColor);
             adicionarCelulaHeader(tabela, "2ª Un.", headerFont, headerColor);
@@ -188,17 +217,19 @@ public class PdfService {
 
             document.add(tabela);
 
+            // ===== RODAPE =====
             Paragraph dataEmissao = new Paragraph(
-                    "Emitido em: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                    "Emitido em: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
                     smallFont);
             dataEmissao.setSpacingBefore(20f);
+            dataEmissao.setAlignment(Element.ALIGN_CENTER);
             document.add(dataEmissao);
 
             Paragraph assinatura = new Paragraph(
                     "\n\n___________________________________________\n" +
                     "Assinatura da Direção / Coordenação", smallFont);
             assinatura.setAlignment(Element.ALIGN_CENTER);
-            assinatura.setSpacingBefore(30f);
+            assinatura.setSpacingBefore(40f);
             document.add(assinatura);
 
             document.close();
@@ -220,9 +251,9 @@ public class PdfService {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            Font escolaNome = new Font(Font.HELVETICA, 16, Font.BOLD, new Color(44, 62, 80));
+            Font escolaNome = new Font(Font.HELVETICA, 16, Font.BOLD, new Color(30, 64, 175));
             Font escolaInfo = new Font(Font.HELVETICA, 9, Font.NORMAL, new Color(108, 117, 125));
-            Font titulo = new Font(Font.HELVETICA, 14, Font.BOLD, new Color(74, 111, 165));
+            Font titulo = new Font(Font.HELVETICA, 14, Font.BOLD, new Color(30, 64, 175));
             Font headerFont = new Font(Font.HELVETICA, 10, Font.BOLD, Color.WHITE);
             Font cellFont = new Font(Font.HELVETICA, 10, Font.NORMAL, new Color(33, 37, 41));
             Font cellBold = new Font(Font.HELVETICA, 10, Font.BOLD, new Color(33, 37, 41));
@@ -299,7 +330,7 @@ public class PdfService {
                 tabela.setWidths(new float[]{0.8f, 3.5f, 1.2f, 1.5f, 1.5f});
                 tabela.setSpacingAfter(20f);
 
-                Color headerColor = new Color(74, 111, 165);
+                Color headerColor = new Color(30, 64, 175);
                 adicionarCelulaHeader(tabela, "Nº", headerFont, headerColor);
                 adicionarCelulaHeader(tabela, "Nome do Aluno", headerFont, headerColor);
                 adicionarCelulaHeader(tabela, "Matrícula", headerFont, headerColor);
@@ -384,7 +415,7 @@ public class PdfService {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            Font escolaNome = new Font(Font.HELVETICA, 16, Font.BOLD, new Color(44, 62, 80));
+            Font escolaNome = new Font(Font.HELVETICA, 16, Font.BOLD, new Color(30, 64, 175));
             Font escolaInfo = new Font(Font.HELVETICA, 9, Font.NORMAL, new Color(108, 117, 125));
             Font titulo = new Font(Font.HELVETICA, 14, Font.BOLD, new Color(44, 62, 80));
             Font corpo = new Font(Font.HELVETICA, 11, Font.NORMAL, new Color(33, 37, 41));
@@ -401,7 +432,6 @@ public class PdfService {
             List<Escola> escolas = escolaRepository.findAll();
             Escola escola = escolas.isEmpty() ? null : escolas.get(0);
 
-            // Cabecalho
             if (escola != null) {
                 Paragraph nomeEscola = new Paragraph(escola.getNome().toUpperCase(), escolaNome);
                 nomeEscola.setAlignment(Element.ALIGN_CENTER);
@@ -436,13 +466,11 @@ public class PdfService {
             linha.setSpacingAfter(30f);
             document.add(linha);
 
-            // Titulo
             Paragraph tituloDecl = new Paragraph("DECLARAÇÃO DE MATRÍCULA", titulo);
             tituloDecl.setAlignment(Element.ALIGN_CENTER);
             tituloDecl.setSpacingAfter(40f);
             document.add(tituloDecl);
 
-            // Corpo
             String nomeAluno = aluno.getNome() != null ? aluno.getNome() : "_____________________";
             String dataNasc = (aluno.getDataNascimento() != null)
                     ? aluno.getDataNascimento().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
@@ -473,7 +501,6 @@ public class PdfService {
             paragrafo1.setSpacingAfter(20f);
             document.add(paragrafo1);
 
-            // Responsavel
             if (aluno.getResponsavelFinanceiro() != null
                     && aluno.getResponsavelFinanceiro().getNome() != null) {
                 Paragraph paragrafoResp = new Paragraph();
@@ -496,7 +523,6 @@ public class PdfService {
             paragrafoFinal.setSpacingAfter(50f);
             document.add(paragrafoFinal);
 
-            // Local e Data
             String cidade = (escola != null && escola.getCidade() != null)
                     ? escola.getCidade() : "___________________";
             String dataAtual = LocalDate.now().format(DateTimeFormatter.ofPattern(
@@ -507,7 +533,6 @@ public class PdfService {
             localData.setSpacingAfter(60f);
             document.add(localData);
 
-            // Assinatura
             String nomeDiretor = (escola != null && escola.getDiretor() != null
                     && !escola.getDiretor().isEmpty())
                     ? escola.getDiretor() : "___________________________";
@@ -517,7 +542,6 @@ public class PdfService {
             assinatura.setAlignment(Element.ALIGN_CENTER);
             document.add(assinatura);
 
-            // Rodape
             Paragraph rodape = new Paragraph(
                     "\n\nDocumento emitido em " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
                     + " pelo Sistema Escolar", smallFont);

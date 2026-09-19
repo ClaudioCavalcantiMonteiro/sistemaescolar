@@ -1,63 +1,114 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastrar Série</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%); min-height: 100vh; }
+
+        .form-card {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            padding: 32px;
+            max-width: 650px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        .form-card h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 24px;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+
+        /* ===== RESPONSIVO CELULAR ===== */
+        @media (max-width: 768px) {
+            .form-card {
+                padding: 20px;
+                border-radius: 12px;
+                margin: 0 4px;
+            }
+            .form-card h1 {
+                font-size: 1.15rem;
+                margin-bottom: 18px;
+            }
+            .form-label {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
 </head>
 <body>
 
-<!-- Navbar (igual) -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/home"><i class="bi bi-mortarboard"></i> Sistema Escolar</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item"><a class="nav-link" href="/series">Séries</a></li>
-                <li class="nav-item"><a class="nav-link" href="/materias">Matérias</a></li>
-                <li class="nav-item"><a class="nav-link" href="/turmas">Turmas</a></li>
-                <li class="nav-item"><a class="nav-link" href="/alunos">Alunos</a></li>
-            </ul>
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="/logout"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
+<!-- Navbar PADRONIZADA -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<th:block th:replace="~{fragments/navbar :: estiloNavbar}"></th:block>
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-6 col-md-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="bi bi-book"></i> <span th:text="${serie.id != null ? 'Editar Série' : 'Nova Série'}"></span></h4>
-                </div>
-                <div class="card-body">
-                    <form th:action="@{/series/salvar}" th:object="${serie}" method="post">
-                        <input type="hidden" th:field="*{id}">
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Nome</label>
-                            <input type="text" class="form-control" th:field="*{nome}" placeholder="Ex: 1º Ano" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Descrição</label>
-                            <input type="text" class="form-control" th:field="*{descricao}" placeholder="Descrição opcional">
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Salvar</button>
-                            <a href="/series" class="btn btn-secondary"><i class="bi bi-x-lg"></i> Cancelar</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
+<div class="container mt-4 pb-5">
+    <div class="form-card">
+        <h1>
+            <i class="bi bi-book text-primary"></i>
+            <span th:if="${serie.id == null}">Nova Série</span>
+            <span th:if="${serie.id != null}">Editar Série</span>
+        </h1>
+
+        <!-- ===== ALERTAS FLASH ===== -->
+        <div th:if="${mensagemSucesso}" class="alert alert-success alert-dismissible fade show d-flex align-items-center" role="alert">
+            <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+            <div th:text="${mensagemSucesso}"></div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
         </div>
+
+        <div th:if="${mensagemErro}" class="alert alert-danger alert-dismissible fade show d-flex align-items-center" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+            <div th:text="${mensagemErro}"></div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+        </div>
+
+        <form th:action="@{/series/salvar}" th:object="${serie}" method="post">
+            <input type="hidden" th:field="*{id}">
+
+            <div class="mb-3">
+                <label class="form-label">Nome da Série</label>
+                <input type="text" class="form-control" th:field="*{nome}"
+                       placeholder="Ex: 1º Ano" required>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Descrição (opcional)</label>
+                <input type="text" class="form-control" th:field="*{descricao}"
+                       placeholder="Descrição opcional">
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap">
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-save"></i> Salvar
+                </button>
+                <a href="/series" class="btn btn-secondary">
+                    <i class="bi bi-x-lg"></i> Cancelar
+                </a>
+            </div>
+        </form>
     </div>
 </div>
 
+<!-- Toast -->
+<div th:replace="~{fragments/navbar :: toast}"></div>
+
+<!-- Scripts -->
+<script th:replace="~{fragments/navbar :: scriptToast}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

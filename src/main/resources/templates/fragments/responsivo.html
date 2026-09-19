@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- ==================================================================
+     CSS GLOBAL RESPONSIVO - Aplicado em TODAS as telas
+     ================================================================== -->
+<th:block th:fragment="css">
+    <style>
+        /* ===== BASE ===== */
+        * { box-sizing: border-box; }
+        html, body { overflow-x: hidden; }
+
+        /* ===== CONTAINERS ===== */
+        .container, .container-fluid {
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+
+        /* ===== RESPONSIVO GERAL (CELULAR) ===== */
+        @media (max-width: 768px) {
+
+            /* Tipografia */
+            h1, .h1 { font-size: 1.5rem !important; }
+            h2, .h2 { font-size: 1.3rem !important; }
+            h3, .h3 { font-size: 1.15rem !important; }
+            h4, .h4 { font-size: 1.05rem !important; }
+            h5, .h5 { font-size: 1rem !important; }
+
+            /* Botões maiores para toque */
+            .btn {
+                min-height: 42px;
+                padding: 10px 16px;
+                font-size: 0.9rem;
+            }
+            .btn-sm {
+                min-height: 36px;
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+
+            /* Cards */
+            .card, .form-card, .filter-card, .table-card {
+                border-radius: 10px;
+                margin-bottom: 12px;
+            }
+
+            /* Espaçamentos */
+            .container { padding-left: 12px; padding-right: 12px; }
+            .row { margin-left: -6px; margin-right: -6px; }
+            .row > [class*="col-"] {
+                padding-left: 6px;
+                padding-right: 6px;
+                margin-bottom: 12px;
+            }
+
+            /* Formulários: campos ocupam largura total */
+            .row > [class*="col-md-"],
+            .row > [class*="col-lg-"] {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+
+            /* Form inputs maiores para toque */
+            .form-control, .form-select {
+                min-height: 44px;
+                font-size: 16px; /* Evita zoom automático no iOS */
+                padding: 10px 14px;
+            }
+
+            /* ===== TABELAS RESPONSIVAS ===== */
+            .table-responsive {
+                -webkit-overflow-scrolling: touch;
+                border-radius: 10px;
+            }
+
+            /* Indicador de scroll horizontal */
+            .table-responsive::after {
+                content: "⟵ Deslize para ver mais ⟶";
+                display: block;
+                text-align: center;
+                font-size: 0.7rem;
+                color: #94a3b8;
+                padding: 8px 0;
+                background: #f8fafc;
+                border-top: 1px solid #e5e9f0;
+            }
+
+            /* Tabela mais compacta no celular */
+            .table {
+                font-size: 0.82rem;
+            }
+            .table th, .table td {
+                padding: 8px 10px !important;
+                white-space: nowrap;
+            }
+
+            /* Botões de ação em tabela */
+            .btn-action {
+                min-width: 36px;
+                min-height: 36px;
+                padding: 6px 8px !important;
+                font-size: 0.75rem !important;
+                margin: 2px 1px !important;
+            }
+
+            /* ===== ALERTAS ===== */
+            .alert {
+                padding: 12px 16px;
+                font-size: 0.88rem;
+            }
+
+            /* ===== MODAIS ===== */
+            .modal-dialog {
+                margin: 8px;
+                max-width: calc(100% - 16px);
+            }
+
+            /* ===== HOME (Cards de módulos) ===== */
+            .home-card .card-body {
+                min-height: 150px !important;
+                padding: 14px 8px !important;
+            }
+            .home-card .card-body i {
+                font-size: 1.9rem !important;
+            }
+            .home-card .card-title {
+                font-size: 0.85rem !important;
+            }
+            .home-card .card-text {
+                font-size: 0.72rem !important;
+            }
+
+            /* ===== CABEÇALHOS DE ESCOLA ===== */
+            .escola-header {
+                padding: 16px 20px !important;
+                border-radius: 12px !important;
+            }
+            .escola-header .escola-nome {
+                font-size: 1.1rem !important;
+            }
+            .escola-header .escola-info {
+                padding-left: 0 !important;
+                gap: 12px !important;
+                font-size: 0.7rem !important;
+                margin-top: 8px;
+            }
+            .escola-header .logo-icon {
+                width: 42px !important;
+                height: 42px !important;
+                font-size: 1.2rem !important;
+            }
+        }
+
+        /* ===== TABLET (768px - 992px) ===== */
+        @media (min-width: 769px) and (max-width: 992px) {
+            .container { max-width: 100%; }
+        }
+
+        /* ===== TOASTS ===== */
+        @media (max-width: 576px) {
+            .toast-container {
+                padding: 8px !important;
+                width: 100%;
+            }
+            .toast {
+                width: 100%;
+                max-width: 100%;
+            }
+        }
+
+        /* ===== BOTÃO VOLTAR/INÍCIO (rodapé) ===== */
+        @media (max-width: 768px) {
+            .btn-rodape {
+                width: 100%;
+                margin-bottom: 8px;
+            }
+        }
+    </style>
+</th:block>
+
+</body>
+</html>

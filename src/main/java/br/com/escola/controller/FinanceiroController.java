@@ -3,6 +3,7 @@ package br.com.escola.controller;
 import br.com.escola.model.Aluno;
 import br.com.escola.model.Mensalidade;
 import br.com.escola.service.AlunoService;
+import br.com.escola.service.EscolaService;
 import br.com.escola.service.MensalidadeService;
 import br.com.escola.service.SerieService;
 import br.com.escola.service.TurmaService;
@@ -34,6 +35,10 @@ public class FinanceiroController {
     @Autowired
     private SerieService serieService;
 
+    @Autowired
+    private EscolaService escolaService;   // NOVO
+
+    // ========== PAGINA INICIAL DO MODULO ==========
     @GetMapping
     public String index(Model model) {
         LocalDate hoje = LocalDate.now();
@@ -49,6 +54,7 @@ public class FinanceiroController {
         return "financeiro/index";
     }
 
+    // ========== LISTAGEM ==========
     @GetMapping("/mensalidades")
     public String listar(@RequestParam(required = false) String status,
                          @RequestParam(required = false) Long turmaId,
@@ -98,6 +104,7 @@ public class FinanceiroController {
         return "financeiro/mensalidades";
     }
 
+    // ========== CADASTRAR INDIVIDUAL ==========
     @GetMapping("/nova")
     public String nova(Model model) {
         model.addAttribute("alunos", alunoService.listarTodos());
@@ -119,13 +126,13 @@ public class FinanceiroController {
 
         if (mensalidadeService.existeMensalidade(alunoId, mes)) {
             attributes.addFlashAttribute("mensagemErro",
-                    "Já existe uma mensalidade cadastrada para este aluno neste mês!");
+                    "Ja existe uma mensalidade cadastrada para este aluno neste mes!");
             return "redirect:/financeiro/nova";
         }
 
         Aluno aluno = alunoService.buscarPorId(alunoId);
         if (aluno == null) {
-            attributes.addFlashAttribute("mensagemErro", "Aluno não encontrado!");
+            attributes.addFlashAttribute("mensagemErro", "Aluno nao encontrado!");
             return "redirect:/financeiro/mensalidades";
         }
 
@@ -147,6 +154,7 @@ public class FinanceiroController {
         return "redirect:/financeiro/mensalidades";
     }
 
+    // ========== GERAR EM LOTE ==========
     @GetMapping("/gerar-lote")
     public String gerarLoteForm(Model model) {
         model.addAttribute("turmas", turmaService.listarTodas());
@@ -171,7 +179,7 @@ public class FinanceiroController {
                         criadas + " mensalidade(s) gerada(s) com sucesso!");
             } else {
                 attributes.addFlashAttribute("mensagemErro",
-                        "Nenhuma mensalidade foi gerada. Verifique se os alunos já possuem mensalidade neste mês.");
+                        "Nenhuma mensalidade foi gerada. Verifique se os alunos ja possuem mensalidade neste mes.");
             }
         } catch (Exception e) {
             attributes.addFlashAttribute("mensagemErro", "Erro ao gerar lote: " + e.getMessage());
@@ -180,6 +188,7 @@ public class FinanceiroController {
         return "redirect:/financeiro/mensalidades";
     }
 
+    // ========== MARCAR COMO PAGA ==========
     @GetMapping("/pagar/{id}")
     public String pagarForm(@PathVariable Long id, Model model) {
         Mensalidade m = mensalidadeService.buscarPorId(id);
@@ -212,6 +221,7 @@ public class FinanceiroController {
         return "redirect:/financeiro/recibo/" + id;
     }
 
+    // ========== REVERTER PAGAMENTO ==========
     @GetMapping("/reverter/{id}")
     public String reverter(@PathVariable Long id, RedirectAttributes attributes) {
         try {
@@ -223,10 +233,11 @@ public class FinanceiroController {
         return "redirect:/financeiro/mensalidades";
     }
 
+    // ========== CANCELAR ==========
     @GetMapping("/cancelar/{id}")
     public String cancelar(@PathVariable Long id, RedirectAttributes attributes) {
         try {
-            mensalidadeService.cancelar(id, "Cancelada pelo usuário");
+            mensalidadeService.cancelar(id, "Cancelada pelo usuario");
             attributes.addFlashAttribute("mensagemSucesso", "Mensalidade cancelada com sucesso!");
         } catch (Exception e) {
             attributes.addFlashAttribute("mensagemErro", "Erro ao cancelar: " + e.getMessage());
@@ -234,6 +245,7 @@ public class FinanceiroController {
         return "redirect:/financeiro/mensalidades";
     }
 
+    // ========== RECIBO ==========
     @GetMapping("/recibo/{id}")
     public String recibo(@PathVariable Long id, Model model) {
         Mensalidade m = mensalidadeService.buscarPorId(id);
@@ -242,9 +254,11 @@ public class FinanceiroController {
         }
         model.addAttribute("mensalidade", m);
         model.addAttribute("aluno", m.getAluno());
+        model.addAttribute("escola", escolaService.buscarEscola());   // NOVO
         return "financeiro/recibo";
     }
 
+    // ========== RELATORIO ==========
     @GetMapping("/relatorio")
     public String relatorio(@RequestParam(required = false) Long turmaId,
                             @RequestParam(required = false) Integer mes,

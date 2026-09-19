@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,15 +8,116 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { background: #f4f6f9; font-family: 'Inter', sans-serif; }
-        .page-header {
-            background: linear-gradient(135deg, #2c3e50 0%, #4a6fa5 100%);
-            color: white;
-            padding: 32px;
-            border-radius: 16px;
-            margin-bottom: 24px;
-            box-shadow: 0 8px 24px rgba(44, 62, 80, 0.15);
+        body {
+            background: #f4f6f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
+
+        /* ===== CABEÇALHO DA ESCOLA (IDÊNTICO AO BOLETIM) ===== */
+        .escola-header {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 60%, #0f172a 100%);
+            border-radius: 16px;
+            padding: 28px 36px;
+            margin-bottom: 28px;
+            color: white;
+            box-shadow: 0 8px 28px rgba(30,64,175,0.25);
+            position: relative;
+            overflow: hidden;
+        }
+        .escola-header::before {
+            content: '🎓';
+            position: absolute;
+            right: -20px;
+            top: -40px;
+            font-size: 200px;
+            opacity: 0.07;
+            pointer-events: none;
+        }
+        .escola-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #fbbf24, #f59e0b, #fbbf24);
+        }
+        .escola-header .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 14px;
+        }
+        .escola-header .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            border: 1px solid rgba(255,255,255,0.25);
+            flex-shrink: 0;
+        }
+        .escola-header .escola-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.75;
+            margin-bottom: 2px;
+        }
+        .escola-header .escola-nome {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -0.5px;
+            line-height: 1.15;
+        }
+        .escola-header .escola-info {
+            display: flex;
+            gap: 28px;
+            flex-wrap: wrap;
+            font-size: 0.85rem;
+            opacity: 0.9;
+            padding-left: 78px;
+        }
+        .escola-header .escola-info span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .escola-header .escola-info i {
+            color: #93c5fd;
+            font-size: 0.9rem;
+        }
+
+        .escola-fallback {
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            box-shadow: 0 8px 28px rgba(100,116,139,0.25);
+        }
+
+        /* ===== PAGE HEADER ===== */
+        .page-header {
+            background: white;
+            border-radius: 14px;
+            padding: 20px 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border-left: 4px solid #1e40af;
+        }
+        .page-header h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 4px;
+        }
+        .page-header h1 i { color: #1e40af; }
+        .page-header p {
+            color: #64748b;
+            margin: 0;
+            font-size: 0.88rem;
+        }
+
+        /* ===== STAT CARDS ===== */
         .stat-card {
             background: white;
             border-radius: 14px;
@@ -54,6 +155,8 @@
             color: #2c3e50;
             line-height: 1.2;
         }
+
+        /* ===== CHART CARD ===== */
         .chart-card {
             background: white;
             border-radius: 14px;
@@ -94,38 +197,86 @@
             box-shadow: 0 10px 25px rgba(74, 111, 165, 0.5);
         }
 
-        /* Cabeçalho de impressão (oculto na tela) */
-        .print-header { display: none; }
+        /* ===== IMPRESSÃO ===== */
+		@media print {
+		    @page { size: A4; margin: 10mm; }
+		    .no-print { display: none !important; }
+		    body { background: white !important; padding: 0; margin: 0; }
 
-        /* Impressão */
-        @media print {
-            .no-print { display: none !important; }
-            body { background: white !important; padding: 0; margin: 0; }
-            .page-header {
-                background: #2c3e50 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-                color: white !important;
-                box-shadow: none !important;
-            }
-            .stat-card {
-                border: 1px solid #e5e9f0 !important;
-                box-shadow: none !important;
-                page-break-inside: avoid;
-            }
-            .stat-card .stat-icon {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            .chart-card {
-                border: 1px solid #e5e9f0 !important;
-                box-shadow: none !important;
-                page-break-inside: avoid;
-            }
-            .container { max-width: 100% !important; }
-            .print-header { display: block !important; margin-bottom: 20px; }
-            canvas { max-width: 100% !important; height: auto !important; }
-        }
+		    .escola-header {
+		        background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 60%, #0f172a 100%) !important;
+		        -webkit-print-color-adjust: exact !important;
+		        print-color-adjust: exact !important;
+		        color-adjust: exact !important;
+		        border-radius: 10px;
+		        padding: 14px 20px;
+		        margin-bottom: 12px;
+		        box-shadow: none !important;
+		        max-width: 750px;
+		        margin-left: auto;
+		        margin-right: auto;
+		    }
+		    .escola-header::before {
+		        font-size: 120px;
+		        opacity: 0.07;
+		    }
+		    .escola-header::after {
+		        -webkit-print-color-adjust: exact !important;
+		        print-color-adjust: exact !important;
+		    }
+		    .escola-header .logo-icon {
+		        background: rgba(255,255,255,0.2) !important;
+		        -webkit-print-color-adjust: exact !important;
+		        print-color-adjust: exact !important;
+		        width: 40px;
+		        height: 40px;
+		        font-size: 1.15rem;
+		    }
+		    .escola-header .escola-nome {
+		        font-size: 1.05rem;
+		    }
+		    .escola-header .escola-label {
+		        font-size: 0.58rem;
+		    }
+		    .escola-header .escola-info {
+		        padding-left: 0;
+		        margin-top: 6px;
+		        gap: 14px;
+		        font-size: 0.68rem;
+		    }
+
+		    .page-header {
+		        box-shadow: none;
+		        border: 1px solid #e2e8f0;
+		        padding: 14px 20px;
+		        margin-bottom: 14px;
+		        max-width: 750px;
+		        margin-left: auto;
+		        margin-right: auto;
+		    }
+
+		    .stat-card {
+		        border: 1px solid #e5e9f0 !important;
+		        box-shadow: none !important;
+		        page-break-inside: avoid;
+		    }
+		    .stat-card .stat-icon {
+		        -webkit-print-color-adjust: exact;
+		        print-color-adjust: exact;
+		    }
+		    .chart-card {
+		        border: 1px solid #e5e9f0 !important;
+		        box-shadow: none !important;
+		        page-break-inside: avoid;
+		    }
+		    .container { max-width: 100% !important; }
+		    canvas {
+		        max-width: 100% !important;
+		        height: auto !important;
+		        -webkit-print-color-adjust: exact !important;
+		        print-color-adjust: exact !important;
+		    }
+		}
     </style>
 </head>
 <body>
@@ -146,31 +297,64 @@
     </div>
 </nav>
 
-<!-- Cabeçalho apenas para impressão -->
-<div class="print-header text-center">
-    <h1 style="color: #2c3e50; font-weight: 700; margin-bottom: 4px;">Dashboard - Sistema Escolar</h1>
-    <p style="color: #6c757d; margin: 0;">Emitido em: <span id="dataImpressao"></span></p>
-    <hr>
-</div>
-
 <div class="container mt-4 pb-5">
-    <!-- Cabeçalho (tela) -->
-    <div class="page-header no-print">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+    <!-- ===== CABEÇALHO DA ESCOLA ===== -->
+    <div class="escola-header" th:if="${escola != null}">
+        <div class="logo-area">
+            <div class="logo-icon">🎓</div>
             <div>
-                <h1 class="mb-1"><i class="bi bi-speedometer2"></i> Dashboard</h1>
-                <p class="mb-0 opacity-75">Visão geral da escola com indicadores e gráficos</p>
+                <div class="escola-label">Instituição de Ensino</div>
+                <h1 class="escola-nome" th:text="${escola.nome}">Nome da Escola</h1>
             </div>
+        </div>
+        <div class="escola-info">
+            <span th:if="${escola.cnpj != null and !escola.cnpj.isEmpty()}">
+                <i class="bi bi-file-earmark-text-fill"></i>
+                CNPJ: <strong th:text="${escola.cnpj}"></strong>
+            </span>
+            <span th:if="${escola.enderecoCompleto != null and !escola.enderecoCompleto.isEmpty()}">
+                <i class="bi bi-geo-alt-fill"></i>
+                <span th:text="${escola.enderecoCompleto}"></span>
+            </span>
+            <span th:if="${escola.telefone != null and !escola.telefone.isEmpty()}">
+                <i class="bi bi-telephone-fill"></i>
+                <span th:text="${escola.telefone}"></span>
+            </span>
+            <span th:if="${escola.email != null and !escola.email.isEmpty()}">
+                <i class="bi bi-envelope-fill"></i>
+                <span th:text="${escola.email}"></span>
+            </span>
+        </div>
+    </div>
+
+    <!-- Fallback -->
+    <div class="escola-header escola-fallback" th:if="${escola == null}">
+        <div class="logo-area">
+            <div class="logo-icon">🎓</div>
             <div>
-                <button class="btn btn-light btn-sm" onclick="imprimirDashboard()">
-                    <i class="bi bi-printer"></i> Imprimir
-                </button>
-                <a href="/home" class="btn btn-outline-light btn-sm"><i class="bi bi-house"></i> Início</a>
+                <div class="escola-label">Instituição de Ensino</div>
+                <h1 class="escola-nome">SISTEMA ESCOLAR</h1>
             </div>
         </div>
     </div>
 
-    <!-- Cards de estatísticas -->
+    <!-- ===== PAGE HEADER ===== -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h1><i class="bi bi-speedometer2"></i> Dashboard</h1>
+                <p>Visão geral da escola com indicadores e gráficos</p>
+            </div>
+            <div class="no-print">
+                <button class="btn btn-primary btn-sm" onclick="imprimirDashboard()">
+                    <i class="bi bi-printer"></i> Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== STAT CARDS ===== -->
     <div class="row g-3 mb-4">
         <div class="col-md-3 col-sm-6">
             <div class="stat-card" style="border-color: #4a6fa5;">
@@ -202,7 +386,7 @@
         </div>
     </div>
 
-    <!-- Cards secundários -->
+    <!-- ===== CARDS SECUNDÁRIOS ===== -->
     <div class="row g-3 mb-4">
         <div class="col-md-4">
             <div class="stat-card" style="border-color: #16a085;">
@@ -227,7 +411,7 @@
         </div>
     </div>
 
-    <!-- Gráficos -->
+    <!-- ===== GRÁFICOS ===== -->
     <div class="row g-3 mb-4">
         <div class="col-md-6">
             <div class="chart-card">
@@ -261,7 +445,6 @@
     let chartSerie = null;
     let chartMateria = null;
 
-    // Gráfico 1: Alunos por Série (pizza)
     fetch('/dashboard/api/alunos-por-serie')
         .then(r => r.json())
         .then(data => {
@@ -284,6 +467,7 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     animation: { duration: 0 },
+                    devicePixelRatio: 3,
                     plugins: {
                         legend: { position: 'bottom', labels: { padding: 10, font: { size: 11 } } }
                     }
@@ -291,7 +475,6 @@
             });
         });
 
-    // Gráfico 2: Média por Matéria (barras)
     fetch('/dashboard/api/media-por-materia')
         .then(r => r.json())
         .then(data => {
@@ -312,6 +495,7 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     animation: { duration: 0 },
+                    devicePixelRatio: 3,
                     scales: {
                         y: {
                             beginAtZero: true,
@@ -326,21 +510,12 @@
             });
         });
 
-    // Função para imprimir o dashboard
     function imprimirDashboard() {
-        // Preenche a data no cabeçalho de impressão
-        const hoje = new Date();
-        const dataFormatada = hoje.toLocaleDateString('pt-BR') + ' às ' +
-                              hoje.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        document.getElementById('dataImpressao').textContent = dataFormatada;
-
-        // Aguarda um instante para que os gráficos estejam prontos
-        setTimeout(() => {
-            window.print();
-        }, 200);
+        if (chartSerie) { chartSerie.resize(); chartSerie.update('none'); }
+        if (chartMateria) { chartMateria.resize(); chartMateria.update('none'); }
+        setTimeout(() => window.print(), 250);
     }
 
-    // Ao fechar a janela de impressão, redesenha os gráficos com animação
     window.addEventListener('afterprint', function() {
         if (chartSerie) chartSerie.update();
         if (chartMateria) chartMateria.update();
