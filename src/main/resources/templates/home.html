@@ -15,7 +15,7 @@
             min-height: 100vh;
         }
 
-        /* ===== CABEÇALHO DE BOAS-VINDAS (menor) ===== */
+        /* ===== CABEÇALHO DE BOAS-VINDAS ===== */
         .welcome-header {
             background: white;
             border-radius: 14px;
@@ -47,7 +47,7 @@
             padding-left: 38px;
         }
 
-        /* ===== CARD DA ESCOLA (full width + gradiente) ===== */
+        /* ===== CARD DA ESCOLA ===== */
         .school-section {
             margin-bottom: 24px;
         }
@@ -141,7 +141,7 @@
             line-height: 1.2;
         }
 
-        /* Card vazio (sem escola cadastrada) */
+        /* Card vazio */
         .school-empty-full {
             background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
             border-radius: 14px;
@@ -283,7 +283,7 @@
 <!-- Conteúdo -->
 <div class="container mt-4 pb-5">
 
-    <!-- ===== CABEÇALHO DE BOAS-VINDAS (compacto) ===== -->
+    <!-- ===== CABEÇALHO DE BOAS-VINDAS ===== -->
     <div class="welcome-header">
         <div class="welcome-title-row">
             <i class="bi bi-house-heart-fill"></i>
@@ -292,7 +292,7 @@
         <p>Gerencie séries, matérias, turmas, alunos, notas, frequência, financeiro e relatórios.</p>
     </div>
 
-    <!-- ===== CARD DA ESCOLA (full width + gradiente) ===== -->
+    <!-- ===== CARD DA ESCOLA ===== -->
     <div class="school-section" th:if="${escola != null}">
         <div class="school-card-full">
             <div class="school-logo-area">
@@ -341,7 +341,7 @@
         </div>
     </div>
 
-    <!-- ===== CARD VAZIO (sem escola cadastrada) ===== -->
+    <!-- ===== CARD VAZIO ===== -->
     <div class="school-section" th:if="${escola == null}">
         <div class="school-empty-full">
             <div class="texto">
@@ -422,6 +422,18 @@
                     <h5 class="card-title">Frequência</h5>
                     <p class="card-text">Registre a presença dos alunos.</p>
                     <a href="/frequencia" class="btn btn-outline-success">Acessar</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== NOVO CARD: HISTÓRICO ESCOLAR ===== -->
+        <div class="col-6 col-sm-6 col-md-4 col-lg-3 col-xl-2" sec:authorize="hasAnyRole('ADMIN','SECRETARIA','PROFESSOR')">
+            <div class="card home-card" style="--card-color: #8b5cf6;">
+                <div class="card-body">
+                    <i class="bi bi-file-earmark-text-fill" style="color: #8b5cf6;"></i>
+                    <h5 class="card-title">Histórico Escolar</h5>
+                    <p class="card-text">Gere históricos dos alunos.</p>
+                    <a href="/historico" class="btn btn-outline-secondary" style="border-color: #8b5cf6; color: #8b5cf6;">Acessar</a>
                 </div>
             </div>
         </div>

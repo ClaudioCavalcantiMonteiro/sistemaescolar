@@ -2,6 +2,8 @@ package br.com.escola.model;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
+
 @Entity
 public class Nota {
     @Id
@@ -18,11 +20,24 @@ public class Nota {
 
     private Integer unidade; // 1, 2, 3, 4
 
+    // Ano letivo em que a nota foi lançada (ex: 2026)
+    private Integer anoLetivo;
+
     private Double nota1;
     private Double nota2;
     private Double nota3;
     private Double nota4;
     private Double recuperacao;
+
+    // ===== Callback: define o ano letivo automaticamente =====
+    @PrePersist
+    public void prePersist() {
+        if (this.anoLetivo == null) {
+            this.anoLetivo = LocalDate.now().getYear();
+        }
+    }
+
+    // ===== Cálculos de média =====
 
     public Double getMediaUnidade() {
         double soma = 0.0;
@@ -43,7 +58,7 @@ public class Nota {
         return media;
     }
 
-    // Getters e Setters
+    // ===== Getters e Setters =====
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public Aluno getAluno() { return aluno; }
@@ -52,6 +67,8 @@ public class Nota {
     public void setMateria(Materia materia) { this.materia = materia; }
     public Integer getUnidade() { return unidade; }
     public void setUnidade(Integer unidade) { this.unidade = unidade; }
+    public Integer getAnoLetivo() { return anoLetivo; }
+    public void setAnoLetivo(Integer anoLetivo) { this.anoLetivo = anoLetivo; }
     public Double getNota1() { return nota1; }
     public void setNota1(Double nota1) { this.nota1 = nota1; }
     public Double getNota2() { return nota2; }

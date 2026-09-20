@@ -1,6 +1,7 @@
 package br.com.escola.controller;
 
 import br.com.escola.model.Turma;
+import br.com.escola.service.EscolaService;
 import br.com.escola.service.PdfService;
 import br.com.escola.service.SerieService;
 import br.com.escola.service.TurmaService;
@@ -30,6 +31,9 @@ public class TurmaController {
 
     @Autowired
     private PdfService pdfService;
+
+    @Autowired
+    private EscolaService escolaService;
 
     @GetMapping
     public String listar(@RequestParam(required = false) String nome,
@@ -115,11 +119,12 @@ public class TurmaController {
         }
         model.addAttribute("turma", turma);
         model.addAttribute("alunos", turmaService.buscarAlunosPorTurma(id));
+        model.addAttribute("escola", escolaService.buscarEscola());
         return "turmas/alunos-da-turma";
     }
 
     // ==================================================================
-    // RELATORIO DE ALUNOS POR TURMA (PDF) - CORRIGIDO com byte[]
+    // RELATORIO DE ALUNOS POR TURMA (PDF)
     // ==================================================================
     @GetMapping("/{id}/alunos/pdf")
     public ResponseEntity<byte[]> relatorioAlunosPorTurma(@PathVariable Long id) {

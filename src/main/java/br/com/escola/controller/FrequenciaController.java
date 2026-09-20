@@ -5,15 +5,22 @@ import br.com.escola.model.Frequencia;
 import br.com.escola.model.Materia;
 import br.com.escola.model.Turma;
 import br.com.escola.service.AlunoService;
+import br.com.escola.service.EscolaService;
 import br.com.escola.service.FrequenciaService;
 import br.com.escola.service.MateriaService;
+import br.com.escola.service.PdfService;
 import br.com.escola.service.TurmaService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.ByteArrayInputStream;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.*;
@@ -34,14 +41,20 @@ public class FrequenciaController {
     @Autowired
     private MateriaService materiaService;
 
-    // ========== PÁGINA INICIAL ==========
+    @Autowired
+    private EscolaService escolaService;
+
+    @Autowired
+    private PdfService pdfService;
+
+    // ========== PAGINA INICIAL ==========
     @GetMapping
     public String index(Model model) {
         model.addAttribute("turmas", turmaService.listarTodas());
         return "frequencia/index";
     }
 
-    // ========== REGISTRAR FREQUÊNCIA ==========
+    // ========== REGISTRAR FREQUENCIA ==========
     @GetMapping("/registrar")
     public String registrar(@RequestParam(required = false) Long turmaId,
                             @RequestParam(required = false) Long materiaId,
@@ -52,12 +65,21 @@ public class FrequenciaController {
         model.addAttribute("turmas", turmaService.listarTodas());
         model.addAttribute("materias", materiaService.listarTodas());
 
-        if (turmaId == null || turmaId <= 0) {
+        // Precisa de turma E materia para carregar a lista de alunos
+        if (turmaId == null || turmaId <= 0 || materiaId == null || materiaId <= 0) {
+            model.addAttribute("turmaId", turmaId);
+            model.addAttribute("materiaId", materiaId);
+            if (data != null) model.addAttribute("data", data);
             return "frequencia/registrar";
         }
 
         Turma turma = turmaService.buscarPorId(turmaId);
         if (turma == null) {
+            return "redirect:/frequencia";
+        }
+
+        Materia materia = materiaService.buscarPorId(materiaId);
+        if (materia == null) {
             return "redirect:/frequencia";
         }
 
@@ -68,18 +90,19 @@ public class FrequenciaController {
         List<Aluno> alunos = alunoService.buscarPorTurma(turmaId);
         List<Frequencia> existentes = frequenciaService.listarPorTurmaEData(turmaId, data);
 
-        // Mapa: alunoId -> Frequencia (apenas para a matéria selecionada)
         Map<Long, Frequencia> mapaExistentes = new HashMap<>();
         for (Frequencia f : existentes) {
-            boolean mesmaMateria = (materiaId == null && f.getMateria() == null) ||
-                    (materiaId != null && f.getMateria() != null && f.getMateria().getId().equals(materiaId));
+            boolean mesmaMateria = f.getMateria() != null
+                    && f.getMateria().getId().equals(materiaId);
             if (mesmaMateria) {
                 mapaExistentes.put(f.getAluno().getId(), f);
             }
         }
 
         model.addAttribute("turma", turma);
+        model.addAttribute("turmaId", turmaId);
         model.addAttribute("materiaId", materiaId);
+        model.addAttribute("materia", materia);
         model.addAttribute("data", data);
         model.addAttribute("alunos", alunos);
         model.addAttribute("mapaExistentes", mapaExistentes);
@@ -87,15 +110,15 @@ public class FrequenciaController {
         return "frequencia/registrar";
     }
 
-    // ========== SALVAR FREQUÊNCIA ==========
+    // ========== SALVAR FREQUENCIA ==========
     @PostMapping("/salvar")
     public String salvar(@RequestParam Long turmaId,
-                         @RequestParam(required = false) Long materiaId,
+                         @RequestParam Long materiaId,
                          @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data,
                          @RequestParam Map<String, String> params) {
 
         Turma turma = turmaService.buscarPorId(turmaId);
-        Materia materia = materiaId != null ? materiaService.buscarPorId(materiaId) : null;
+        Materia materia = materiaService.buscarPorId(materiaId);
         List<Aluno> alunos = alunoService.buscarPorTurma(turmaId);
 
         for (Aluno aluno : alunos) {
@@ -123,14 +146,21 @@ public class FrequenciaController {
             frequenciaService.salvar(frequencia);
         }
 
-        String url = "redirect:/frequencia/registrar?turmaId=" + turmaId + "&data=" + data;
-        if (materiaId != null) {
-            url += "&materiaId=" + materiaId;
-        }
-        return url + "&sucesso";
+        return "redirect:/frequencia/registrar?turmaId=" + turmaId
+                + "&materiaId=" + materiaId
+                + "&data=" + data
+                + "&sucesso";
     }
 
-    // ========== VISUALIZAR FREQUÊNCIA DE UM ALUNO ==========
+    // ========== TELA DE SELECAO ==========
+    @GetMapping("/aluno")
+    public String selecionarAluno(Model model) {
+        model.addAttribute("turmas", turmaService.listarTodas());
+        model.addAttribute("alunos", alunoService.listarTodos());
+        return "frequencia/aluno-selecionar";
+    }
+
+    // ========== FREQUENCIA DE UM ALUNO ==========
     @GetMapping("/aluno/{alunoId}")
     public String frequenciaAluno(@PathVariable Long alunoId, Model model) {
         Aluno aluno = alunoService.buscarPorId(alunoId);
@@ -145,10 +175,28 @@ public class FrequenciaController {
         model.addAttribute("aluno", aluno);
         model.addAttribute("registros", registros);
         model.addAttribute("estatisticas", estatisticas);
+        model.addAttribute("escola", escolaService.buscarEscola());
         return "frequencia/aluno";
     }
 
-    // ========== RELATÓRIO MENSAL POR TURMA ==========
+    // ========== PDF DA FREQUENCIA INDIVIDUAL DO ALUNO ==========
+    @GetMapping("/aluno/{alunoId}/pdf")
+    public ResponseEntity<InputStreamResource> baixarFrequenciaAlunoPdf(@PathVariable Long alunoId) {
+        Aluno aluno = alunoService.buscarPorId(alunoId);
+        String nomeArquivo = "frequencia_" +
+                (aluno != null ? aluno.getNome().replaceAll("\\s+", "_") : alunoId) + ".pdf";
+
+        ByteArrayInputStream pdf = pdfService.gerarPdfFrequenciaAluno(alunoId);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "inline; filename=" + nomeArquivo);
+
+        return ResponseEntity.ok().headers(headers)
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(new InputStreamResource(pdf));
+    }
+
+    // ========== RELATORIO MENSAL POR TURMA ==========
     @GetMapping("/relatorio")
     public String relatorio(@RequestParam(required = false) Long turmaId,
                             @RequestParam(required = false) Integer mes,
@@ -156,6 +204,7 @@ public class FrequenciaController {
                             Model model) {
 
         model.addAttribute("turmas", turmaService.listarTodas());
+        model.addAttribute("escola", escolaService.buscarEscola());
 
         if (turmaId == null || turmaId <= 0) {
             return "frequencia/relatorio";
@@ -176,12 +225,11 @@ public class FrequenciaController {
         List<Aluno> alunos = alunoService.buscarPorTurma(turmaId);
         List<Frequencia> registros = frequenciaService.listarPorTurmaEPeriodo(turmaId, inicio, fim);
 
-        // Mapa: alunoId -> Estatísticas
         Map<Long, FrequenciaService.EstatisticasFrequencia> estatisticasPorAluno = new LinkedHashMap<>();
         for (Aluno aluno : alunos) {
             int total = 0, presencas = 0;
             for (Frequencia f : registros) {
-                if (f.getAluno().getId().equals(aluno.getId())) {
+                if (f.getAluno() != null && f.getAluno().getId().equals(aluno.getId())) {
                     total++;
                     if (Boolean.TRUE.equals(f.getPresente())) presencas++;
                 }
@@ -192,7 +240,6 @@ public class FrequenciaController {
                     new FrequenciaService.EstatisticasFrequencia(total, presencas, total - presencas, perc));
         }
 
-        // Totais gerais
         int totalRegistros = registros.size();
         int totalPresencas = 0;
         for (Frequencia f : registros) {
@@ -201,7 +248,6 @@ public class FrequenciaController {
         double percentualGeral = totalRegistros > 0 ? (totalPresencas * 100.0 / totalRegistros) : 0;
         percentualGeral = Math.round(percentualGeral * 10.0) / 10.0;
 
-        // Nome do mês
         String[] meses = {"", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
                           "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
 
@@ -218,5 +264,27 @@ public class FrequenciaController {
         model.addAttribute("percentualGeral", percentualGeral);
 
         return "frequencia/relatorio";
+    }
+
+    // ========== PDF DO RELATORIO MENSAL ==========
+    @GetMapping("/relatorio/pdf")
+    public ResponseEntity<InputStreamResource> baixarRelatorioPdf(
+            @RequestParam Long turmaId,
+            @RequestParam(required = false) Integer mes,
+            @RequestParam(required = false) Integer ano) {
+
+        Turma turma = turmaService.buscarPorId(turmaId);
+        String nomeArquivo = "relatorio_frequencia_" +
+                (turma != null ? turma.getNome().replaceAll("\\s+", "_") : turmaId) +
+                "_" + mes + "_" + ano + ".pdf";
+
+        ByteArrayInputStream pdf = pdfService.gerarRelatorioFrequenciaPdf(turmaId, mes, ano);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "inline; filename=" + nomeArquivo);
+
+        return ResponseEntity.ok().headers(headers)
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(new InputStreamResource(pdf));
     }
 }

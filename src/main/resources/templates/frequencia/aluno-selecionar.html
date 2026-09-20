@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frequência por Aluno</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%); min-height: 100vh; }
+
+        /* ===== CONTAINER EM LARGURA TOTAL ===== */
+        @media (min-width: 1200px) {
+            .container {
+                max-width: 100% !important;
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+        }
+
+        /* ===== CABEÇALHO DA PÁGINA (LARGURA TOTAL) ===== */
+        .page-header {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            color: white;
+            padding: 24px 28px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 24px rgba(30, 64, 175, 0.25);
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+
+            /* Impede "encolher" */
+            box-sizing: border-box;
+        }
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #fbbf24, #f59e0b, #fbbf24);
+        }
+        .page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .page-header p { margin-bottom: 0; }
+
+        /* ===== CARD DO FORMULÁRIO (LARGURA TOTAL) ===== */
+        .form-card {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            padding: 32px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .form-label { font-weight: 600; color: #495057; font-size: 0.9rem; }
+        .form-select, .form-control {
+            padding: 10px 14px;
+            font-size: 0.95rem;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+        .form-select:focus, .form-control:focus {
+            border-color: #1e40af;
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.12);
+        }
+
+        /* ===== RESPONSIVO ===== */
+        @media (max-width: 768px) {
+            .page-header { padding: 18px 20px; }
+            .page-header h1 { font-size: 1.2rem; }
+            .form-card { padding: 20px; }
+            .form-label { font-size: 0.85rem; }
+        }
+
+        /* ===== IMPRESSÃO (mesmo padrão do relatório) ===== */
+        @media print {
+            @page { size: A4; margin: 8mm; }
+
+            body { background: white !important; }
+
+            .no-print { display: none !important; }
+
+            .container {
+                max-width: 100% !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+                width: 100% !important;
+            }
+
+            /* Cabeçalho: largura total + cores preservadas + não encolhe */
+            .page-header {
+                background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%) !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                color: #ffffff !important;
+
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 100% !important;
+                box-sizing: border-box !important;
+
+                padding: 16px 22px !important;
+                margin-bottom: 14px !important;
+                border-radius: 10px !important;
+                box-shadow: none !important;
+
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+            .page-header::after {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .page-header h1 {
+                font-size: 1.3rem !important;
+                margin-bottom: 2px !important;
+            }
+            .page-header p {
+                font-size: 0.85rem !important;
+                opacity: 0.9 !important;
+            }
+
+            /* Form-card: sem sombra, borda fina, largura total */
+            .form-card {
+                box-shadow: none !important;
+                border: 1px solid #e2e8f0 !important;
+                width: 100% !important;
+                padding: 20px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<th:block th:replace="~{fragments/navbar :: estiloNavbar}"></th:block>
+
+<div class="container mt-4 pb-5">
+
+    <!-- ===== CABEÇALHO DA PÁGINA ===== -->
+    <div class="page-header">
+        <h1><i class="bi bi-person-badge-fill"></i> Frequência por Aluno</h1>
+        <p class="opacity-75">Selecione a turma e o aluno para visualizar a frequência individual.</p>
+    </div>
+
+    <!-- ===== CARD DO FORMULÁRIO ===== -->
+    <div class="form-card">
+
+        <div class="row g-3">
+
+            <div class="col-md-6">
+                <label class="form-label">
+                    <i class="bi bi-people"></i> Turma (opcional)
+                </label>
+                <select id="turmaSelect" class="form-select" onchange="filtrarAlunos()">
+                    <option value="">Todas as turmas</option>
+                    <option th:each="t : ${turmas}" th:value="${t.id}" th:text="${t.nome}"></option>
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">
+                    <i class="bi bi-person"></i> Aluno
+                </label>
+                <select id="alunoSelect" class="form-select" required>
+                    <option value="">Selecione um aluno</option>
+                    <option th:each="a : ${alunos}"
+                            th:value="${a.id}"
+                            th:text="${a.nome} + (${a.turma != null} ? ' - ' + ${a.turma.nome} : '')"
+                            th:attr="data-turma-id=${a.turma != null ? a.turma.id : ''}">
+                    </option>
+                </select>
+            </div>
+
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap mt-4">
+            <button onclick="verFrequencia()" class="btn btn-primary px-4">
+                <i class="bi bi-search"></i> Ver Frequência
+            </button>
+            <a href="/frequencia" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<div th:replace="~{fragments/navbar :: toast}"></div>
+<script th:replace="~{fragments/navbar :: scriptToast}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    function filtrarAlunos() {
+        const turmaId = document.getElementById('turmaSelect').value;
+        const alunoSelect = document.getElementById('alunoSelect');
+        const opcoes = alunoSelect.querySelectorAll('option');
+
+        opcoes.forEach(function(opt, i) {
+            if (i === 0) return;
+            const turmaDoAluno = opt.getAttribute('data-turma-id');
+            const deveMostrar = !turmaId || turmaDoAluno === turmaId;
+            opt.style.display = deveMostrar ? '' : 'none';
+            opt.disabled = !deveMostrar;
+        });
+
+        // Limpa o aluno se estiver escondido
+        const atual = alunoSelect.options[alunoSelect.selectedIndex];
+        if (atual && atual.value && atual.disabled) {
+            alunoSelect.value = '';
+        }
+    }
+
+    function verFrequencia() {
+        const alunoId = document.getElementById('alunoSelect').value;
+        if (!alunoId) {
+            alert('Selecione um aluno.');
+            return;
+        }
+        window.location.href = '/frequencia/aluno/' + alunoId;
+    }
+</script>
+
+</body>
+</html>

@@ -19,6 +19,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayInputStream;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -44,20 +45,25 @@ public class NotaController {
     private PdfService pdfService;
 
     @Autowired
-    private EscolaService escolaService;   // NOVO
+    private EscolaService escolaService;
 
     // ==================== TELA INICIAL DE LANCAMENTO ====================
     @GetMapping("/lancar")
     public String lancar(@RequestParam(required = false) Long turmaId,
                          @RequestParam(required = false) Long materiaId,
                          @RequestParam(required = false) Integer unidade,
+                         @RequestParam(required = false) Integer ano,
                          Model model) {
+
+        if (ano == null) ano = LocalDate.now().getYear();
 
         model.addAttribute("turmas", turmaService.listarTodas());
         model.addAttribute("materias", materiaService.listarTodas());
+        model.addAttribute("ano", ano);
+        model.addAttribute("anoAtual", LocalDate.now().getYear());
 
         if (turmaId != null && turmaId > 0 && materiaId != null && materiaId > 0) {
-            return carregarAlunosParaLancamento(turmaId, materiaId, unidade, model);
+            return carregarAlunosParaLancamento(turmaId, materiaId, unidade, ano, model);
         }
 
         model.addAttribute("turmaId", turmaId);
@@ -67,14 +73,16 @@ public class NotaController {
     }
 
     private String carregarAlunosParaLancamento(Long turmaId, Long materiaId,
-                                                 Integer unidade, Model model) {
+                                                 Integer unidade, Integer ano, Model model) {
         if (unidade == null) unidade = 1;
+        if (ano == null) ano = LocalDate.now().getYear();
 
         List<Aluno> alunos = alunoService.buscarPorTurma(turmaId);
 
         Map<Long, Nota> notasPorAluno = new HashMap<>();
         for (Aluno aluno : alunos) {
-            List<Nota> notas = notaService.buscarPorAlunoMateriaEUnidade(aluno.getId(), materiaId, unidade);
+            List<Nota> notas = notaService.buscarPorAlunoMateriaUnidadeEAno(
+                    aluno.getId(), materiaId, unidade, ano);
             if (!notas.isEmpty()) {
                 notasPorAluno.put(aluno.getId(), notas.get(0));
             }
@@ -83,11 +91,14 @@ public class NotaController {
         model.addAttribute("turmaSelecionada", turmaService.buscarPorId(turmaId));
         model.addAttribute("materiaSelecionada", materiaService.buscarPorId(materiaId));
         model.addAttribute("unidadeSelecionada", unidade);
+        model.addAttribute("anoSelecionado", ano);
         model.addAttribute("alunos", alunos);
         model.addAttribute("notasPorAluno", notasPorAluno);
         model.addAttribute("turmaId", turmaId);
         model.addAttribute("materiaId", materiaId);
         model.addAttribute("unidade", unidade);
+        model.addAttribute("ano", ano);
+        model.addAttribute("anoAtual", LocalDate.now().getYear());
 
         return "notas/lancar-turma";
     }
@@ -97,7 +108,10 @@ public class NotaController {
     public String salvarLote(@RequestParam Long turmaId,
                               @RequestParam Long materiaId,
                               @RequestParam Integer unidade,
+                              @RequestParam(required = false) Integer ano,
                               @RequestParam Map<String, String> params) {
+
+        if (ano == null) ano = LocalDate.now().getYear();
 
         List<Aluno> alunos = alunoService.buscarPorTurma(turmaId);
         Materia materia = materiaService.buscarPorId(materiaId);
@@ -119,7 +133,8 @@ public class NotaController {
 
             if (!temValor) continue;
 
-            List<Nota> existentes = notaService.buscarPorAlunoMateriaEUnidade(aluno.getId(), materiaId, unidade);
+            List<Nota> existentes = notaService.buscarPorAlunoMateriaUnidadeEAno(
+                    aluno.getId(), materiaId, unidade, ano);
             Nota nota;
             if (!existentes.isEmpty()) {
                 nota = existentes.get(0);
@@ -128,6 +143,7 @@ public class NotaController {
                 nota.setAluno(aluno);
                 nota.setMateria(materia);
                 nota.setUnidade(unidade);
+                nota.setAnoLetivo(ano);
             }
 
             nota.setNota1(parseDouble(n1));
@@ -143,6 +159,7 @@ public class NotaController {
         return "redirect:/notas/lancar?turmaId=" + turmaId +
                "&materiaId=" + materiaId +
                "&unidade=" + unidade +
+               "&ano=" + ano +
                "&loteSucesso=" + salvas;
     }
 
@@ -151,13 +168,17 @@ public class NotaController {
     public String salvar(@RequestParam("aluno.id") Long alunoId,
                          @RequestParam("materia.id") Long materiaId,
                          @RequestParam("unidade") Integer unidade,
+                         @RequestParam(value = "ano", required = false) Integer ano,
                          @RequestParam(value = "nota1", required = false) Double nota1,
                          @RequestParam(value = "nota2", required = false) Double nota2,
                          @RequestParam(value = "nota3", required = false) Double nota3,
                          @RequestParam(value = "nota4", required = false) Double nota4,
                          @RequestParam(value = "recuperacao", required = false) Double recuperacao) {
 
-        List<Nota> existentes = notaService.buscarPorAlunoMateriaEUnidade(alunoId, materiaId, unidade);
+        if (ano == null) ano = LocalDate.now().getYear();
+
+        List<Nota> existentes = notaService.buscarPorAlunoMateriaUnidadeEAno(
+                alunoId, materiaId, unidade, ano);
         Nota nota;
         if (!existentes.isEmpty()) {
             nota = existentes.get(0);
@@ -166,6 +187,7 @@ public class NotaController {
             nota.setAluno(alunoService.buscarPorId(alunoId));
             nota.setMateria(materiaService.buscarPorId(materiaId));
             nota.setUnidade(unidade);
+            nota.setAnoLetivo(ano);
         }
         nota.setNota1(nota1);
         nota.setNota2(nota2);
@@ -186,21 +208,28 @@ public class NotaController {
 
     // ==================== NOTAS POR TURMA ====================
     @GetMapping("/turma/{turmaId}")
-    public String listarNotasPorTurma(@PathVariable Long turmaId, Model model) {
+    public String listarNotasPorTurma(@PathVariable Long turmaId,
+                                       @RequestParam(required = false) Integer ano,
+                                       Model model) {
+        if (ano == null) ano = LocalDate.now().getYear();
+
         model.addAttribute("turma", turmaService.buscarPorId(turmaId));
         List<Aluno> alunos = alunoService.buscarPorTurma(turmaId);
         model.addAttribute("alunos", alunos);
         List<Materia> materias = materiaService.listarTodas();
         model.addAttribute("materias", materias);
+        model.addAttribute("ano", ano);
+        model.addAttribute("anoAtual", LocalDate.now().getYear());
 
         Map<Long, Map<Long, Map<Integer, Nota>>> notasPorAlunoMateria = new HashMap<>();
         Map<Long, Double> mediaGeralPorAluno = new HashMap<>();
 
         for (Aluno aluno : alunos) {
             Map<Long, Map<Integer, Nota>> porMateria = new HashMap<>();
-            List<Nota> notasAluno = notaService.listarPorAluno(aluno.getId());
+            List<Nota> notasAluno = notaService.listarPorAlunoEAno(aluno.getId(), ano);
 
             for (Nota n : notasAluno) {
+                if (n.getMateria() == null) continue;
                 porMateria.computeIfAbsent(n.getMateria().getId(), k -> new HashMap<>())
                         .put(n.getUnidade(), n);
             }
@@ -227,13 +256,18 @@ public class NotaController {
 
     // ==================== BOLETIM INDIVIDUAL ====================
     @GetMapping("/boletim/{alunoId}")
-    public String boletim(@PathVariable Long alunoId, Model model) {
+    public String boletim(@PathVariable Long alunoId,
+                          @RequestParam(required = false) Integer ano,
+                          Model model) {
+        if (ano == null) ano = LocalDate.now().getYear();
+
         Aluno aluno = alunoService.buscarPorId(alunoId);
         List<Materia> materias = materiaService.listarTodas();
-        List<Nota> notas = notaService.listarPorAluno(alunoId);
+        List<Nota> notas = notaService.listarPorAlunoEAno(alunoId, ano);
 
         Map<Long, Map<Integer, Nota>> notasPorMateria = new HashMap<>();
         for (Nota n : notas) {
+            if (n.getMateria() == null) continue;
             notasPorMateria.computeIfAbsent(n.getMateria().getId(), k -> new HashMap<>())
                     .put(n.getUnidade(), n);
         }
@@ -287,9 +321,11 @@ public class NotaController {
         model.addAttribute("aluno", aluno);
         model.addAttribute("materias", materias);
         model.addAttribute("notasPorMateria", notasPorMateria);
+        model.addAttribute("ano", ano);
+        model.addAttribute("anoAtual", LocalDate.now().getYear());
         model.addAttribute("graficoLabels", "[\"1ª Unidade\",\"2ª Unidade\",\"3ª Unidade\",\"4ª Unidade\"]");
         model.addAttribute("graficoDatasets", datasetsJson.toString());
-        model.addAttribute("escola", escolaService.buscarEscola());   // NOVO
+        model.addAttribute("escola", escolaService.buscarEscola());
 
         return "notas/boletim";
     }
@@ -313,16 +349,23 @@ public class NotaController {
 
     // ==================== EDITAR NOTAS ====================
     @GetMapping("/editar/{alunoId}")
-    public String editarNotas(@PathVariable Long alunoId, Model model) {
+    public String editarNotas(@PathVariable Long alunoId,
+                              @RequestParam(required = false) Integer ano,
+                              Model model) {
+        if (ano == null) ano = LocalDate.now().getYear();
+
         Aluno aluno = alunoService.buscarPorId(alunoId);
-        List<Nota> notas = notaService.listarPorAluno(alunoId);
+        List<Nota> notas = notaService.listarPorAlunoEAno(alunoId, ano);
         List<Materia> materias = materiaService.listarTodas();
 
         model.addAttribute("aluno", aluno);
         model.addAttribute("materias", materias);
+        model.addAttribute("ano", ano);
+        model.addAttribute("anoAtual", LocalDate.now().getYear());
 
         Map<Long, Map<Integer, Nota>> notasMap = new HashMap<>();
         for (Nota n : notas) {
+            if (n.getMateria() == null) continue;
             notasMap.computeIfAbsent(n.getMateria().getId(), k -> new HashMap<>())
                     .put(n.getUnidade(), n);
         }
@@ -333,9 +376,14 @@ public class NotaController {
     // ==================== SALVAR TODAS AS NOTAS ====================
     @PostMapping("/salvar-todas")
     public String salvarTodas(@RequestParam Long alunoId,
+                              @RequestParam(required = false) Integer ano,
                               @RequestParam Map<String, String> params) {
+        if (ano == null) ano = LocalDate.now().getYear();
+
         Aluno aluno = alunoService.buscarPorId(alunoId);
-        notaService.excluirPorAlunoId(alunoId);
+
+        // ⚠️ Exclui APENAS as notas do aluno NO ANO ESPECÍFICO
+        notaService.excluirPorAlunoIdEAno(alunoId, ano);
 
         int notasCriadas = 0;
         for (Materia materia : materiaService.listarTodas()) {
@@ -358,6 +406,7 @@ public class NotaController {
                     nota.setAluno(aluno);
                     nota.setMateria(materia);
                     nota.setUnidade(unidade);
+                    nota.setAnoLetivo(ano);
                     nota.setNota1(parseDouble(nota1Str));
                     nota.setNota2(parseDouble(nota2Str));
                     nota.setNota3(parseDouble(nota3Str));
@@ -372,7 +421,7 @@ public class NotaController {
                 }
             }
         }
-        return "redirect:/notas/boletim/" + alunoId + "?sucesso";
+        return "redirect:/notas/boletim/" + alunoId + "?ano=" + ano + "&sucesso";
     }
 
     private Double parseDouble(String value) {

@@ -5,15 +5,21 @@ import br.com.escola.model.Mensalidade;
 import br.com.escola.service.AlunoService;
 import br.com.escola.service.EscolaService;
 import br.com.escola.service.MensalidadeService;
+import br.com.escola.service.PdfService;
 import br.com.escola.service.SerieService;
 import br.com.escola.service.TurmaService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.io.ByteArrayInputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -36,7 +42,10 @@ public class FinanceiroController {
     private SerieService serieService;
 
     @Autowired
-    private EscolaService escolaService;   // NOVO
+    private EscolaService escolaService;
+
+    @Autowired
+    private PdfService pdfService;
 
     // ========== PAGINA INICIAL DO MODULO ==========
     @GetMapping
@@ -254,7 +263,7 @@ public class FinanceiroController {
         }
         model.addAttribute("mensalidade", m);
         model.addAttribute("aluno", m.getAluno());
-        model.addAttribute("escola", escolaService.buscarEscola());   // NOVO
+        model.addAttribute("escola", escolaService.buscarEscola());
         return "financeiro/recibo";
     }
 
@@ -291,6 +300,52 @@ public class FinanceiroController {
         model.addAttribute("mes", mes);
         model.addAttribute("ano", ano);
         model.addAttribute("nomeMes", meses[mes]);
+        model.addAttribute("escola", escolaService.buscarEscola());
         return "financeiro/relatorio";
+    }
+
+    // ========== PDF DO RELATORIO FINANCEIRO ==========
+    @GetMapping("/relatorio/pdf")
+    public ResponseEntity<InputStreamResource> baixarRelatorioFinanceiroPdf(
+            @RequestParam(required = false) Long turmaId,
+            @RequestParam(required = false) Integer mes,
+            @RequestParam(required = false) Integer ano) {
+
+        LocalDate hoje = LocalDate.now();
+        if (mes == null) mes = hoje.getMonthValue();
+        if (ano == null) ano = hoje.getYear();
+
+        LocalDate inicio = LocalDate.of(ano, mes, 1);
+        LocalDate fim = inicio.withDayOfMonth(inicio.lengthOfMonth());
+
+        List<Mensalidade> lista;
+        String nomeTurmaFiltro = null;
+        if (turmaId != null && turmaId > 0) {
+            lista = mensalidadeService.listarPorTurmaEPeriodo(turmaId, inicio, fim);
+            try {
+                nomeTurmaFiltro = turmaService.buscarPorId(turmaId).getNome();
+            } catch (Exception ignored) {}
+        } else {
+            lista = mensalidadeService.listarPorPeriodo(inicio, fim);
+        }
+
+        MensalidadeService.EstatisticasFinanceiras est =
+                mensalidadeService.calcularEstatisticas(inicio, fim);
+
+        String[] meses = {"", "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+                          "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"};
+
+        ByteArrayInputStream pdf = pdfService.gerarRelatorioFinanceiroPdf(
+                lista, meses[mes], ano, nomeTurmaFiltro,
+                est.totalPrevisto, est.totalRecebido, est.totalAtrasado, est.qtdAtrasadas);
+
+        String nomeArquivo = "relatorio_financeiro_" + mes + "_" + ano + ".pdf";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "inline; filename=" + nomeArquivo);
+
+        return ResponseEntity.ok().headers(headers)
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(new InputStreamResource(pdf));
     }
 }

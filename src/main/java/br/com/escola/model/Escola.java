@@ -29,6 +29,10 @@ public class Escola {
     private String diretor;
     private String slogan;
 
+    // ===== Configurações pedagógicas =====
+    // Média mínima para aprovação (ex: 6.0 ou 7.0)
+    private Double mediaAprovacao;
+
     @Column(length = 500)
     private String observacao;
 
@@ -39,6 +43,7 @@ public class Escola {
     public void prePersist() {
         this.dataCriacao = LocalDateTime.now();
         this.dataAlteracao = LocalDateTime.now();
+        if (this.mediaAprovacao == null) this.mediaAprovacao = 6.0;
     }
 
     @PreUpdate
@@ -88,6 +93,9 @@ public class Escola {
     public String getSlogan() { return slogan; }
     public void setSlogan(String slogan) { this.slogan = slogan; }
 
+    public Double getMediaAprovacao() { return mediaAprovacao; }
+    public void setMediaAprovacao(Double mediaAprovacao) { this.mediaAprovacao = mediaAprovacao; }
+
     public String getObservacao() { return observacao; }
     public void setObservacao(String observacao) { this.observacao = observacao; }
 
@@ -107,5 +115,14 @@ public class Escola {
         if (estado != null && !estado.isEmpty()) sb.append("/").append(estado);
         if (cep != null && !cep.isEmpty()) sb.append(" - CEP: ").append(cep);
         return sb.toString();
+    }
+
+    /**
+     * Retorna a média de aprovação, com fallback para 6.0
+     * caso não esteja configurada.
+     */
+    @Transient
+    public double getMediaAprovacaoSegura() {
+        return mediaAprovacao != null ? mediaAprovacao : 6.0;
     }
 }

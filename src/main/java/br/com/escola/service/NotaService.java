@@ -5,6 +5,7 @@ import br.com.escola.repository.NotaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +16,10 @@ public class NotaService {
     private NotaRepository notaRepository;
 
     public Nota salvar(Nota nota) {
+        // Garante que sempre tenha um ano letivo (fallback)
+        if (nota.getAnoLetivo() == null) {
+            nota.setAnoLetivo(LocalDate.now().getYear());
+        }
         return notaRepository.save(nota);
     }
 
@@ -42,7 +47,53 @@ public class NotaService {
     }
 
     // ==================================================================
-    // METODOS NOVOS - USADOS PELO DASHBOARD
+    // MÉTODOS — FILTRO POR ANO LETIVO
+    // ==================================================================
+
+    /**
+     * Lista todas as notas de um aluno em um ano letivo específico.
+     */
+    public List<Nota> listarPorAlunoEAno(Long alunoId, Integer anoLetivo) {
+        return notaRepository.findByAlunoIdAndAnoLetivo(alunoId, anoLetivo);
+    }
+
+    /**
+     * Lista notas do aluno em uma matéria, em um ano letivo específico.
+     */
+    public List<Nota> listarPorAlunoMateriaEAno(Long alunoId, Long materiaId, Integer anoLetivo) {
+        return notaRepository.findByAlunoIdAndMateriaIdAndAnoLetivo(alunoId, materiaId, anoLetivo);
+    }
+
+    /**
+     * Busca nota de aluno + matéria + unidade + ano letivo.
+     * Usado ao lançar/atualizar notas.
+     */
+    public List<Nota> buscarPorAlunoMateriaUnidadeEAno(
+            Long alunoId, Long materiaId, Integer unidade, Integer anoLetivo) {
+        return notaRepository.findByAlunoIdAndMateriaIdAndUnidadeAndAnoLetivo(
+                alunoId, materiaId, unidade, anoLetivo);
+    }
+
+    /**
+     * Exclui as notas de um aluno APENAS em um ano letivo específico.
+     * Usado ao salvar todas as notas de um boletim, para não apagar de outros anos.
+     */
+    public void excluirPorAlunoIdEAno(Long alunoId, Integer anoLetivo) {
+        List<Nota> notas = notaRepository.findByAlunoIdAndAnoLetivo(alunoId, anoLetivo);
+        if (!notas.isEmpty()) {
+            notaRepository.deleteAll(notas);
+        }
+    }
+
+    /**
+     * Retorna o ano letivo atual do sistema.
+     */
+    public Integer getAnoLetivoAtual() {
+        return LocalDate.now().getYear();
+    }
+
+    // ==================================================================
+    // METODOS USADOS PELO DASHBOARD
     // ==================================================================
 
     /**
@@ -90,7 +141,6 @@ public class NotaService {
     public int[] contarAprovadosReprovados() {
         List<Nota> todas = notaRepository.findAll();
 
-        // Agrupa notas por aluno
         java.util.Map<Long, List<Double>> mediasPorAluno = new java.util.HashMap<>();
 
         for (Nota n : todas) {
