@@ -12,7 +12,8 @@ import br.com.escola.model.Turma;
 import br.com.escola.repository.EscolaRepository;
 import br.com.escola.repository.HistoricoEscolarRepository;
 import com.lowagie.text.*;
-import com.lowagie.text.Font;
+import com.lowagie.text.pdf.Barcode128;
+import com.lowagie.text.pdf.PdfContentByte;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
@@ -50,6 +51,9 @@ public class PdfService {
 
     @Autowired
     private FrequenciaService frequenciaService;
+
+    @Autowired
+    private MensalidadeService mensalidadeService;
 
     @Autowired
     private EscolaRepository escolaRepository;
@@ -1061,161 +1065,7 @@ public class PdfService {
     }
 
     // ==================================================================
-    // DECLARACAO DE MATRICULA
-    // ==================================================================
-    public ByteArrayInputStream gerarDeclaracaoMatricula(Long alunoId) {
-        Document document = new Document(PageSize.A4, 50, 50, 50, 50);
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-        try {
-            PdfWriter.getInstance(document, out);
-            document.open();
-
-            Font escolaNome = new Font(Font.HELVETICA, 16, Font.BOLD, new Color(30, 64, 175));
-            Font escolaInfo = new Font(Font.HELVETICA, 9, Font.NORMAL, new Color(108, 117, 125));
-            Font titulo = new Font(Font.HELVETICA, 14, Font.BOLD, new Color(44, 62, 80));
-            Font corpo = new Font(Font.HELVETICA, 11, Font.NORMAL, new Color(33, 37, 41));
-            Font negrito = new Font(Font.HELVETICA, 11, Font.BOLD, new Color(33, 37, 41));
-            Font italico = new Font(Font.HELVETICA, 11, Font.ITALIC, new Color(33, 37, 41));
-            Font smallFont = new Font(Font.HELVETICA, 9, Font.NORMAL, new Color(108, 117, 125));
-
-            Aluno aluno = alunoService.buscarPorId(alunoId);
-            if (aluno == null) {
-                document.close();
-                return new ByteArrayInputStream(out.toByteArray());
-            }
-
-            List<Escola> escolas = escolaRepository.findAll();
-            Escola escola = escolas.isEmpty() ? null : escolas.get(0);
-
-            if (escola != null) {
-                Paragraph nomeEscola = new Paragraph(escola.getNome().toUpperCase(), escolaNome);
-                nomeEscola.setAlignment(Element.ALIGN_CENTER);
-                document.add(nomeEscola);
-
-                StringBuilder infoEscola = new StringBuilder();
-                if (escola.getCnpj() != null && !escola.getCnpj().isEmpty()) {
-                    infoEscola.append("CNPJ: ").append(escola.getCnpj());
-                }
-                if (escola.getEnderecoCompleto() != null && !escola.getEnderecoCompleto().isEmpty()) {
-                    if (infoEscola.length() > 0) infoEscola.append(" | ");
-                    infoEscola.append(escola.getEnderecoCompleto());
-                }
-                if (escola.getTelefone() != null && !escola.getTelefone().isEmpty()) {
-                    if (infoEscola.length() > 0) infoEscola.append(" | ");
-                    infoEscola.append("Tel: ").append(escola.getTelefone());
-                }
-
-                Paragraph info = new Paragraph(infoEscola.toString(), escolaInfo);
-                info.setAlignment(Element.ALIGN_CENTER);
-                info.setSpacingAfter(20f);
-                document.add(info);
-            } else {
-                Paragraph nomePadrao = new Paragraph("SISTEMA ESCOLAR", escolaNome);
-                nomePadrao.setAlignment(Element.ALIGN_CENTER);
-                nomePadrao.setSpacingAfter(20f);
-                document.add(nomePadrao);
-            }
-
-            Paragraph linha = new Paragraph("_______________________________________________________________________________", escolaInfo);
-            linha.setAlignment(Element.ALIGN_CENTER);
-            linha.setSpacingAfter(30f);
-            document.add(linha);
-
-            Paragraph tituloDecl = new Paragraph("DECLARAÇÃO DE MATRÍCULA", titulo);
-            tituloDecl.setAlignment(Element.ALIGN_CENTER);
-            tituloDecl.setSpacingAfter(40f);
-            document.add(tituloDecl);
-
-            String nomeAluno = aluno.getNome() != null ? aluno.getNome() : "_____________________";
-            String dataNasc = (aluno.getDataNascimento() != null)
-                    ? aluno.getDataNascimento().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                    : "____/____/______";
-            String serie = (aluno.getSerie() != null) ? aluno.getSerie().getNome() : "________";
-            String turma = (aluno.getTurma() != null) ? aluno.getTurma().getNome() : "________";
-            String matricula = (aluno.getMatricula() != null) ? aluno.getMatricula() : "________";
-            String anoLetivo = (aluno.getAnoLetivo() != null)
-                    ? String.valueOf(aluno.getAnoLetivo())
-                    : String.valueOf(LocalDate.now().getYear());
-
-            Paragraph paragrafo1 = new Paragraph();
-            paragrafo1.setAlignment(Element.ALIGN_JUSTIFIED);
-            paragrafo1.setLeading(22f);
-            paragrafo1.add(new Phrase("Declaramos, para os devidos fins, que o(a) aluno(a) ", corpo));
-            paragrafo1.add(new Phrase(nomeAluno, negrito));
-            paragrafo1.add(new Phrase(", nascido(a) em ", corpo));
-            paragrafo1.add(new Phrase(dataNasc, negrito));
-            paragrafo1.add(new Phrase(", encontra-se regularmente matriculado(a) nesta instituição de ensino no ano letivo de ", corpo));
-            paragrafo1.add(new Phrase(anoLetivo, negrito));
-            paragrafo1.add(new Phrase(", cursando a ", corpo));
-            paragrafo1.add(new Phrase(serie, negrito));
-            paragrafo1.add(new Phrase(" — turma ", corpo));
-            paragrafo1.add(new Phrase(turma, negrito));
-            paragrafo1.add(new Phrase(", sob o número de matrícula ", corpo));
-            paragrafo1.add(new Phrase(matricula, negrito));
-            paragrafo1.add(new Phrase(".", corpo));
-            paragrafo1.setSpacingAfter(20f);
-            document.add(paragrafo1);
-
-            if (aluno.getResponsavelFinanceiro() != null
-                    && aluno.getResponsavelFinanceiro().getNome() != null) {
-                Paragraph paragrafoResp = new Paragraph();
-                paragrafoResp.setAlignment(Element.ALIGN_JUSTIFIED);
-                paragrafoResp.setLeading(22f);
-                paragrafoResp.add(new Phrase("Responsável financeiro: ", corpo));
-                paragrafoResp.add(new Phrase(aluno.getResponsavelFinanceiro().getNome(), negrito));
-                if (aluno.getResponsavelFinanceiro().getCpf() != null) {
-                    paragrafoResp.add(new Phrase(" — CPF: ", corpo));
-                    paragrafoResp.add(new Phrase(aluno.getResponsavelFinanceiro().getCpf(), negrito));
-                }
-                paragrafoResp.add(new Phrase(".", corpo));
-                paragrafoResp.setSpacingAfter(20f);
-                document.add(paragrafoResp);
-            }
-
-            Paragraph paragrafoFinal = new Paragraph(
-                    "Por ser verdade, firmo a presente declaração.", corpo);
-            paragrafoFinal.setAlignment(Element.ALIGN_JUSTIFIED);
-            paragrafoFinal.setSpacingAfter(50f);
-            document.add(paragrafoFinal);
-
-            String cidade = (escola != null && escola.getCidade() != null)
-                    ? escola.getCidade() : "___________________";
-            String dataAtual = LocalDate.now().format(DateTimeFormatter.ofPattern(
-                    "dd 'de' MMMM 'de' yyyy", new java.util.Locale("pt", "BR")));
-
-            Paragraph localData = new Paragraph(cidade + ", " + dataAtual + ".", italico);
-            localData.setAlignment(Element.ALIGN_RIGHT);
-            localData.setSpacingAfter(60f);
-            document.add(localData);
-
-            String nomeDiretor = (escola != null && escola.getDiretor() != null
-                    && !escola.getDiretor().isEmpty())
-                    ? escola.getDiretor() : "___________________________";
-
-            Paragraph assinatura = new Paragraph(
-                    "___________________________________________\n" + nomeDiretor + "\nDireção", corpo);
-            assinatura.setAlignment(Element.ALIGN_CENTER);
-            document.add(assinatura);
-
-            Paragraph rodape = new Paragraph(
-                    "\n\nDocumento emitido em " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                    + " pelo Sistema Escolar", smallFont);
-            rodape.setAlignment(Element.ALIGN_CENTER);
-            rodape.setSpacingBefore(40f);
-            document.add(rodape);
-
-            document.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return new ByteArrayInputStream(out.toByteArray());
-    }
-
-    // ==================================================================
     // HISTÓRICO ESCOLAR (1 ANO) — 2 PÁGINAS (Frente + Verso detalhado)
-    // CORRIGIDO: campos reais do aluno
     // ==================================================================
     public ByteArrayInputStream gerarHistoricoEscolarPdf(Long historicoId) {
         Document document = new Document(PageSize.A4, 36, 36, 36, 36);
@@ -1678,7 +1528,6 @@ public class PdfService {
 
     // ==================================================================
     // HISTÓRICO ESCOLAR COMPLETO — TODOS OS ANOS DO ALUNO
-    // CORRIGIDO: campos reais do aluno
     // ==================================================================
     public ByteArrayInputStream gerarHistoricoCompletoPdf(Long alunoId) {
         Document document = new Document(PageSize.A4, 36, 36, 36, 36);
@@ -2123,7 +1972,6 @@ public class PdfService {
 
     // ==================================================================
     // HISTÓRICO OFICIAL COMPACTO (Retrato A4) — Padrão Ficha 18/19
-    // CORRIGIDO: campos reais do aluno
     // ==================================================================
     public ByteArrayInputStream gerarHistoricoOficialPdf(Long alunoId) {
         Document document = new Document(PageSize.A4, 20, 20, 20, 20);
@@ -2407,7 +2255,6 @@ public class PdfService {
 
     // ==================================================================
     // HISTÓRICO OFICIAL FRENTE/VERSO (2 PÁGINAS - Padrão Ficha 18/19)
-    // CORRIGIDO: campos reais do aluno + bug primeiro/último
     // ==================================================================
     public ByteArrayInputStream gerarHistoricoOficialFrenteVersoPdf(Long alunoId) {
         Document document = new Document(PageSize.A4, 30, 30, 30, 30);
@@ -2438,7 +2285,6 @@ public class PdfService {
             }
 
             List<HistoricoEscolar> historicos = historicoRepository.findByAlunoIdWithItems(alunoId);
-            // Ordem CRESCENTE
             historicos.sort((a, b) -> {
                 Integer anoA = a.getAnoLetivo() != null ? a.getAnoLetivo() : 0;
                 Integer anoB = b.getAnoLetivo() != null ? b.getAnoLetivo() : 0;
@@ -2565,7 +2411,6 @@ public class PdfService {
             tabCurso.setWidths(new float[]{1.3f, 2f, 1.3f, 2f});
             tabCurso.setSpacingAfter(14f);
 
-            // CORRIGIDO: primeiro = index 0, ultimo = index size-1
             HistoricoEscolar primeiro = historicos.isEmpty() ? null : historicos.get(0);
             HistoricoEscolar ultimo = historicos.isEmpty() ? null : historicos.get(historicos.size() - 1);
 
@@ -2841,8 +2686,424 @@ public class PdfService {
     }
 
     // ==================================================================
+    // CARNÊ INDIVIDUAL
+    // ==================================================================
+    public ByteArrayInputStream gerarCarneIndividualPdf(Long alunoId, int mesInicio, int mesFim, int ano) {
+        Aluno aluno = alunoService.buscarPorId(alunoId);
+        if (aluno == null) {
+            return new ByteArrayInputStream(new byte[0]);
+        }
+        return gerarCarnePdf(java.util.Collections.singletonList(aluno), mesInicio, mesFim, ano);
+    }
+
+    // ==================================================================
+    // CARNÊ POR TURMA
+    // ==================================================================
+    public ByteArrayInputStream gerarCarneTurmaPdf(Long turmaId, int mesInicio, int mesFim, int ano) {
+        List<Aluno> alunos = alunoService.buscarPorTurma(turmaId);
+        if (alunos.isEmpty()) {
+            return new ByteArrayInputStream(new byte[0]);
+        }
+        return gerarCarnePdf(alunos, mesInicio, mesFim, ano);
+    }
+
+    // ==================================================================
+    // MÉTODO INTERNO — Gera o PDF de carnê para lista de alunos
+    // Formato: A4 retrato | 6 talões por folha | auto-height
+    // ==================================================================
+    private ByteArrayInputStream gerarCarnePdf(List<Aluno> alunos, int mesInicio, int mesFim, int ano) {
+        Document document = new Document(PageSize.A4, 10, 10, 10, 10);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        try {
+            PdfWriter writer = PdfWriter.getInstance(document, out);
+            document.open();
+
+            Font escolaF       = new Font(Font.HELVETICA, 11, Font.BOLD, new Color(30, 64, 175));
+            Font tituloF       = new Font(Font.HELVETICA, 9, Font.BOLD, new Color(30, 64, 175));
+            Font numF          = new Font(Font.HELVETICA, 8, Font.NORMAL, new Color(108, 117, 125));
+            Font labelF        = new Font(Font.HELVETICA, 8, Font.NORMAL, new Color(108, 117, 125));
+            Font labelStrongF  = new Font(Font.HELVETICA, 8, Font.BOLD, new Color(108, 117, 125));
+            Font valorF        = new Font(Font.HELVETICA, 9.5f, Font.BOLD, new Color(33, 37, 41));
+            Font refF          = new Font(Font.HELVETICA, 11, Font.BOLD, new Color(30, 64, 175));
+            Font vencF         = new Font(Font.HELVETICA, 10, Font.BOLD, new Color(33, 37, 41));
+            Font valorGrandeF  = new Font(Font.HELVETICA, 13, Font.BOLD, new Color(30, 64, 175));
+            Font picoteF       = new Font(Font.HELVETICA, 8, Font.NORMAL, new Color(90, 90, 90));
+
+            List<Escola> escolas = escolaRepository.findAll();
+            Escola escola = escolas.isEmpty() ? null : escolas.get(0);
+            String nomeEscola = (escola != null) ? escola.getNome() : "SISTEMA ESCOLAR";
+
+            List<Mensalidade> todasMensalidades = new ArrayList<>();
+            for (Aluno aluno : alunos) {
+                List<Mensalidade> ms = mensalidadeService.listarPorAluno(aluno.getId());
+                for (Mensalidade m : ms) {
+                    if (m.getMesReferencia() == null) continue;
+                    int mesRef = m.getMesReferencia().getMonthValue();
+                    int anoRef = m.getMesReferencia().getYear();
+                    if (anoRef == ano && mesRef >= mesInicio && mesRef <= mesFim) {
+                        todasMensalidades.add(m);
+                    }
+                }
+            }
+
+            todasMensalidades.sort((a, b) -> {
+                Long idA = a.getAluno().getId();
+                Long idB = b.getAluno().getId();
+                if (!idA.equals(idB)) return idA.compareTo(idB);
+                return a.getMesReferencia().compareTo(b.getMesReferencia());
+            });
+
+            if (todasMensalidades.isEmpty()) {
+                Paragraph vazio = new Paragraph("Nenhuma mensalidade encontrada no período informado.", labelF);
+                vazio.setAlignment(Element.ALIGN_CENTER);
+                document.add(vazio);
+                document.close();
+                return new ByteArrayInputStream(out.toByteArray());
+            }
+
+            int TALOES_POR_FOLHA = 6;
+            int totalTal = todasMensalidades.size();
+            int totalFolhas = (int) Math.ceil(totalTal / (double) TALOES_POR_FOLHA);
+
+            DateTimeFormatter fmtData = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            String[] mesesNomes = {"", "JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO",
+                                    "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"};
+
+            String linhaPicote = "--- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---";
+
+            for (int folha = 0; folha < totalFolhas; folha++) {
+
+                PdfPTable tabela = new PdfPTable(1);
+                tabela.setWidthPercentage(100);
+
+                int inicio = folha * TALOES_POR_FOLHA;
+                int fim = Math.min(inicio + TALOES_POR_FOLHA, totalTal);
+
+                for (int i = inicio; i < fim; i++) {
+                    Mensalidade m = todasMensalidades.get(i);
+                    Aluno aluno = m.getAluno();
+
+                    // ===== TALÃO (altura automática) =====
+                    PdfPCell cell = new PdfPCell();
+                    cell.setPadding(8);
+                    cell.setBorder(Rectangle.NO_BORDER);
+                    cell.setMinimumHeight(80f);   // mínimo, cresce se precisar
+
+                    // Cabeçalho
+                    PdfPTable header = new PdfPTable(3);
+                    header.setWidthPercentage(100);
+                    header.setWidths(new float[]{3f, 2f, 1.2f});
+
+                    PdfPCell h1 = new PdfPCell(new Phrase("🎓 " + nomeEscola, escolaF));
+                    h1.setBorder(Rectangle.BOTTOM);
+                    h1.setBorderColor(new Color(30, 64, 175));
+                    h1.setBorderWidth(1.5f);
+                    h1.setPadding(2);
+                    header.addCell(h1);
+
+                    PdfPCell h2 = new PdfPCell(new Phrase("CARNÊ DE PAGAMENTO", tituloF));
+                    h2.setBorder(Rectangle.BOTTOM);
+                    h2.setBorderColor(new Color(30, 64, 175));
+                    h2.setBorderWidth(1.5f);
+                    h2.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    h2.setPadding(2);
+                    header.addCell(h2);
+
+                    String numTal = String.format("%06d", i + 1);
+                    PdfPCell h3 = new PdfPCell(new Phrase("Nº " + numTal, numF));
+                    h3.setBorder(Rectangle.BOTTOM);
+                    h3.setBorderColor(new Color(30, 64, 175));
+                    h3.setBorderWidth(1.5f);
+                    h3.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                    h3.setPadding(2);
+                    header.addCell(h3);
+
+                    cell.addElement(header);
+
+                    // Linha aluno + matrícula
+                    PdfPTable linha1 = new PdfPTable(3);
+                    linha1.setWidthPercentage(100);
+                    linha1.setWidths(new float[]{3.5f, 2f, 1.5f});
+                    linha1.setSpacingBefore(4f);
+
+                    PdfPCell l1a = new PdfPCell(new Phrase("Aluno: " + aluno.getNome(), valorF));
+                    l1a.setBorder(Rectangle.NO_BORDER);
+                    l1a.setPadding(1);
+                    linha1.addCell(l1a);
+
+                    PdfPCell l1b = new PdfPCell(new Phrase("Matrícula: " + (aluno.getMatricula() != null ? aluno.getMatricula() : "-"), labelF));
+                    l1b.setBorder(Rectangle.NO_BORDER);
+                    l1b.setPadding(1);
+                    linha1.addCell(l1b);
+
+                    String telefoneAluno = aluno.getTelefone() != null ? aluno.getTelefone() : "";
+                    PdfPCell l1c = new PdfPCell(new Phrase("Tel: " + telefoneAluno, labelF));
+                    l1c.setBorder(Rectangle.NO_BORDER);
+                    l1c.setPadding(1);
+                    l1c.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                    linha1.addCell(l1c);
+
+                    cell.addElement(linha1);
+
+                    // Linha responsável
+                    String nomeResp = (aluno.getResponsavelFinanceiro() != null
+                            && aluno.getResponsavelFinanceiro().getNome() != null)
+                            ? aluno.getResponsavelFinanceiro().getNome() : "-";
+                    Paragraph linhaResp = new Paragraph("Responsável: " + nomeResp, labelF);
+                    linhaResp.setSpacingBefore(2f);
+                    cell.addElement(linhaResp);
+
+                    // Rodapé: referência + vencimento + valor
+                    PdfPTable rodape = new PdfPTable(3);
+                    rodape.setWidthPercentage(100);
+                    rodape.setWidths(new float[]{2f, 1.5f, 1.5f});
+                    rodape.setSpacingBefore(8f);
+
+                    String nomeMes = mesesNomes[m.getMesReferencia().getMonthValue()];
+
+                    // Referência
+                    Paragraph pRef = new Paragraph();
+                    pRef.add(new Phrase("Referência", labelStrongF));
+                    pRef.add(Chunk.NEWLINE);
+                    pRef.add(new Phrase(nomeMes + " / " + m.getMesReferencia().getYear(), refF));
+                    PdfPCell r1 = new PdfPCell(pRef);
+                    r1.setBorder(Rectangle.TOP);
+                    r1.setBorderColor(new Color(200, 200, 200));
+                    r1.setPadding(4);
+                    rodape.addCell(r1);
+
+                    // Vencimento
+                    Paragraph pVenc = new Paragraph();
+                    pVenc.add(new Phrase("Vencimento", labelStrongF));
+                    pVenc.add(Chunk.NEWLINE);
+                    String dataVenc = m.getDataVencimento() != null ? m.getDataVencimento().format(fmtData) : "-";
+                    pVenc.add(new Phrase(dataVenc, vencF));
+                    PdfPCell r2 = new PdfPCell(pVenc);
+                    r2.setBorder(Rectangle.TOP);
+                    r2.setBorderColor(new Color(200, 200, 200));
+                    r2.setPadding(4);
+                    r2.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    rodape.addCell(r2);
+
+                    // Valor
+                    Paragraph pValor = new Paragraph();
+                    pValor.add(new Phrase("Valor", labelStrongF));
+                    pValor.add(Chunk.NEWLINE);
+                    String valorTxt = "R$ " + String.format(Locale.US, "%.2f",
+                            m.getValorOriginal() != null ? m.getValorOriginal() : 0.0);
+                    pValor.add(new Phrase(valorTxt, valorGrandeF));
+                    PdfPCell r3 = new PdfPCell(pValor);
+                    r3.setBorder(Rectangle.TOP);
+                    r3.setBorderColor(new Color(200, 200, 200));
+                    r3.setPadding(4);
+                    r3.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                    rodape.addCell(r3);
+
+                    cell.addElement(rodape);
+
+                    // Código de barras
+                    try {
+                        PdfContentByte cb = writer.getDirectContent();
+                        Barcode128 barcode = new Barcode128();
+                        barcode.setCode(String.format("%010d", m.getId()));
+                        barcode.setBarHeight(14);
+                        barcode.setX(0.7f);
+                        barcode.setFont(null);
+                        Image imgBarcode = barcode.createImageWithBarcode(cb, null, null);
+                        imgBarcode.scalePercent(70);
+                        imgBarcode.setSpacingBefore(6f);
+                        cell.addElement(imgBarcode);
+                    } catch (Exception ignored) { }
+
+                    tabela.addCell(cell);
+
+                    // ===== PICOTE APÓS CADA TALÃO =====
+                    PdfPCell picote = new PdfPCell(new Phrase(linhaPicote, picoteF));
+                    picote.setBorder(Rectangle.NO_BORDER);
+                    picote.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    picote.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    picote.setPaddingTop(4);
+                    picote.setPaddingBottom(4);
+                    picote.setFixedHeight(14f);
+                    tabela.addCell(picote);
+                }
+
+                document.add(tabela);
+
+                if (folha < totalFolhas - 1) {
+                    document.newPage();
+                }
+            }
+
+            document.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return new ByteArrayInputStream(out.toByteArray());
+    }
+    // ==================================================================
+    // DECLARAÇÃO DE MATRÍCULA
+    // ==================================================================
+    public ByteArrayInputStream gerarDeclaracaoMatricula(Long alunoId) {
+        Document document = new Document(PageSize.A4, 50, 50, 60, 50);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        try {
+            PdfWriter.getInstance(document, out);
+            document.open();
+
+            Font escolaNomeF = new Font(Font.HELVETICA, 16, Font.BOLD, new Color(30, 64, 175));
+            Font escolaInfoF = new Font(Font.HELVETICA, 9, Font.NORMAL, new Color(108, 117, 125));
+            Font tituloF = new Font(Font.HELVETICA, 16, Font.BOLD, new Color(30, 64, 80));
+            Font corpoF = new Font(Font.HELVETICA, 12, Font.NORMAL, new Color(33, 37, 41));
+            Font corpoBoldF = new Font(Font.HELVETICA, 12, Font.BOLD, new Color(33, 37, 41));
+            Font pequenaF = new Font(Font.HELVETICA, 10, Font.NORMAL, new Color(108, 117, 125));
+
+            Aluno aluno = alunoService.buscarPorId(alunoId);
+            if (aluno == null) {
+                document.close();
+                return new ByteArrayInputStream(out.toByteArray());
+            }
+
+            List<Escola> escolas = escolaRepository.findAll();
+            Escola escola = escolas.isEmpty() ? null : escolas.get(0);
+
+            // ===== Cabeçalho =====
+            if (escola != null) {
+                Paragraph nomeEsc = new Paragraph(escola.getNome().toUpperCase(), escolaNomeF);
+                nomeEsc.setAlignment(Element.ALIGN_CENTER);
+                document.add(nomeEsc);
+
+                StringBuilder info = new StringBuilder();
+                if (escola.getCnpj() != null && !escola.getCnpj().isEmpty()) {
+                    info.append("CNPJ: ").append(escola.getCnpj());
+                }
+                if (escola.getEnderecoCompleto() != null && !escola.getEnderecoCompleto().isEmpty()) {
+                    if (info.length() > 0) info.append(" | ");
+                    info.append(escola.getEnderecoCompleto());
+                }
+                if (escola.getTelefone() != null && !escola.getTelefone().isEmpty()) {
+                    if (info.length() > 0) info.append(" | ");
+                    info.append("Tel: ").append(escola.getTelefone());
+                }
+                if (escola.getEmail() != null && !escola.getEmail().isEmpty()) {
+                    if (info.length() > 0) info.append(" | ");
+                    info.append(escola.getEmail());
+                }
+
+                Paragraph infoP = new Paragraph(info.toString(), escolaInfoF);
+                infoP.setAlignment(Element.ALIGN_CENTER);
+                infoP.setSpacingAfter(6f);
+                document.add(infoP);
+            } else {
+                Paragraph nomePadrao = new Paragraph("SISTEMA ESCOLAR", escolaNomeF);
+                nomePadrao.setAlignment(Element.ALIGN_CENTER);
+                nomePadrao.setSpacingAfter(6f);
+                document.add(nomePadrao);
+            }
+
+            Paragraph linha = new Paragraph("___________________________________________________________________________", escolaInfoF);
+            linha.setAlignment(Element.ALIGN_CENTER);
+            linha.setSpacingAfter(30f);
+            document.add(linha);
+
+            // ===== Título =====
+            Paragraph titulo = new Paragraph("DECLARAÇÃO DE MATRÍCULA", tituloF);
+            titulo.setAlignment(Element.ALIGN_CENTER);
+            titulo.setSpacingAfter(40f);
+            document.add(titulo);
+
+            // ===== Corpo =====
+            String nomeResponsavel = (aluno.getResponsavelFinanceiro() != null
+                    && aluno.getResponsavelFinanceiro().getNome() != null)
+                    ? aluno.getResponsavelFinanceiro().getNome() : "_______________________";
+
+            String nomeSerie = (aluno.getSerie() != null) ? aluno.getSerie().getNome() : "____";
+            String nomeTurma = (aluno.getTurma() != null) ? aluno.getTurma().getNome() : "____";
+
+            Integer anoLetivo = aluno.getAnoLetivo() != null
+                    ? aluno.getAnoLetivo()
+                    : LocalDate.now().getYear();
+
+            Paragraph p1 = new Paragraph();
+            p1.setAlignment(Element.ALIGN_JUSTIFIED);
+            p1.setLeading(24f);
+            p1.setSpacingAfter(20f);
+            p1.add(new Phrase("Declaramos, para os devidos fins, que ", corpoF));
+            p1.add(new Phrase(aluno.getNome(), corpoBoldF));
+            p1.add(new Phrase(", matrícula nº ", corpoF));
+            p1.add(new Phrase(aluno.getMatricula() != null ? aluno.getMatricula() : "____", corpoBoldF));
+            p1.add(new Phrase(", está regularmente matriculado(a) nesta instituição de ensino no ano letivo de ", corpoF));
+            p1.add(new Phrase(String.valueOf(anoLetivo), corpoBoldF));
+            p1.add(new Phrase(", cursando a ", corpoF));
+            p1.add(new Phrase(nomeSerie, corpoBoldF));
+            p1.add(new Phrase(", turma ", corpoF));
+            p1.add(new Phrase(nomeTurma, corpoBoldF));
+            p1.add(new Phrase(".", corpoF));
+            document.add(p1);
+
+            // ===== Responsável =====
+            Paragraph p2 = new Paragraph();
+            p2.setAlignment(Element.ALIGN_JUSTIFIED);
+            p2.setLeading(24f);
+            p2.setSpacingAfter(30f);
+            p2.add(new Phrase("Responsável Financeiro: ", corpoF));
+            p2.add(new Phrase(nomeResponsavel, corpoBoldF));
+            if (aluno.getTelefone() != null && !aluno.getTelefone().isEmpty()) {
+                p2.add(new Phrase(" — Telefone: ", corpoF));
+                p2.add(new Phrase(aluno.getTelefone(), corpoBoldF));
+            }
+            document.add(p2);
+
+            // ===== Finalidade =====
+            Paragraph p3 = new Paragraph(
+                "A presente declaração é emitida a pedido do interessado para fins de comprovação.",
+                corpoF);
+            p3.setAlignment(Element.ALIGN_JUSTIFIED);
+            p3.setLeading(24f);
+            p3.setSpacingAfter(50f);
+            document.add(p3);
+
+            // ===== Local e data =====
+            String cidade = (escola != null && escola.getCidade() != null) ? escola.getCidade() : "___________________";
+            String dataAtual = LocalDate.now().format(DateTimeFormatter.ofPattern(
+                    "dd 'de' MMMM 'de' yyyy", new java.util.Locale("pt", "BR")));
+
+            Paragraph localData = new Paragraph(cidade + ", " + dataAtual + ".", corpoF);
+            localData.setAlignment(Element.ALIGN_RIGHT);
+            localData.setSpacingAfter(80f);
+            document.add(localData);
+
+            // ===== Assinatura =====
+            Paragraph assinatura = new Paragraph();
+            assinatura.setAlignment(Element.ALIGN_CENTER);
+            assinatura.add(new Phrase("___________________________________________\n", corpoF));
+            assinatura.add(new Phrase("Direção / Secretaria\n", corpoBoldF));
+            assinatura.add(new Phrase("Assinatura e Carimbo", pequenaF));
+            document.add(assinatura);
+
+            // ===== Rodapé =====
+            Paragraph rodape = new Paragraph();
+            rodape.setAlignment(Element.ALIGN_CENTER);
+            rodape.setSpacingBefore(60f);
+            rodape.add(new Phrase("Documento emitido em "
+                    + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+                    + " pelo Sistema Escolar", pequenaF));
+            document.add(rodape);
+
+            document.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return new ByteArrayInputStream(out.toByteArray());
+    }
+    // ==================================================================
     // METODOS AUXILIARES
     // ==================================================================
+
     private void adicionarLinhaInfo(PdfPTable tabela, String label, String valor,
                                      Font labelFont, Font valorFont) {
         PdfPCell cellLabel = new PdfPCell(new Phrase(label, labelFont));
@@ -2906,18 +3167,6 @@ public class PdfService {
 
         PdfPCell cellValor = new PdfPCell(new Phrase(valor != null ? valor : "-", valorFont));
         cellValor.setPadding(5);
-        tabela.addCell(cellValor);
-    }
-
-    private void addCampoFichaCompacto(PdfPTable tabela, String label, String valor,
-                                        Font labelFont, Font valorFont) {
-        PdfPCell cellLabel = new PdfPCell(new Phrase(label, labelFont));
-        cellLabel.setPadding(3);
-        cellLabel.setBackgroundColor(new Color(240, 244, 248));
-        tabela.addCell(cellLabel);
-
-        PdfPCell cellValor = new PdfPCell(new Phrase(valor != null ? valor : "-", valorFont));
-        cellValor.setPadding(3);
         tabela.addCell(cellValor);
     }
 

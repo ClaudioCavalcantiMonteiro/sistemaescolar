@@ -61,7 +61,10 @@
 <div class="container mt-4 pb-5">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
         <h1 class="h3 mb-0"><i class="bi bi-list-check text-primary"></i> Mensalidades</h1>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="/financeiro/carne" class="btn btn-outline-primary">
+                <i class="bi bi-receipt-cutoff"></i> Gerar Carnê
+            </a>
             <a href="/financeiro/nova" class="btn btn-success"><i class="bi bi-plus-circle"></i> Nova</a>
             <a href="/financeiro/gerar-lote" class="btn btn-outline-success"><i class="bi bi-layers"></i> Gerar Lote</a>
         </div>
@@ -211,6 +214,16 @@
                             </span>
                         </td>
                         <td class="text-center text-nowrap">
+                            <!-- BOTÃO CARNÊ (NOVO) -->
+                            <a th:if="${m.aluno != null}"
+                               th:href="@{/financeiro/carne(alunoId=${m.aluno.id})}"
+                               class="btn btn-sm btn-outline-primary"
+                               title="Gerar Carnê do aluno"
+                               target="_blank">
+                                <i class="bi bi-receipt-cutoff"></i>
+                            </a>
+                            <!-- FIM BOTÃO CARNÊ -->
+
                             <a th:if="${!m.paga and !m.cancelada}"
                                th:href="@{/financeiro/pagar/{id}(id=${m.id})}"
                                class="btn btn-sm btn-success" title="Marcar como Paga">

@@ -348,4 +348,67 @@ public class FinanceiroController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(new InputStreamResource(pdf));
     }
+
+    // ==================================================================
+    // TELA DE GERAÇÃO DE CARNÊ (formulário)
+    // ==================================================================
+    @GetMapping("/carne")
+    public String carneForm(@RequestParam(required = false) Long alunoId,
+                            @RequestParam(required = false) Long turmaId,
+                            @RequestParam(required = false) Integer ano,
+                            Model model) {
+
+        if (ano == null) ano = LocalDate.now().getYear();
+
+        model.addAttribute("alunos", alunoService.listarTodos());
+        model.addAttribute("turmas", turmaService.listarTodas());
+        model.addAttribute("series", serieService.listarTodas());
+        model.addAttribute("alunoId", alunoId);
+        model.addAttribute("turmaId", turmaId);
+        model.addAttribute("ano", ano);
+        model.addAttribute("mesAtual", LocalDate.now().getMonthValue());
+        model.addAttribute("escola", escolaService.buscarEscola());
+
+        return "financeiro/carne";
+    }
+
+    // ==================================================================
+    // PDF DO CARNÊ (individual ou turma)
+    // ==================================================================
+    @GetMapping("/carne/pdf")
+    public ResponseEntity<InputStreamResource> baixarCarne(
+            @RequestParam(required = false) Long alunoId,
+            @RequestParam(required = false) Long turmaId,
+            @RequestParam Integer mesInicio,
+            @RequestParam Integer mesFim,
+            @RequestParam Integer ano) {
+
+        ByteArrayInputStream pdf;
+        String nomeArquivo;
+
+        if (alunoId != null && alunoId > 0) {
+            Aluno aluno = alunoService.buscarPorId(alunoId);
+            String nome = (aluno != null) ? aluno.getNome().replaceAll("\\s+", "_") : "aluno";
+            nomeArquivo = "carne_" + nome + "_" + ano + ".pdf";
+            pdf = pdfService.gerarCarneIndividualPdf(alunoId, mesInicio, mesFim, ano);
+
+        } else if (turmaId != null && turmaId > 0) {
+            String nomeTurma = "turma";
+            try {
+                nomeTurma = turmaService.buscarPorId(turmaId).getNome().replaceAll("\\s+", "_");
+            } catch (Exception ignored) {}
+            nomeArquivo = "carne_" + nomeTurma + "_" + ano + ".pdf";
+            pdf = pdfService.gerarCarneTurmaPdf(turmaId, mesInicio, mesFim, ano);
+
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "inline; filename=" + nomeArquivo);
+
+        return ResponseEntity.ok().headers(headers)
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(new InputStreamResource(pdf));
+    }
 }
