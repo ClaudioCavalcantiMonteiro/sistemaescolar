@@ -69,7 +69,102 @@
         }
         .table input { font-size: 0.88rem; }
 
-        /* ===== RESPONSIVO ===== */
+        .box-dependencia {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+        }
+        .box-dependencia h6 {
+            font-size: 0.92rem;
+            font-weight: 800;
+            color: #856404;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .box-dependencia .lista-materias {
+            color: #856404;
+            font-weight: 600;
+            font-size: 0.88rem;
+        }
+        .box-dependencia .aviso {
+            color: #856404;
+            font-size: 0.78rem;
+            font-style: italic;
+            margin-top: 6px;
+            display: block;
+        }
+
+        .box-transferencia {
+            background: #e0f2fe;
+            border-left: 5px solid #0284c7;
+            border-radius: 10px;
+            padding: 14px 20px;
+            margin-bottom: 16px;
+        }
+        .box-transferencia h6 {
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: #075985;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .box-transferencia .escola {
+            color: #075985;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .box-transferencia .cidade {
+            color: #075985;
+            font-size: 0.8rem;
+            opacity: 0.85;
+        }
+
+        .table-actions-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-bottom: 2px solid #e5e9f0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .table-actions-bar .titulo {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #1e40af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-remover-item {
+            background: transparent;
+            border: none;
+            color: #dc3545;
+            font-size: 1.1rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-remover-item:hover {
+            background: #f8d7da;
+            color: #842029;
+        }
+
+        /* ===== Destaque da linha ao adicionar ===== */
+        @keyframes piscarLinha {
+            0%   { background-color: #fff3cd; }
+            100% { background-color: transparent; }
+        }
+        tr.nova-linha {
+            animation: piscarLinha 2s ease-out;
+        }
+
         @media (max-width: 768px) {
             .escola-header {
                 flex-direction: column; align-items: flex-start;
@@ -89,208 +184,217 @@
             .escola-header .escola-info span { white-space: normal; }
         }
 
-		/* ===== IMPRESSÃO ===== */
-		@media print {
-		    @page { size: A4 portrait; margin: 8mm; }
+        @media print {
+            @page { size: A4 portrait; margin: 8mm; }
+            .no-print { display: none !important; }
+            html, body { background: white !important; margin: 0 !important; padding: 0 !important; }
+            .container { max-width: 100% !important; width: 100% !important; padding: 0 !important; margin: 0 !important; }
 
-		    .no-print { display: none !important; }
+            .escola-header {
+                background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 60%, #0f172a 100%) !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                border-radius: 6px !important;
+                padding: 8px 14px !important;
+                margin: 0 0 10px 0 !important;
+                box-shadow: none !important;
+                width: 100% !important;
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 14px !important;
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+            .escola-header::before { display: none !important; }
+            .escola-header::after {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .escola-marca {
+                padding-right: 12px !important;
+                border-right: 1px solid rgba(255,255,255,0.22) !important;
+                border-bottom: none !important;
+                padding-bottom: 0 !important;
+                width: auto !important;
+                flex-shrink: 0;
+            }
+            .escola-header .logo-icon {
+                background: rgba(255,255,255,0.2) !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                width: 34px !important; height: 34px !important; font-size: 1rem !important;
+            }
+            .escola-header .escola-nome { font-size: 0.95rem !important; white-space: nowrap !important; }
+            .escola-header .escola-info {
+                font-size: 0.62rem !important; gap: 3px 12px !important;
+                width: auto !important; flex-direction: row !important; flex-wrap: wrap !important;
+            }
+            .escola-header .escola-info span { white-space: nowrap !important; }
 
-		    html, body {
-		        background: white !important;
-		        margin: 0 !important;
-		        padding: 0 !important;
-		    }
+            .d-flex.justify-content-between { margin-bottom: 8px !important; }
+            h1.h3 { font-size: 1rem !important; margin: 4px 0 !important; }
 
-		    .container {
-		        max-width: 100% !important;
-		        width: 100% !important;
-		        padding: 0 !important;
-		        margin: 0 !important;
-		    }
+            .info-card, .table-card {
+                display: block !important;
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 6px 0 !important;
+                margin: 0 0 8px 0 !important;
+                break-inside: auto !important;
+                page-break-inside: auto !important;
+            }
+            .info-card h5 {
+                font-size: 0.85rem !important;
+                margin: 6px 0 4px 0 !important;
+                padding-bottom: 3px !important;
+                border-bottom: 1px solid #d0d8e0 !important;
+            }
 
-		    /* Cabeçalho da escola compacto */
-		    .escola-header {
-		        background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 60%, #0f172a 100%) !important;
-		        -webkit-print-color-adjust: exact !important;
-		        print-color-adjust: exact !important;
-		        color-adjust: exact !important;
-		        border-radius: 6px !important;
-		        padding: 8px 14px !important;
-		        margin: 0 0 10px 0 !important;
-		        box-shadow: none !important;
-		        width: 100% !important;
-		        display: flex !important;
-		        flex-direction: row !important;
-		        align-items: center !important;
-		        gap: 14px !important;
-		        break-inside: avoid !important;
-		        page-break-inside: avoid !important;
-		    }
-		    .escola-header::before { display: none !important; }
-		    .escola-header::after {
-		        -webkit-print-color-adjust: exact !important;
-		        print-color-adjust: exact !important;
-		    }
-		    .escola-marca {
-		        padding-right: 12px !important;
-		        border-right: 1px solid rgba(255,255,255,0.22) !important;
-		        border-bottom: none !important;
-		        padding-bottom: 0 !important;
-		        width: auto !important;
-		        flex-shrink: 0;
-		    }
-		    .escola-header .logo-icon {
-		        background: rgba(255,255,255,0.2) !important;
-		        -webkit-print-color-adjust: exact !important;
-		        print-color-adjust: exact !important;
-		        width: 34px !important;
-		        height: 34px !important;
-		        font-size: 1rem !important;
-		    }
-		    .escola-header .escola-nome { font-size: 0.95rem !important; white-space: nowrap !important; }
-		    .escola-header .escola-info {
-		        font-size: 0.62rem !important;
-		        gap: 3px 12px !important;
-		        width: auto !important;
-		        flex-direction: row !important;
-		        flex-wrap: wrap !important;
-		    }
-		    .escola-header .escola-info span { white-space: nowrap !important; }
+            .info-card .row { display: block !important; margin: 0 !important; }
+            .info-card .row > [class*="col-"] {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                flex: none !important;
+                padding: 2px 0 !important;
+                margin: 0 !important;
+            }
 
-		    /* Título da página */
-		    .d-flex.justify-content-between { margin-bottom: 8px !important; }
-		    h1.h3 {
-		        font-size: 1rem !important;
-		        margin: 4px 0 !important;
-		    }
-		    h1.h3 + p, .d-flex.justify-content-between p {
-		        font-size: 0.78rem !important;
-		        margin: 0 !important;
-		    }
+            .form-label {
+                display: inline-block !important;
+                font-size: 0.7rem !important;
+                color: #6c757d !important;
+                margin: 0 4px 0 0 !important;
+                padding: 0 !important;
+                font-weight: 600 !important;
+            }
+            .form-control, .form-select, textarea {
+                display: inline-block !important;
+                border: none !important;
+                background: transparent !important;
+                padding: 0 !important;
+                font-size: 0.82rem !important;
+                font-weight: 600 !important;
+                color: #000 !important;
+                box-shadow: none !important;
+                -webkit-appearance: none !important;
+                appearance: none !important;
+                width: auto !important;
+                max-width: 100% !important;
+                height: auto !important;
+                min-height: 0 !important;
+            }
+            textarea { width: 100% !important; resize: none !important; }
 
-		    /* Cards de info — VIRAM BLOCK simples */
-		    .info-card {
-		        display: block !important;
-		        background: transparent !important;
-		        border: none !important;
-		        box-shadow: none !important;
-		        padding: 6px 0 !important;
-		        margin: 0 0 8px 0 !important;
-		        break-inside: auto !important;
-		        page-break-inside: auto !important;
-		    }
-		    .info-card h5 {
-		        font-size: 0.85rem !important;
-		        margin: 6px 0 4px 0 !important;
-		        padding-bottom: 3px !important;
-		        border-bottom: 1px solid #d0d8e0 !important;
-		    }
+            .table-actions-bar { display: none !important; }
 
-		    /* Row/col — força block */
-		    .info-card .row {
-		        display: block !important;
-		        margin: 0 !important;
-		    }
-		    .info-card .row > [class*="col-"] {
-		        display: block !important;
-		        width: 100% !important;
-		        max-width: 100% !important;
-		        flex: none !important;
-		        padding: 2px 0 !important;
-		        margin: 0 !important;
-		    }
+            .table-card {
+                display: block !important;
+                background: white !important;
+                border: 1px solid #d0d8e0 !important;
+                border-radius: 4px !important;
+                box-shadow: none !important;
+                overflow: visible !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .table-responsive { overflow: visible !important; display: block !important; }
 
-		    /* Labels + Inputs */
-		    .form-label {
-		        display: inline-block !important;
-		        font-size: 0.7rem !important;
-		        color: #6c757d !important;
-		        margin: 0 4px 0 0 !important;
-		        padding: 0 !important;
-		        font-weight: 600 !important;
-		    }
-		    .form-control, .form-select, textarea {
-		        display: inline-block !important;
-		        border: none !important;
-		        background: transparent !important;
-		        padding: 0 !important;
-		        font-size: 0.82rem !important;
-		        font-weight: 600 !important;
-		        color: #000 !important;
-		        box-shadow: none !important;
-		        -webkit-appearance: none !important;
-		        appearance: none !important;
-		        width: auto !important;
-		        max-width: 100% !important;
-		        height: auto !important;
-		        min-height: 0 !important;
-		    }
-		    textarea { width: 100% !important; resize: none !important; }
+            table.table {
+                display: table !important;
+                width: 100% !important;
+                font-size: 0.78rem !important;
+                margin: 0 !important;
+                border-collapse: collapse !important;
+            }
+            table.table thead { display: table-header-group !important; }
+            table.table tbody { display: table-row-group !important; }
+            table.table tr {
+                display: table-row !important;
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+            table.table th {
+                display: table-cell !important;
+                background: #e8eef5 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color: #1e40af !important;
+                font-size: 0.7rem !important;
+                padding: 4px 6px !important;
+                border-bottom: 1px solid #1e40af !important;
+            }
+            table.table td {
+                display: table-cell !important;
+                padding: 4px 6px !important;
+                border-bottom: 1px solid #e0e6ec !important;
+                vertical-align: middle !important;
+            }
+            table.table td input,
+            table.table td select {
+                display: inline !important;
+                font-size: 0.78rem !important;
+                width: auto !important;
+                max-width: 100% !important;
+            }
 
-		    /* Card da tabela — VIRA BLOCK simples */
-		    .table-card {
-		        display: block !important;
-		        background: white !important;
-		        border: 1px solid #d0d8e0 !important;
-		        border-radius: 4px !important;
-		        box-shadow: none !important;
-		        overflow: visible !important;
-		        padding: 0 !important;
-		        margin: 0 !important;
-		        break-inside: auto !important;
-		        page-break-inside: auto !important;
-		    }
-		    .table-responsive {
-		        overflow: visible !important;
-		        display: block !important;
-		    }
+            .no-print,
+            td.no-print,
+            th.no-print,
+            .btn-remover-item,
+            a.btn-remover-item,
+            table.table td.no-print,
+            table.table th.no-print,
+            table.table td.no-print *,
+            table.table th.no-print * {
+                display: none !important;
+                visibility: hidden !important;
+                width: 0 !important;
+                height: 0 !important;
+                max-width: 0 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                border: none !important;
+                overflow: hidden !important;
+                font-size: 0 !important;
+                line-height: 0 !important;
+            }
 
-		    /* Tabela */
-		    table.table {
-		        display: table !important;
-		        width: 100% !important;
-		        font-size: 0.78rem !important;
-		        margin: 0 !important;
-		        border-collapse: collapse !important;
-		    }
-		    table.table thead { display: table-header-group !important; }
-		    table.table tbody { display: table-row-group !important; }
-		    table.table tr {
-		        display: table-row !important;
-		        break-inside: avoid !important;
-		        page-break-inside: avoid !important;
-		    }
-		    table.table th {
-		        display: table-cell !important;
-		        background: #e8eef5 !important;
-		        -webkit-print-color-adjust: exact !important;
-		        print-color-adjust: exact !important;
-		        color: #1e40af !important;
-		        font-size: 0.7rem !important;
-		        padding: 4px 6px !important;
-		        border-bottom: 1px solid #1e40af !important;
-		    }
-		    table.table td {
-		        display: table-cell !important;
-		        padding: 4px 6px !important;
-		        border-bottom: 1px solid #e0e6ec !important;
-		        vertical-align: middle !important;
-		    }
-		    table.table td input,
-		    table.table td select {
-		        display: inline !important;
-		        font-size: 0.78rem !important;
-		        width: auto !important;
-		        max-width: 100% !important;
-		    }
+            .btn, button { display: none !important; }
+            form { display: block !important; }
 
-		    /* Esconde botões e a navbar */
-		    .btn, button { display: none !important; }
-		    form { display: block !important; }
+            .box-dependencia {
+                background: #fff3cd !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                border-left: 5px solid #ffc107 !important;
+                border-radius: 6px !important;
+                padding: 10px 14px !important;
+                margin-bottom: 10px !important;
+                break-inside: avoid !important;
+            }
+            .box-dependencia h6 { font-size: 0.8rem !important; margin-bottom: 4px !important; }
+            .box-dependencia .lista-materias { font-size: 0.78rem !important; }
+            .box-dependencia .aviso { font-size: 0.68rem !important; }
 
-		    /* Assinatura (se houver) */
-		    .d-none.d-print-block { display: block !important; }
-		}
+            .box-transferencia {
+                background: #e0f2fe !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                border-left: 5px solid #0284c7 !important;
+                border-radius: 6px !important;
+                padding: 10px 14px !important;
+                margin-bottom: 10px !important;
+                break-inside: avoid !important;
+            }
+            .box-transferencia h6 { font-size: 0.78rem !important; }
+            .box-transferencia .escola { font-size: 0.85rem !important; }
+
+            .d-none.d-print-block { display: block !important; }
+        }
     </style>
 </head>
 <body>
@@ -302,7 +406,6 @@
 
 <div class="container mt-4 pb-5">
 
-    <!-- Cabeçalho da Escola -->
     <div class="escola-header" th:if="${escola != null}">
         <div class="escola-marca">
             <div class="logo-icon">🎓</div>
@@ -331,12 +434,14 @@
         </div>
     </div>
 
-    <!-- Cabeçalho da página -->
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
         <div>
             <h1 class="h3 mb-1">
                 <i class="bi bi-file-earmark-text text-primary"></i>
                 Histórico <span th:text="${historico.anoLetivo}"></span>
+                <span th:if="${historico.externo}" class="badge bg-info text-dark ms-2" style="font-size: 0.75rem;">
+                    <i class="bi bi-arrow-left-right"></i> Transferência
+                </span>
             </h1>
             <p class="text-muted mb-0">
                 <strong th:text="${historico.aluno.nome}"></strong>
@@ -350,6 +455,7 @@
             </a>
             <a th:href="@{/historico/recalcular/{id}(id=${historico.id})}"
                class="btn btn-warning"
+               th:if="${!historico.externo}"
                onclick="return confirm('Recalcular com base nos dados atuais do banco?')">
                 <i class="bi bi-arrow-clockwise"></i> Recalcular
             </a>
@@ -363,66 +469,109 @@
         </div>
     </div>
 
-    <form th:action="@{/historico/salvar}" method="post" th:object="${historico}">
-        <input type="hidden" th:field="*{id}">
-        <input type="hidden" th:field="*{aluno.id}">
-        <input type="hidden" th:field="*{anoLetivo}">
+    <div th:if="${historico.externo}" class="box-transferencia">
+        <h6>🎓 Escola de Origem (Transferência)</h6>
+        <div class="escola" th:text="${historico.escolaOrigem}">-</div>
+        <div class="cidade" th:if="${historico.cidadeOrigem != null and !historico.cidadeOrigem.isEmpty()}"
+             th:text="${historico.cidadeOrigem}">-</div>
+    </div>
 
-        <!-- Info do cabeçalho -->
+    <div th:if="${historico.situacaoFinal == 'APROVADO_COM_DEPENDENCIA'}" class="box-dependencia">
+        <h6>⚠ Aprovado com Dependência em:</h6>
+        <div class="lista-materias" th:text="${historico.resumoDependencia}">-</div>
+        <span class="aviso">
+            O aluno deverá cursar a(s) disciplina(s) acima em regime de dependência.
+        </span>
+    </div>
+
+    <form th:action="@{/historico/salvar}" method="post">
+        <input type="hidden" name="id" th:value="${historico.id}">
+
         <div class="info-card">
             <h5><i class="bi bi-info-circle"></i> Informações Gerais</h5>
             <div class="row g-3">
                 <div class="col-md-3">
                     <label class="form-label">Ano Letivo</label>
-                    <input type="text" class="form-control" th:value="*{anoLetivo}" disabled>
+                    <input type="text" class="form-control" th:value="${historico.anoLetivo}" disabled>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Série</label>
-                    <input type="text" class="form-control" th:field="*{serie}">
+                    <input type="text" name="serie" class="form-control" th:value="${historico.serie}">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Turma</label>
-                    <input type="text" class="form-control" th:field="*{turma}">
+                    <input type="text" name="turma" class="form-control" th:value="${historico.turma}">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Turno</label>
-                    <input type="text" class="form-control" th:field="*{turno}">
+                    <input type="text" name="turno" class="form-control" th:value="${historico.turno}">
                 </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">
+                        <i class="bi bi-building"></i> Escola de Origem (opcional)
+                    </label>
+                    <input type="text" name="escolaOrigem" class="form-control"
+                           th:value="${historico.escolaOrigem}"
+                           placeholder="Deixe em branco se o aluno estudou nesta escola">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">
+                        <i class="bi bi-geo-alt"></i> Cidade/UF da Escola de Origem
+                    </label>
+                    <input type="text" name="cidadeOrigem" class="form-control"
+                           th:value="${historico.cidadeOrigem}"
+                           placeholder="Ex: Paulista/PE">
+                </div>
+
                 <div class="col-md-4">
                     <label class="form-label">
                         Média para Aprovação
                         <i class="bi bi-info-circle" title="Notas maiores ou iguais a esta média são consideradas aprovadas"></i>
                     </label>
                     <input type="number" step="0.1" min="0" max="10" class="form-control"
-                           th:field="*{mediaAprovacao}">
+                           name="mediaAprovacao" th:value="${historico.mediaAprovacao}">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Carga Horária Total (h)</label>
-                    <input type="number" class="form-control" th:field="*{cargaHorariaTotal}">
+                    <input type="number" class="form-control"
+                           th:value="${historico.cargaHorariaTotal}" disabled>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Dias Letivos</label>
-                    <input type="number" class="form-control" th:field="*{diasLetivos}">
+                    <input type="number" name="diasLetivos" class="form-control"
+                           th:value="${historico.diasLetivos}">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Situação Final</label>
-                    <select class="form-select" th:field="*{situacaoFinal}">
-                        <option value="CURSANDO">Cursando</option>
-                        <option value="APROVADO">Aprovado</option>
-                        <option value="REPROVADO">Reprovado</option>
-                        <option value="TRANSFERIDO">Transferido</option>
-                        <option value="EVADIDO">Evadido</option>
+                    <select class="form-select" name="situacaoFinal">
+                        <option value="CURSANDO" th:selected="${historico.situacaoFinal == 'CURSANDO'}">Cursando</option>
+                        <option value="APROVADO" th:selected="${historico.situacaoFinal == 'APROVADO'}">Aprovado</option>
+                        <option value="APROVADO_COM_DEPENDENCIA" th:selected="${historico.situacaoFinal == 'APROVADO_COM_DEPENDENCIA'}">Aprovado com Dependência</option>
+                        <option value="REPROVADO" th:selected="${historico.situacaoFinal == 'REPROVADO'}">Reprovado</option>
+                        <option value="TRANSFERIDO" th:selected="${historico.situacaoFinal == 'TRANSFERIDO'}">Transferido</option>
+                        <option value="EVADIDO" th:selected="${historico.situacaoFinal == 'EVADIDO'}">Evadido</option>
                     </select>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Observações</label>
-                    <textarea class="form-control" rows="2" th:field="*{observacoes}"></textarea>
+                    <textarea class="form-control" name="observacoes" rows="2"
+                              th:text="${historico.observacoes}"></textarea>
                 </div>
             </div>
         </div>
 
-        <!-- Tabela de itens (matérias) -->
-        <div class="table-card mb-3">
+        <div class="table-card mb-3" id="tabela-materias">
+            <div class="table-actions-bar no-print">
+                <span class="titulo">
+                    <i class="bi bi-journal-text"></i> Matérias (<span th:text="${#lists.size(historico.items)}"></span>)
+                </span>
+                <a th:href="@{/historico/{id}/adicionar-item(id=${historico.id})}"
+                   class="btn btn-success btn-sm">
+                    <i class="bi bi-plus-circle"></i> Adicionar Matéria
+                </a>
+            </div>
+
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
                     <thead>
@@ -433,45 +582,64 @@
                             <th style="width: 100px;" class="text-center">Faltas</th>
                             <th style="width: 120px;" class="text-center">CH (h)</th>
                             <th style="width: 140px;" class="text-center">Resultado</th>
+                            <th style="width: 50px;" class="text-center no-print"></th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="item, iter : *{items}">
+                        <tr th:each="item, iter : ${historico.items}"
+                            th:attr="data-item-id=${item.id}">
                             <td th:text="${iter.count}" class="text-muted"></td>
                             <td>
-                                <input type="hidden" th:field="*{items[__${iter.index}__].id}">
-                                <input type="hidden" th:field="*{items[__${iter.index}__].materia.id}">
                                 <input type="text" class="form-control form-control-sm"
-                                       th:field="*{items[__${iter.index}__].nomeMateria}">
+                                       th:name="'item_' + ${item.id} + '_nomeMateria'"
+                                       th:value="${item.nomeMateria}">
                             </td>
                             <td class="text-center">
                                 <input type="number" step="0.01" min="0" max="10"
                                        class="form-control form-control-sm text-center"
-                                       th:field="*{items[__${iter.index}__].notaFinal}">
+                                       th:name="'item_' + ${item.id} + '_notaFinal'"
+                                       th:value="${item.notaFinal}">
                             </td>
                             <td class="text-center">
                                 <input type="number" min="0"
                                        class="form-control form-control-sm text-center"
-                                       th:field="*{items[__${iter.index}__].faltas}">
+                                       th:name="'item_' + ${item.id} + '_faltas'"
+                                       th:value="${item.faltas}">
                             </td>
                             <td class="text-center">
                                 <input type="number" min="0"
                                        class="form-control form-control-sm text-center"
-                                       th:field="*{items[__${iter.index}__].cargaHoraria}">
+                                       th:name="'item_' + ${item.id} + '_cargaHoraria'"
+                                       th:value="${item.cargaHoraria}">
                             </td>
                             <td class="text-center">
                                 <select class="form-select form-select-sm"
-                                        th:field="*{items[__${iter.index}__].resultado}">
-                                    <option value="APROVADO">Aprovado</option>
-                                    <option value="REPROVADO">Reprovado</option>
-                                    <option value="CURSANDO">Cursando</option>
+                                        th:name="'item_' + ${item.id} + '_resultado'">
+                                    <option value="APROVADO" th:selected="${item.resultado == 'APROVADO'}">Aprovado</option>
+                                    <option value="REPROVADO" th:selected="${item.resultado == 'REPROVADO'}">Reprovado</option>
+                                    <option value="CURSANDO" th:selected="${item.resultado == 'CURSANDO'}">Cursando</option>
                                 </select>
+                            </td>
+                            <td class="text-center no-print">
+                                <a th:href="@{/historico/{hid}/remover-item/{iid}(hid=${historico.id}, iid=${item.id})}"
+                                   class="btn-remover-item"
+                                   th:data-materia="${item.nomeMateria}"
+                                   onclick="return confirm('Remover a matéria ' + this.dataset.materia + '?');"
+                                   title="Remover matéria">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                </a>
                             </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(historico.items)}">
-                            <td colspan="6" class="text-center text-muted py-5">
+                            <td colspan="7" class="text-center text-muted py-5">
                                 <i class="bi bi-inbox display-4 d-block mb-2"></i>
-                                Nenhuma matéria neste histórico. Use o botão <strong>Recalcular</strong> para buscar as notas lançadas.
+                                <div th:if="${historico.externo}">
+                                    <strong>Histórico de transferência</strong><br>
+                                    <span class="text-muted">Clique em <strong>"Adicionar Matéria"</strong> acima para inserir as disciplinas e notas.</span>
+                                </div>
+                                <div th:unless="${historico.externo}">
+                                    Nenhuma matéria neste histórico. Use o botão <strong>Recalcular</strong> ou adicione manualmente.
+                                </div>
                             </td>
                         </tr>
                     </tbody>
@@ -489,7 +657,6 @@
         </div>
     </form>
 
-    <!-- Assinatura (só na impressão) -->
     <div class="d-none d-print-block text-center mt-5">
         <p>_____________________________________________________</p>
         <p><strong>Assinatura da Direção / Coordenação</strong></p>
@@ -499,6 +666,50 @@
 
 <div th:replace="~{fragments/navbar :: toast}"></div>
 <script th:replace="~{fragments/navbar :: scriptToast}"></script>
+
+<script>
+    // ============================================================
+    // ROLAGEM AUTOMÁTICA PARA A TABELA DE MATÉRIAS
+    // Quando a página carregar com #tabela-materias, rola até ela
+    // e foca no último input de nome de matéria
+    // ============================================================
+    window.addEventListener('DOMContentLoaded', function() {
+        if (window.location.hash === '#tabela-materias') {
+            const tabela = document.getElementById('tabela-materias');
+            if (!tabela) return;
+
+            setTimeout(function() {
+                // Rolagem suave até a tabela
+                tabela.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                // Foca no último input de nome de matéria
+                const inputs = tabela.querySelectorAll('input[name*="nomeMateria"]');
+                if (inputs.length > 0) {
+                    const ultimo = inputs[inputs.length - 1];
+                    ultimo.focus();
+
+                    // Coloca o cursor no final do texto
+                    const val = ultimo.value;
+                    ultimo.value = '';
+                    ultimo.value = val;
+
+                    // Destaque visual na linha
+                    const linha = ultimo.closest('tr');
+                    if (linha) {
+                        linha.classList.add('nova-linha');
+                        setTimeout(() => linha.classList.remove('nova-linha'), 2000);
+                    }
+                }
+
+                // Remove o hash da URL para não interferir no próximo clique
+                if (history.replaceState) {
+                    history.replaceState(null, null, window.location.pathname);
+                }
+            }, 150);
+        }
+    });
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

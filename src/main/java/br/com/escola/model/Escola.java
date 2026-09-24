@@ -33,6 +33,16 @@ public class Escola {
     // Média mínima para aprovação (ex: 6.0 ou 7.0)
     private Double mediaAprovacao;
 
+    // Regra de aprovação: RIGIDA, DEPENDENCIA, MEDIA_GERAL
+    // RIGIDA = qualquer reprovação reprova o ano
+    // DEPENDENCIA = até N matérias reprovadas, avança com dependência
+    // MEDIA_GERAL = aprovado se média geral >= mediaAprovacao
+    @Column(length = 30)
+    private String regraAprovacao;
+
+    // Máximo de matérias que pode reprovar e ainda avançar (regra DEPENDENCIA)
+    private Integer maxMateriasDependencia;
+
     @Column(length = 500)
     private String observacao;
 
@@ -44,6 +54,8 @@ public class Escola {
         this.dataCriacao = LocalDateTime.now();
         this.dataAlteracao = LocalDateTime.now();
         if (this.mediaAprovacao == null) this.mediaAprovacao = 6.0;
+        if (this.regraAprovacao == null) this.regraAprovacao = "DEPENDENCIA";
+        if (this.maxMateriasDependencia == null) this.maxMateriasDependencia = 2;
     }
 
     @PreUpdate
@@ -96,6 +108,12 @@ public class Escola {
     public Double getMediaAprovacao() { return mediaAprovacao; }
     public void setMediaAprovacao(Double mediaAprovacao) { this.mediaAprovacao = mediaAprovacao; }
 
+    public String getRegraAprovacao() { return regraAprovacao; }
+    public void setRegraAprovacao(String regraAprovacao) { this.regraAprovacao = regraAprovacao; }
+
+    public Integer getMaxMateriasDependencia() { return maxMateriasDependencia; }
+    public void setMaxMateriasDependencia(Integer maxMateriasDependencia) { this.maxMateriasDependencia = maxMateriasDependencia; }
+
     public String getObservacao() { return observacao; }
     public void setObservacao(String observacao) { this.observacao = observacao; }
 
@@ -117,12 +135,18 @@ public class Escola {
         return sb.toString();
     }
 
-    /**
-     * Retorna a média de aprovação, com fallback para 6.0
-     * caso não esteja configurada.
-     */
     @Transient
     public double getMediaAprovacaoSegura() {
         return mediaAprovacao != null ? mediaAprovacao : 6.0;
+    }
+
+    @Transient
+    public String getRegraAprovacaoSegura() {
+        return regraAprovacao != null ? regraAprovacao : "DEPENDENCIA";
+    }
+
+    @Transient
+    public int getMaxMateriasDependenciaSeguro() {
+        return maxMateriasDependencia != null ? maxMateriasDependencia : 2;
     }
 }

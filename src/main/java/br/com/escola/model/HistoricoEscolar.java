@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 public class HistoricoEscolar {
@@ -32,9 +33,18 @@ public class HistoricoEscolar {
     @Column(length = 50)
     private String turno;
 
+    // ===== Campos para histórico externo (transferência) =====
+    // Se preenchido, o histórico é de OUTRA escola (aluno veio transferido)
+    @Column(length = 200)
+    private String escolaOrigem;
+
+    @Column(length = 150)
+    private String cidadeOrigem;
+
     // Média mínima usada para aprovação NESTE histórico
     private Double mediaAprovacao;
 
+    // APROVADO, APROVADO_COM_DEPENDENCIA, REPROVADO, TRANSFERIDO, CURSANDO, EVADIDO
     @Column(length = 30)
     private String situacaoFinal;
 
@@ -67,6 +77,8 @@ public class HistoricoEscolar {
         this.dataAlteracao = LocalDateTime.now();
     }
 
+    // ===== Métodos auxiliares =====
+
     @Transient
     public int getTotalDisciplinas() {
         return items != null ? items.size() : 0;
@@ -91,6 +103,7 @@ public class HistoricoEscolar {
     @Transient
     public boolean isConcluido() {
         return "APROVADO".equalsIgnoreCase(situacaoFinal)
+                || "APROVADO_COM_DEPENDENCIA".equalsIgnoreCase(situacaoFinal)
                 || "TRANSFERIDO".equalsIgnoreCase(situacaoFinal);
     }
 
@@ -104,6 +117,55 @@ public class HistoricoEscolar {
         return mediaAprovacao != null ? mediaAprovacao : 6.0;
     }
 
+    /**
+     * Retorna true se este histórico é de outra escola (transferência).
+     */
+    @Transient
+    public boolean isExterno() {
+        return escolaOrigem != null && !escolaOrigem.trim().isEmpty();
+    }
+
+    /**
+     * Retorna a lista de itens (matérias) que ficaram em dependência.
+     */
+    @Transient
+    public List<ItemHistorico> getItemsEmDependencia() {
+        if (items == null) return new ArrayList<>();
+        return items.stream()
+                .filter(i -> "REPROVADO".equalsIgnoreCase(i.getResultado()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Retorna um resumo em texto das matérias em dependência.
+     */
+    @Transient
+    public String getResumoDependencia() {
+        List<ItemHistorico> deps = getItemsEmDependencia();
+        if (deps.isEmpty()) return "";
+        return deps.stream()
+                .map(i -> i.getNomeMateria() != null ? i.getNomeMateria() : "-")
+                .collect(Collectors.joining(", "));
+    }
+
+    /**
+     * Retorna a média geral de todas as matérias.
+     */
+    @Transient
+    public double getMediaGeral() {
+        if (items == null || items.isEmpty()) return 0.0;
+        double soma = 0;
+        int count = 0;
+        for (ItemHistorico i : items) {
+            if (i.getNotaFinal() != null) {
+                soma += i.getNotaFinal();
+                count++;
+            }
+        }
+        return count > 0 ? Math.round((soma / count) * 100.0) / 100.0 : 0.0;
+    }
+
+    // ===== Helper para relacionamento bidirecional =====
     public void addItem(ItemHistorico item) {
         item.setHistorico(this);
         this.items.add(item);
@@ -114,6 +176,7 @@ public class HistoricoEscolar {
         this.items.remove(item);
     }
 
+    // ===== Getters e Setters =====
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -134,6 +197,12 @@ public class HistoricoEscolar {
 
     public String getTurno() { return turno; }
     public void setTurno(String turno) { this.turno = turno; }
+
+    public String getEscolaOrigem() { return escolaOrigem; }
+    public void setEscolaOrigem(String escolaOrigem) { this.escolaOrigem = escolaOrigem; }
+
+    public String getCidadeOrigem() { return cidadeOrigem; }
+    public void setCidadeOrigem(String cidadeOrigem) { this.cidadeOrigem = cidadeOrigem; }
 
     public Double getMediaAprovacao() { return mediaAprovacao; }
     public void setMediaAprovacao(Double mediaAprovacao) { this.mediaAprovacao = mediaAprovacao; }

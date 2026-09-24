@@ -60,6 +60,7 @@
         .badge-aprovado { background: #d1e7dd; color: #0f5132; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
         .badge-reprovado { background: #f8d7da; color: #842029; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
         .badge-cursando { background: #fff3cd; color: #856404; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
+        .badge-dependencia { background: #ffecb5; color: #664d03; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; border: 1px solid #ffc107; }
         .badge-outro { background: #e2e3e5; color: #41464b; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
 
         .empty-state { text-align: center; padding: 60px 20px; background: white; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
@@ -94,9 +95,27 @@
                 </p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
+                <a th:href="@{/historico/aluno/{id}/pdf-oficial(id=${aluno.id})}"
+                   class="btn btn-danger"
+                   target="_blank"
+                   title="Histórico Oficial Compacto (1 folha retrato)">
+                    <i class="bi bi-file-earmark-text-fill"></i> Compacto (1 Folha)
+                </a>
+                <a th:href="@{/historico/aluno/{id}/pdf-oficial-fv(id=${aluno.id})}"
+                   class="btn btn-warning"
+                   target="_blank"
+                   title="Histórico Oficial Frente/Verso (2 páginas - modelo Ficha 18/19)">
+                    <i class="bi bi-file-earmark-break-fill"></i> Frente/Verso (Oficial)
+                </a>
+                <a th:href="@{/historico/aluno/{id}/pdf-completo(id=${aluno.id})}"
+                   class="btn btn-primary"
+                   target="_blank"
+                   title="Histórico Detalhado (todos os anos com notas por unidade)">
+                    <i class="bi bi-file-earmark-pdf-fill"></i> Detalhado
+                </a>
                 <a th:href="@{/historico/gerar/{id}(id=${aluno.id})}"
                    class="btn btn-success">
-                    <i class="bi bi-plus-circle"></i> Gerar Novo Histórico
+                    <i class="bi bi-plus-circle"></i> Gerar Novo
                 </a>
                 <a href="/historico" class="btn btn-secondary">
                     <i class="bi bi-arrow-left"></i> Voltar
@@ -105,7 +124,6 @@
         </div>
     </div>
 
-    <!-- Lista de históricos -->
     <div th:if="${!#lists.isEmpty(historicos)}">
         <div class="historico-card" th:each="h : ${historicos}">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
@@ -132,11 +150,21 @@
                             <strong th:text="${h.totalDisciplinas}"></strong> disciplinas
                         </span>
                     </div>
+
+                    <div th:if="${h.situacaoFinal == 'APROVADO_COM_DEPENDENCIA'}"
+                         style="margin-top: 8px; font-size: 0.82rem; color: #856404;">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>Dependência em:</strong>
+                        <span th:text="${h.resumoDependencia}"></span>
+                    </div>
                 </div>
 
                 <div class="d-flex align-items-center gap-3 flex-wrap">
                     <span th:if="${h.situacaoFinal == 'APROVADO'}" class="badge-aprovado">
                         <i class="bi bi-check-circle"></i> Aprovado
+                    </span>
+                    <span th:if="${h.situacaoFinal == 'APROVADO_COM_DEPENDENCIA'}" class="badge-dependencia">
+                        <i class="bi bi-exclamation-triangle"></i> Aprovado c/ Dependência
                     </span>
                     <span th:if="${h.situacaoFinal == 'REPROVADO'}" class="badge-reprovado">
                         <i class="bi bi-x-circle"></i> Reprovado
@@ -176,11 +204,10 @@
         </div>
     </div>
 
-    <!-- Vazio -->
     <div th:if="${#lists.isEmpty(historicos)}" class="empty-state">
         <i class="bi bi-file-earmark-x"></i>
         <h4>Nenhum histórico gerado</h4>
-        <p class="text-muted">Clique em "Gerar Novo Histórico" para criar o primeiro.</p>
+        <p class="text-muted">Clique em "Gerar Novo" para criar o primeiro.</p>
         <a th:href="@{/historico/gerar/{id}(id=${aluno.id})}" class="btn btn-success mt-2">
             <i class="bi bi-plus-circle"></i> Gerar Novo Histórico
         </a>

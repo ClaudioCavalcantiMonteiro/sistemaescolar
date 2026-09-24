@@ -44,16 +44,23 @@
             font-size: 0.85rem;
             margin-bottom: 4px;
         }
-        .form-control {
+        .form-control, .form-select {
             border-radius: 10px;
             border: 1.5px solid #e0e7ef;
             padding: 10px 14px;
             font-size: 0.9rem;
         }
-        .form-control:focus {
+        .form-control:focus, .form-select:focus {
             border-color: #4a6fa5;
             box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.1);
         }
+        .info-box {
+            background: #e8eef5; border-left: 4px solid #4a6fa5;
+            padding: 12px 16px; border-radius: 8px;
+            font-size: 0.85rem; color: #2c3e50;
+            margin-bottom: 16px;
+        }
+        .info-box i { color: #4a6fa5; }
     </style>
 </head>
 <body>
@@ -72,14 +79,14 @@
 
         <form th:action="@{/alunos/salvar}" th:object="${aluno}" method="post">
 
-            <!-- ===== MENSAGENS DE ERRO ===== -->
-            <div th:if="${param.cpfInvalido}" class="alert alert-danger">
+            <!-- ===== MENSAGENS DE ERRO (agora via Model) ===== -->
+            <div th:if="${cpfInvalido}" class="alert alert-danger">
                 <i class="bi bi-exclamation-triangle-fill"></i>
-                <strong>CPF inválido!</strong> Digite um CPF válido (11 dígitos).
+                <strong>CPF inválido!</strong> Digite um CPF válido (11 dígitos). Os dados digitados foram mantidos.
             </div>
-            <div th:if="${param.cpfDuplicado}" class="alert alert-warning">
+            <div th:if="${cpfDuplicado}" class="alert alert-warning">
                 <i class="bi bi-exclamation-triangle-fill"></i>
-                <strong>CPF já cadastrado!</strong> Este CPF pertence a outro responsável.
+                <strong>CPF já cadastrado!</strong> Este CPF pertence a outro responsável. Os dados digitados foram mantidos.
             </div>
 
             <input type="hidden" th:field="*{id}">
@@ -137,6 +144,63 @@
                         <option th:value="true">Ativa</option>
                         <option th:value="false">Inativa</option>
                     </select>
+                </div>
+            </div>
+
+            <!-- ===== DADOS COMPLEMENTARES ===== -->
+            <div class="section-title">
+                <i class="bi bi-person-vcard"></i> Dados Complementares (Histórico Escolar)
+            </div>
+
+            <div class="info-box">
+                <i class="bi bi-info-circle-fill"></i>
+                Estes campos aparecem no <strong>Histórico Escolar</strong> (Ficha 18/19). Preencha para gerar documentos completos.
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Naturalidade</label>
+                    <input type="text" class="form-control" th:field="*{naturalidade}"
+                           placeholder="Ex: Paulista/PE">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Nacionalidade</label>
+                    <input type="text" class="form-control" th:field="*{nacionalidade}"
+                           placeholder="Ex: Brasileiro(a)">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Sexo</label>
+                    <select class="form-select" th:field="*{sexo}">
+                        <option value="">Selecione</option>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Feminino">Feminino</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Nome do Pai</label>
+                    <input type="text" class="form-control" th:field="*{nomePai}"
+                           placeholder="Nome completo do pai">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Nome da Mãe</label>
+                    <input type="text" class="form-control" th:field="*{nomeMae}"
+                           placeholder="Nome completo da mãe">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">CPF do Aluno</label>
+                    <input type="text" class="form-control" th:field="*{cpfAluno}"
+                           placeholder="000.000.000-00">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">RG do Aluno</label>
+                    <input type="text" class="form-control" th:field="*{rgAluno}"
+                           placeholder="RG">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Telefone do Aluno</label>
+                    <input type="text" class="form-control" th:field="*{telefone}"
+                           placeholder="(00) 00000-0000">
                 </div>
             </div>
 
@@ -235,7 +299,6 @@
 <script th:replace="~{fragments/navbar :: scriptToast}"></script>
 
 <script>
-    // Máscara de CPF
     document.addEventListener('DOMContentLoaded', function() {
         const cpfInput = document.getElementById('cpfInput');
         if (cpfInput) {

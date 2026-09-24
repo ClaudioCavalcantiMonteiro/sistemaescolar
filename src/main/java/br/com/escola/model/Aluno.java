@@ -21,13 +21,24 @@ public class Aluno {
     private LocalDate dataNascimento;
     private String matricula;
 
-    // ===== NOVOS CAMPOS =====
+    // ===== CAMPOS COMPLEMENTARES (Histórico Escolar) =====
+    private String naturalidade;
+    private String nacionalidade;
+    private String sexo;
+    private String nomePai;
+    private String nomeMae;
+    private String cpfAluno;
+    private String rgAluno;
+    private String telefone;
+    // ====================================================
+
+    // ===== CAMPOS DE MATRÍCULA =====
     private Integer anoLetivo;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate dataMatricula;
     private Boolean matriculaAtiva = true;
-    // =========================
+    // ================================
 
     @ManyToOne
     @JoinColumn(name = "serie_id")
@@ -66,6 +77,30 @@ public class Aluno {
 
     public String getMatricula() { return matricula; }
     public void setMatricula(String matricula) { this.matricula = matricula; }
+
+    public String getNaturalidade() { return naturalidade; }
+    public void setNaturalidade(String naturalidade) { this.naturalidade = naturalidade; }
+
+    public String getNacionalidade() { return nacionalidade; }
+    public void setNacionalidade(String nacionalidade) { this.nacionalidade = nacionalidade; }
+
+    public String getSexo() { return sexo; }
+    public void setSexo(String sexo) { this.sexo = sexo; }
+
+    public String getNomePai() { return nomePai; }
+    public void setNomePai(String nomePai) { this.nomePai = nomePai; }
+
+    public String getNomeMae() { return nomeMae; }
+    public void setNomeMae(String nomeMae) { this.nomeMae = nomeMae; }
+
+    public String getCpfAluno() { return cpfAluno; }
+    public void setCpfAluno(String cpfAluno) { this.cpfAluno = cpfAluno; }
+
+    public String getRgAluno() { return rgAluno; }
+    public void setRgAluno(String rgAluno) { this.rgAluno = rgAluno; }
+
+    public String getTelefone() { return telefone; }
+    public void setTelefone(String telefone) { this.telefone = telefone; }
 
     public Integer getAnoLetivo() { return anoLetivo; }
     public void setAnoLetivo(Integer anoLetivo) { this.anoLetivo = anoLetivo; }

@@ -44,11 +44,12 @@ public class HistoricoEscolarService {
     private EscolaRepository escolaRepository;
 
     private static final double MEDIA_PADRAO = 6.0;
+    private static final String REGRA_PADRAO = "DEPENDENCIA";
+    private static final int MAX_DEPENDENCIA_PADRAO = 2;
 
     // ==================================================================
     // LISTAGEM / BUSCA
     // ==================================================================
-
     public List<HistoricoEscolar> listarTodos() {
         return historicoRepository.findAllWithItems();
     }
@@ -67,8 +68,42 @@ public class HistoricoEscolarService {
     }
 
     // ==================================================================
+    // CÁLCULO DA SITUAÇÃO FINAL
+    // ==================================================================
+    private String calcularSituacaoFinal(HistoricoEscolar historico, Escola escola) {
+        int total = historico.getTotalDisciplinas();
+        int reprovadas = historico.getTotalReprovadas();
+        int anoAtual = LocalDate.now().getYear();
+        Integer anoLetivo = historico.getAnoLetivo();
+
+        if (total == 0 || (anoLetivo != null && anoLetivo >= anoAtual)) {
+            return "CURSANDO";
+        }
+
+        if (reprovadas == 0) {
+            return "APROVADO";
+        }
+
+        String regra = (escola != null) ? escola.getRegraAprovacaoSegura() : REGRA_PADRAO;
+        int maxDependencia = (escola != null) ? escola.getMaxMateriasDependenciaSeguro() : MAX_DEPENDENCIA_PADRAO;
+        double mediaMin = (escola != null) ? escola.getMediaAprovacaoSegura() : MEDIA_PADRAO;
+
+        switch (regra.toUpperCase()) {
+            case "RIGIDA":
+                return "REPROVADO";
+            case "MEDIA_GERAL":
+                return (historico.getMediaGeral() >= mediaMin) ? "APROVADO" : "REPROVADO";
+            case "DEPENDENCIA":
+            default:
+                if (reprovadas <= maxDependencia) {
+                    return "APROVADO_COM_DEPENDENCIA";
+                }
+                return "REPROVADO";
+        }
+    }
+
+    // ==================================================================
     // GERAR HISTORICO AUTOMATICAMENTE
-    // Usa apenas notas do ANO LETIVO específico
     // ==================================================================
     @Transactional
     public HistoricoEscolar gerarHistorico(Long alunoId, Integer anoLetivo) {
@@ -82,7 +117,6 @@ public class HistoricoEscolarService {
             throw new RuntimeException("Já existe um histórico para este aluno no ano " + anoLetivo);
         }
 
-        // ===== 1. Dados do cabeçalho =====
         HistoricoEscolar historico = new HistoricoEscolar();
         historico.setAluno(aluno);
 
@@ -90,10 +124,7 @@ public class HistoricoEscolarService {
         Escola escola = escolas.isEmpty() ? null : escolas.get(0);
         historico.setEscola(escola);
 
-        // Média da escola (com fallback para 6.0)
-        double mediaAprovacao = (escola != null && escola.getMediaAprovacao() != null)
-                ? escola.getMediaAprovacao()
-                : MEDIA_PADRAO;
+        double mediaAprovacao = (escola != null) ? escola.getMediaAprovacaoSegura() : MEDIA_PADRAO;
         historico.setMediaAprovacao(mediaAprovacao);
 
         historico.setAnoLetivo(anoLetivo);
@@ -102,20 +133,15 @@ public class HistoricoEscolarService {
         historico.setTurno(aluno.getTurma() != null && aluno.getTurma().getTurno() != null
                 ? aluno.getTurma().getTurno() : "-");
 
-        // ===== 2. Buscar notas DO ANO LETIVO e frequências =====
-        // ⚠️ IMPORTANTE: notas filtradas por ano
         List<Nota> notas = notaService.listarPorAlunoEAno(alunoId, anoLetivo);
-        // Frequências ainda não têm anoLetivo — pegamos todas do aluno
         List<Frequencia> frequencias = frequenciaService.listarPorAluno(alunoId);
 
-        // ===== 3. Agrupar notas por matéria =====
         Map<Long, List<Nota>> notasPorMateria = new HashMap<>();
         for (Nota n : notas) {
             if (n.getMateria() == null) continue;
             notasPorMateria.computeIfAbsent(n.getMateria().getId(), k -> new ArrayList<>()).add(n);
         }
 
-        // ===== 4. Contar faltas por matéria =====
         Map<Long, Integer> faltasPorMateria = new HashMap<>();
         for (Frequencia f : frequencias) {
             if (Boolean.FALSE.equals(f.getPresente()) && f.getMateria() != null) {
@@ -123,7 +149,6 @@ public class HistoricoEscolarService {
             }
         }
 
-        // ===== 5. Criar um item por matéria =====
         int ordem = 1;
         for (Map.Entry<Long, List<Nota>> entry : notasPorMateria.entrySet()) {
             List<Nota> notasMateria = entry.getValue();
@@ -131,7 +156,6 @@ public class HistoricoEscolarService {
 
             Materia materia = notasMateria.get(0).getMateria();
 
-            // 5.1 — Média final (média das médias de cada unidade)
             double somaMedias = 0;
             int countMedias = 0;
             for (Nota n : notasMateria) {
@@ -143,7 +167,6 @@ public class HistoricoEscolarService {
             double mediaFinal = countMedias > 0 ? somaMedias / countMedias : 0.0;
             mediaFinal = Math.round(mediaFinal * 100.0) / 100.0;
 
-            // 5.2 — Criar item
             ItemHistorico item = new ItemHistorico();
             item.setMateria(materia);
             item.setNomeMateria(materia.getNome());
@@ -156,36 +179,61 @@ public class HistoricoEscolarService {
             historico.addItem(item);
         }
 
-        // ===== 6. Situação final geral =====
-        int total = historico.getItems().size();
-        int aprovadas = historico.getTotalAprovadas();
-        int anoAtual = LocalDate.now().getYear();
+        historico.setSituacaoFinal(calcularSituacaoFinal(historico, escola));
 
-        if (total == 0) {
-            historico.setSituacaoFinal("CURSANDO");
-        } else if (anoLetivo >= anoAtual) {
-            historico.setSituacaoFinal("CURSANDO");
-        } else if (aprovadas * 2 >= total) {
-            historico.setSituacaoFinal("APROVADO");
-        } else {
-            historico.setSituacaoFinal("REPROVADO");
-        }
-
-        // ===== 7. Carga horária total =====
         int cargaTotal = historico.getItems().stream()
                 .mapToInt(i -> i.getCargaHoraria() != null ? i.getCargaHoraria() : 0)
                 .sum();
         historico.setCargaHorariaTotal(cargaTotal);
-
-        // ===== 8. Dias letivos (padrão 200) =====
         historico.setDiasLetivos(200);
 
-        // ===== 9. Salvar =====
         return historicoRepository.save(historico);
     }
 
     // ==================================================================
-    // SALVAR (UPDATE) — recalcula resultado dos itens e situação final
+    // GERAR HISTORICO EXTERNO (transferência)
+    // ==================================================================
+    @Transactional
+    public HistoricoEscolar gerarHistoricoExterno(Long alunoId, Integer anoLetivo,
+                                                    String escolaOrigem, String cidadeOrigem) {
+
+        Aluno aluno = alunoService.buscarPorId(alunoId);
+        if (aluno == null) {
+            throw new RuntimeException("Aluno não encontrado: " + alunoId);
+        }
+
+        if (historicoRepository.existsByAlunoIdAndAnoLetivo(alunoId, anoLetivo)) {
+            throw new RuntimeException("Já existe um histórico para este aluno no ano " + anoLetivo);
+        }
+
+        HistoricoEscolar historico = new HistoricoEscolar();
+        historico.setAluno(aluno);
+
+        List<Escola> escolas = escolaRepository.findAll();
+        Escola escola = escolas.isEmpty() ? null : escolas.get(0);
+        historico.setEscola(escola);
+
+        double mediaAprovacao = (escola != null) ? escola.getMediaAprovacaoSegura() : MEDIA_PADRAO;
+        historico.setMediaAprovacao(mediaAprovacao);
+
+        historico.setEscolaOrigem(escolaOrigem);
+        historico.setCidadeOrigem(cidadeOrigem);
+
+        historico.setAnoLetivo(anoLetivo);
+        historico.setSerie("-");
+        historico.setTurma("-");
+        historico.setTurno("-");
+
+        historico.setSituacaoFinal("CURSANDO");
+        historico.setCargaHorariaTotal(0);
+        historico.setDiasLetivos(200);
+        historico.setObservacoes("Histórico de transferência — preencher com os dados da escola de origem.");
+
+        return historicoRepository.save(historico);
+    }
+
+    // ==================================================================
+    // SALVAR
     // ==================================================================
     @Transactional
     public HistoricoEscolar salvar(HistoricoEscolar historico) {
@@ -200,7 +248,6 @@ public class HistoricoEscolarService {
                 }
                 ordem++;
 
-                // Recalcula resultado do item (exceto se estiver CURSANDO)
                 double nota = item.getNotaFinal() != null ? item.getNotaFinal() : 0.0;
                 if (!"CURSANDO".equalsIgnoreCase(item.getResultado())) {
                     item.setResultado(nota >= media ? "APROVADO" : "REPROVADO");
@@ -208,22 +255,6 @@ public class HistoricoEscolarService {
             }
         }
 
-        // Recalcula situação final se não estiver definida manualmente
-        if (historico.getSituacaoFinal() == null || historico.getSituacaoFinal().isEmpty()) {
-            int total = historico.getItems().size();
-            int aprovadas = historico.getTotalAprovadas();
-            int anoAtual = LocalDate.now().getYear();
-
-            if (total == 0 || (historico.getAnoLetivo() != null && historico.getAnoLetivo() >= anoAtual)) {
-                historico.setSituacaoFinal("CURSANDO");
-            } else if (aprovadas * 2 >= total) {
-                historico.setSituacaoFinal("APROVADO");
-            } else {
-                historico.setSituacaoFinal("REPROVADO");
-            }
-        }
-
-        // Recalcula carga horária
         int cargaTotal = historico.getItems().stream()
                 .mapToInt(i -> i.getCargaHoraria() != null ? i.getCargaHoraria() : 0)
                 .sum();
@@ -255,7 +286,7 @@ public class HistoricoEscolarService {
     }
 
     // ==================================================================
-    // RECALCULAR (busca notas DO ANO do histórico + faltas atualizadas)
+    // RECALCULAR
     // ==================================================================
     @Transactional
     public HistoricoEscolar recalcular(Long id) {
@@ -264,15 +295,17 @@ public class HistoricoEscolarService {
             throw new RuntimeException("Histórico não encontrado: " + id);
         }
 
+        if (historico.isExterno()) {
+            throw new RuntimeException("Este histórico é de escola externa (transferência). Edite manualmente.");
+        }
+
         Long alunoId = historico.getAluno().getId();
         Integer anoLetivo = historico.getAnoLetivo();
         double media = historico.getMediaAprovacaoSegura();
 
-        // ⚠️ Notas filtradas pelo ano do histórico
         List<Nota> notas = notaService.listarPorAlunoEAno(alunoId, anoLetivo);
         List<Frequencia> frequencias = frequenciaService.listarPorAluno(alunoId);
 
-        // Recalcular faltas
         Map<Long, Integer> faltasPorMateria = new HashMap<>();
         for (Frequencia f : frequencias) {
             if (Boolean.FALSE.equals(f.getPresente()) && f.getMateria() != null) {
@@ -280,7 +313,6 @@ public class HistoricoEscolarService {
             }
         }
 
-        // Recalcular nota final de cada item
         for (ItemHistorico item : historico.getItems()) {
             if (item.getMateria() == null) continue;
 
@@ -302,20 +334,13 @@ public class HistoricoEscolarService {
             item.setResultado(mediaFinal >= media ? "APROVADO" : "REPROVADO");
         }
 
-        // Situação final
-        int total = historico.getItems().size();
-        int aprovadas = historico.getTotalAprovadas();
-        int anoAtual = LocalDate.now().getYear();
-
-        if (total == 0 || (anoLetivo != null && anoLetivo >= anoAtual)) {
-            historico.setSituacaoFinal("CURSANDO");
-        } else if (aprovadas * 2 >= total) {
-            historico.setSituacaoFinal("APROVADO");
-        } else {
-            historico.setSituacaoFinal("REPROVADO");
+        Escola escola = historico.getEscola();
+        if (escola == null) {
+            List<Escola> escolas = escolaRepository.findAll();
+            escola = escolas.isEmpty() ? null : escolas.get(0);
         }
+        historico.setSituacaoFinal(calcularSituacaoFinal(historico, escola));
 
-        // Carga horária
         int cargaTotal = historico.getItems().stream()
                 .mapToInt(i -> i.getCargaHoraria() != null ? i.getCargaHoraria() : 0)
                 .sum();
@@ -344,5 +369,16 @@ public class HistoricoEscolarService {
         item.setOrdem(historico.getItems().size() + 1);
 
         return itemRepository.save(item);
+    }
+
+    // ==================================================================
+    // REMOVER ITEM
+    // ==================================================================
+    @Transactional
+    public void removerItem(Long itemId) {
+        ItemHistorico item = itemRepository.findById(itemId).orElse(null);
+        if (item != null) {
+            itemRepository.delete(item);
+        }
     }
 }

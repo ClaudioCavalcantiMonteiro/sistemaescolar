@@ -98,25 +98,31 @@ public class AlunoController {
     }
 
     @PostMapping("/salvar")
-    public String salvar(@ModelAttribute Aluno aluno) {
+    public String salvar(@ModelAttribute Aluno aluno, Model model) {
 
         ResponsavelFinanceiro respForm = aluno.getResponsavelFinanceiro();
 
         if (respForm != null && respForm.getNome() != null && !respForm.getNome().isEmpty()) {
 
             if (respForm.getCpf() != null && !respForm.getCpf().trim().isEmpty()) {
-                if (!br.com.escola.util.CpfValidator.isValid(respForm.getCpf())) {
-                    String url = aluno.getId() != null
-                            ? "/alunos/editar/" + aluno.getId()
-                            : "/alunos/novo";
-                    return "redirect:" + url + "?cpfInvalido";
+
+                if (!CpfValidator.isValid(respForm.getCpf())) {
+                    model.addAttribute("aluno", aluno);
+                    model.addAttribute("series", serieService.listarTodas());
+                    model.addAttribute("turmas", turmaService.listarTodas());
+                    model.addAttribute("cpfInvalido", true);
+                    return "alunos/cadastrar";
                 }
 
                 String cpfLimpo = respForm.getCpf().replaceAll("[^0-9]", "");
 
                 if (aluno.getId() == null) {
                     if (responsavelService.existeCpf(cpfLimpo)) {
-                        return "redirect:/alunos/novo?cpfDuplicado";
+                        model.addAttribute("aluno", aluno);
+                        model.addAttribute("series", serieService.listarTodas());
+                        model.addAttribute("turmas", turmaService.listarTodas());
+                        model.addAttribute("cpfDuplicado", true);
+                        return "alunos/cadastrar";
                     }
                 } else {
                     Aluno existenteAluno = alunoService.buscarPorId(aluno.getId());
@@ -124,7 +130,11 @@ public class AlunoController {
                         ResponsavelFinanceiro respAtual = responsavelService.buscarPorAlunoId(aluno.getId());
                         if (respAtual != null && !respAtual.getCpf().replaceAll("[^0-9]", "").equals(cpfLimpo)) {
                             if (responsavelService.existeCpf(cpfLimpo)) {
-                                return "redirect:/alunos/editar/" + aluno.getId() + "?cpfDuplicado";
+                                model.addAttribute("aluno", aluno);
+                                model.addAttribute("series", serieService.listarTodas());
+                                model.addAttribute("turmas", turmaService.listarTodas());
+                                model.addAttribute("cpfDuplicado", true);
+                                return "alunos/cadastrar";
                             }
                         }
                     }
@@ -143,6 +153,15 @@ public class AlunoController {
                 existente.setAnoLetivo(aluno.getAnoLetivo());
                 existente.setDataMatricula(aluno.getDataMatricula());
                 existente.setMatriculaAtiva(aluno.getMatriculaAtiva());
+
+                existente.setNaturalidade(aluno.getNaturalidade());
+                existente.setNacionalidade(aluno.getNacionalidade());
+                existente.setSexo(aluno.getSexo());
+                existente.setNomePai(aluno.getNomePai());
+                existente.setNomeMae(aluno.getNomeMae());
+                existente.setCpfAluno(aluno.getCpfAluno());
+                existente.setRgAluno(aluno.getRgAluno());
+                existente.setTelefone(aluno.getTelefone());
 
                 if (respForm != null && respForm.getNome() != null && !respForm.getNome().isEmpty()) {
                     ResponsavelFinanceiro respExistente = responsavelService.buscarPorAlunoId(existente.getId());
@@ -189,19 +208,54 @@ public class AlunoController {
         return "alunos/cadastrar";
     }
 
-    // ===== EXCLUIR (com tratamento de erro amigável) =====
+    // ==================================================================
+    // EXCLUIR — com debug de log no console
+    // ==================================================================
     @GetMapping("/excluir/{id}")
     public String excluir(@PathVariable Long id, RedirectAttributes attributes) {
         try {
-            responsavelService.excluirPorAlunoId(id);
-            notaService.excluirPorAlunoId(id);
+            System.out.println(">>> [EXCLUIR] Tentando excluir aluno ID: " + id);
+
+            Aluno aluno = alunoService.buscarPorId(id);
+            if (aluno == null) {
+                attributes.addFlashAttribute("mensagemErro", "Aluno não encontrado.");
+                return "redirect:/alunos";
+            }
+
+            System.out.println(">>> [EXCLUIR] Aluno encontrado: " + aluno.getNome());
+
+            // 1) Tenta excluir responsável (não deve dar erro se existir FK)
+            try {
+                responsavelService.excluirPorAlunoId(id);
+                System.out.println(">>> [EXCLUIR] Responsável excluído (ou não existia).");
+            } catch (Exception e) {
+                System.err.println(">>> [EXCLUIR] Erro ao excluir responsável: " + e.getMessage());
+                // não interrompe, segue para o resto
+            }
+
+            // 2) Tenta excluir notas (não deve dar erro se existir FK)
+            try {
+                notaService.excluirPorAlunoId(id);
+                System.out.println(">>> [EXCLUIR] Notas excluídas (ou não existiam).");
+            } catch (Exception e) {
+                System.err.println(">>> [EXCLUIR] Erro ao excluir notas: " + e.getMessage());
+                // não interrompe
+            }
+
+            // 3) Tenta excluir o aluno (aqui pode dar FK de mensalidade/frequência/histórico)
             alunoService.excluir(id);
+            System.out.println(">>> [EXCLUIR] Aluno excluído com sucesso!");
+
             attributes.addFlashAttribute("mensagemSucesso", "Aluno excluído com sucesso!");
+
         } catch (DataIntegrityViolationException e) {
+            System.err.println(">>> [EXCLUIR] DataIntegrityViolationException: " + e.getMessage());
             attributes.addFlashAttribute("mensagemErro",
-                    "Não é possível excluir este aluno pois ele possui mensalidades, notas ou frequências vinculadas. " +
+                    "Não é possível excluir este aluno pois ele possui mensalidades, notas, frequências ou históricos vinculados. " +
                     "Use a opção 'Desativar Matrícula' para preservar o histórico.");
         } catch (Exception e) {
+            System.err.println(">>> [EXCLUIR] Exception genérica: " + e.getClass().getName() + " - " + e.getMessage());
+            e.printStackTrace();
             attributes.addFlashAttribute("mensagemErro",
                     "Erro ao excluir o aluno: " + e.getMessage());
         }
@@ -234,7 +288,7 @@ public class AlunoController {
         return "redirect:/alunos?desativado";
     }
 
-    // ===== NOVO: ATIVAR MATRÍCULA =====
+    // ===== ATIVAR MATRÍCULA =====
     @GetMapping("/ativar/{id}")
     public String ativar(@PathVariable Long id) {
         Aluno aluno = alunoService.buscarPorId(id);
